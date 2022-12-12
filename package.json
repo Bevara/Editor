@@ -1,0 +1,51 @@
+{
+	"name": "bevara-code-editor",
+	"description": "This is a helper plugins for designing and debug bevara decoders.",
+	"version": "0.0.1",
+	"publisher": "Bevara",
+	"repository": "https://github.com/Bevara/editor-vscode",
+	"engines": {
+		"vscode": "^1.74.0"
+	},
+	"activationEvents": [],
+	"main": "./out/extension.js",
+	"contributes": {
+		"html": {
+			"customData": [
+				"./html.html-data.json"
+			]
+		},
+		"customEditors": [
+			{
+				"viewType": "bevara.pipeline",
+				"displayName": "Open with Bevara viewer",
+				"selector": [
+					{
+						"filenamePattern": "*.jpeg"
+					}
+				]
+			}
+		],
+		"commands": [
+			{
+				"command": "bevara.pipeline.new",
+				"title": "Create new pipeline Document",
+				"category": "Bevara"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint \"src/**/*.ts\"",
+		"watch": "tsc -w -p ./"
+	},
+	"devDependencies": {
+		"@types/node": "^16.11.7",
+		"@types/vscode": "^1.73.0",
+		"@typescript-eslint/eslint-plugin": "^5.42.0",
+		"@typescript-eslint/parser": "^5.42.0",
+		"eslint": "^8.26.0",
+		"typescript": "^4.8.4"
+	}
+}
