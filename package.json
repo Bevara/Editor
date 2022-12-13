@@ -21,7 +21,7 @@
 				"displayName": "Open with Bevara viewer",
 				"selector": [
 					{
-						"filenamePattern": "*.jpeg"
+						"filenamePattern": "*.jp2"
 					}
 				]
 			}

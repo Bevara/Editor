@@ -94,20 +94,14 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 	 * Get the static HTML used for in our editor's webviews.
 	 */
 	private getHtmlForWebview(webview: vscode.Webview): string {
-		const isDev = true;
+		const isDev = false;
 
 		// Local path to script for the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this._context.extensionUri, 'media', 'bevaraDraw.js'));
 
-		//let universalImg="http://bevara.ddns.net/accessors/universal-img.js";
-		const universalImg=webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'media', 'universal-img.js'));
-
-		/*if (isDev){
-			universalImg=webview.asWebviewUri(vscode.Uri.joinPath(
-				this._context.extensionUri, 'media', 'bevaraDraw.js'));
-		}*/
+		const universalImg : vscode.Uri | string =isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+				this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors/universal-img.js";
 
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
@@ -121,8 +115,6 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			</head>
 			<body>
 			<div class="drawing-preview"></div>
-
-				<img is="universal-img" id='preview' src="http://bevara.ddns.net/test-signals/j2k/Cevennes2.jp2" using="core-img.wasm" with="j2kdec.wasm" controls  connections>
 			</body>
 			<script src="${universalImg}"></script>
 			<script nonce="${nonce}" src="${scriptUri}"></script>

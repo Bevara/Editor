@@ -3,3 +3,4 @@ node_modules
 .angular
 package-lock.json
 out/
+bevara-code-editor-0.0.1.vsix

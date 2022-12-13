@@ -3,37 +3,18 @@
 	// @ts-ignore
 	const vscode = acquireVsCodeApi();
 
-	/**
-	* @param {Uint8Array} initialContent 
-	* @return {Promise<HTMLImageElement>}
-	*/
-	async function loadImageFromData(initialContent) {
-		const blob = new Blob([initialContent], { 'type': 'image/png' });
-		const url = URL.createObjectURL(blob);
-		try {
-			const img = document.createElement('img');
-			img.crossOrigin = 'anonymous';
-			img.src = url;
-			await new Promise((resolve, reject) => {
-				img.onload = resolve;
-				img.onerror = reject;
-			});
-			return img;
-		} finally {
-			URL.revokeObjectURL(url);
-		}
-	}
-
 	class BevaraDrawEditor {
 		constructor( /** @type {HTMLElement} */ preview) {
 			this._preview = preview;
 		}
 		async injectData(data) {
-
+			const blob = new Blob([data], { 'type': 'image/jp2' });
+			const url = URL.createObjectURL(blob);
+			this._preview.innerHTML= `<img is="universal-img" src="${url}" using="core-img.wasm" with="j2kdec.wasm" controls  connections>`;
 		}
 	}
 
-	const editor = new BevaraDrawEditor(document.querySelector('#preview'));
+	const editor = new BevaraDrawEditor(document.querySelector('.drawing-preview'));
 
 	// Handle messages from the extension
 	window.addEventListener('message', async e => {
