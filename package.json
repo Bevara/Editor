@@ -22,8 +22,29 @@
 				"selector": [
 					{
 						"filenamePattern": "*.jp2"
+					},
+					{
+						"filenamePattern": "*.ac3"
 					}
-				]
+					,
+					{
+						"filenamePattern": "*.amr"
+					}
+					,
+					{
+						"filenamePattern": "*.flac"
+					},
+					{
+						"filenamePattern": "*.mp3"
+					},
+					{
+						"filenamePattern": "*.opus"
+					},
+					{
+						"filenamePattern": "*.wma"
+					}
+				],
+				"priority":"default"
 			}
 		],
 		"commands": [

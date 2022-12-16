@@ -7,6 +7,7 @@ import { Disposable, disposeAll } from './dispose';
 export class BevaraDrawDocument extends Disposable implements vscode.CustomDocument {
 	private readonly _uri: vscode.Uri;
 	private _documentData: Uint8Array;
+	private _ext: string | undefined;
 
 	static async create(
 		uri: vscode.Uri,
@@ -26,6 +27,7 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 	}
 
 	public get documentData(): Uint8Array { return this._documentData; }
+	public get extension(): string | undefined { return this._ext; }
 	
 	private constructor(
 		uri: vscode.Uri,
@@ -34,6 +36,7 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 		super();
 		this._uri = uri;
 		this._documentData = initialContent;
+		this._ext = uri? uri.path.split('.').pop(): undefined;
 	}
 	public get uri() { return this._uri; }
 

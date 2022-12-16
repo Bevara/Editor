@@ -9,6 +9,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 
 	private static readonly viewType = 'bevara.pipeline';
 	private static newBevaraDrawFileId = 1;
+
 	/**
 	 * Tracks all known webviews
 	 */
@@ -16,7 +17,10 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 
 	constructor(
 		private readonly _context: vscode.ExtensionContext
-	) { }
+	) { 
+
+
+	}
 
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
 		vscode.commands.registerCommand('bevara.pipeline.new', () => {
@@ -84,7 +88,9 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			if (e.type === 'ready') {
 				this.postMessage(webviewPanel, 'init', {
-					value: document.documentData
+					uri: document.uri,
+					value: document.documentData,
+					ext: document.extension
 				});
 			}
 		});
@@ -100,9 +106,14 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this._context.extensionUri, 'media', 'bevaraDraw.js'));
 
+
+		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
+			this._context.extensionUri, 'media', 'bevaraDraw.css'));
+
 		const universalImg : vscode.Uri | string =isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
 				this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors/universal-img.js";
 
+				
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 
@@ -112,9 +123,52 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
+				<link href="${styleMainUri}" rel="stylesheet" />
+				<title>Bevara editor</title>
 			</head>
 			<body>
+			<section>
+    		<h1>Bevara editor</h1>
+			<h2>Tag:</h2>
+			<div class="drawing-tag"></div>
+
+			<h2>Preview:</h2>
 			<div class="drawing-preview"></div>
+
+			<h2>Messages:</h2>
+			<textarea id="output" rows="8" readonly></textarea>
+
+			<h2>Options:</h2>
+			<table>
+			<tr>
+			<tr>
+			<td>
+			tag
+			</td>
+			<td>
+			<div class="md-chips tag-buttons"> </div>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			using
+			</td>
+			<td>
+			<div class="md-chips using-buttons"> </div>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			with
+			<input type="checkbox" onClick="toggleAllWith(this)" id="allWith" />
+    <label for="allWith" class="md-chip md-chip-clickable md-chip-hover"> Enable_all</label>
+			</td>
+			<td>
+			<div class="md-chips with-buttons"> </div>
+			</td>
+			</tr>
+			</table>
+			</section>
 			</body>
 			<script src="${universalImg}"></script>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
