@@ -60,10 +60,7 @@ let global_editor = null;
 		
 		async updateTag() {
 			this._preview.innerHTML = this.tag.preview;
-
-			this._fragment.innerHTML = "";
-			const htmlText = document.createTextNode(this.tag.text);
-			this._fragment.appendChild(htmlText);
+			this._fragment.value = this.tag.text;
 		}
 
 		async setSource(uri, data, ext) {
@@ -78,7 +75,7 @@ let global_editor = null;
 
 	const editor = new BevaraDrawEditor(
 		document.querySelector('.drawing-preview'),
-		document.querySelector('.drawing-tag')
+		document.querySelector('#htmlTag')
 	);
 
 	// Handle messages from the extension
@@ -192,4 +189,16 @@ function toggleAllWith(source) {
 	}
 
 	toggleWith();
+}
+
+function copyTag() {
+  // Get the text field
+  var copyText = document.getElementById("htmlTag");
+
+  // Select the text field
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); // For mobile devices
+
+   // Copy the text inside the text field
+  navigator.clipboard.writeText(copyText.value);
 }

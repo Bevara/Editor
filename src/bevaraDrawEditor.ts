@@ -130,7 +130,8 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			<section>
     		<h1>Bevara editor</h1>
 			<h2>Tag:</h2>
-			<div class="drawing-tag"></div>
+			<textarea id="htmlTag" rows="8" readonly></textarea>
+			<button type="checkbox" class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()" name="copyTag" id="copyTag"> Copy this tag to clipboard </button>
 
 			<h2>Preview:</h2>
 			<div class="drawing-preview"></div>
