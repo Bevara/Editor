@@ -30,7 +30,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 				return;
 			}
 
-			const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, `new-${BevaraDrawEditorProvider.newBevaraDrawFileId++}.pipeline`)
+			const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, `new-${BevaraDrawEditorProvider.newBevaraDrawFileId++}.bev`)
 				.with({ scheme: 'untitled' });
 
 			vscode.commands.executeCommand('vscode.openWith', uri, BevaraDrawEditorProvider.viewType);
@@ -131,10 +131,11 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
     		<h1>Bevara editor</h1>
 			<h2>Tag:</h2>
 			<textarea id="htmlTag" rows="8" readonly></textarea>
-			<button type="checkbox" class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()" name="copyTag" id="copyTag"> Copy this tag to clipboard </button>
+			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
 
 			<h2>Preview:</h2>
 			<div class="drawing-preview"></div>
+			<button class="md-chip md-chip-clickable md-chip-hover" onClick="preserveFile()"> Preserve </button>
 
 			<h2>Messages:</h2>
 			<textarea id="output" rows="8" readonly></textarea>

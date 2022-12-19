@@ -1,7 +1,7 @@
 {
 	"name": "bevara-code-editor",
 	"description": "This is a helper plugins for designing and debug bevara decoders.",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/editor-vscode",
 	"engines": {
@@ -42,6 +42,9 @@
 					},
 					{
 						"filenamePattern": "*.wma"
+					},
+					{
+						"filenamePattern": "*.bev"
 					}
 				],
 				"priority":"default"
