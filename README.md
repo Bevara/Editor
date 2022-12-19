@@ -11,7 +11,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed. Then run:
 `npm install -g @vscode/vsce`
 
 ### Package the extension
-`vsce package`
+Run : `vsce package`
 
 ### Publish the extension
-`vsce publish`
+Run : `vsce publish`
