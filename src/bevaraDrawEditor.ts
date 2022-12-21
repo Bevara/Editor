@@ -54,10 +54,10 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 	}
 
 	saveCustomDocument(document: BevaraDrawDocument, cancellation: vscode.CancellationToken): Thenable<void> {
-		throw new Error('Method not implemented.');
+		return document.save(cancellation);
 	}
 	saveCustomDocumentAs(document: BevaraDrawDocument, destination: vscode.Uri, cancellation: vscode.CancellationToken): Thenable<void> {
-		return document.save(cancellation);
+		return document.saveAs(destination, cancellation);
 	}
 	revertCustomDocument(document: BevaraDrawDocument, cancellation: vscode.CancellationToken): Thenable<void> {
 		throw new Error('Method not implemented.');
@@ -74,8 +74,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 					throw new Error('Could not find webview to save for');
 				}
 				const panel = webviewsForDocument[0];
-				const response = await this.postMessageWithResponse<number[]>(panel, 'getFileData', {});
-				return new Uint8Array(response);
+				return await this.postMessageWithResponse<number[]>(panel, 'getFileData', {});
 			}
 		});
 

@@ -26,12 +26,10 @@
 					},
 					{
 						"filenamePattern": "*.ac3"
-					}
-					,
+					},
 					{
 						"filenamePattern": "*.amr"
-					}
-					,
+					},
 					{
 						"filenamePattern": "*.flac"
 					},
@@ -48,7 +46,7 @@
 						"filenamePattern": "*.bev"
 					}
 				],
-				"priority":"default"
+				"priority": "default"
 			}
 		],
 		"commands": [
@@ -72,5 +70,10 @@
 		"@typescript-eslint/parser": "^5.42.0",
 		"eslint": "^8.26.0",
 		"typescript": "^4.8.4"
+	},
+	"dependencies": {
+		"@types/jszip": "^3.4.1",
+		"jszip": "^3.10.1",
+		"vscode-uri": "^3.0.7"
 	}
 }

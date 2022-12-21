@@ -38,6 +38,8 @@ let global_editor = null;
 			this._decoders = recommended.with[ext];
 
 			this._uri = uri;
+			this._data = data;
+			
 			const blob = new Blob([data], { 'type': this._mime });
 			this._url = URL.createObjectURL(blob);
 			updateButtons(this._tag, this._core, this._decoders);
@@ -52,11 +54,8 @@ let global_editor = null;
 			};
 		}
 
-		getBevData() {
-			let data = this._data;
-			return new Promise(function (resolve) {
-				resolve(data);
-			});
+		getBevaraData() {
+			return {uri:this._uri, source:this._data, core:this._core, with:this._decoders};
 		}
 
 		set tag(tag) {
@@ -102,11 +101,8 @@ let global_editor = null;
 				}
 			case 'getFileData':
 				{
-					// Get the image data for the canvas and post it back to the extension.
-					editor.getBevData().then(data => {
-						vscode.postMessage({ type: 'response', requestId, body: Array.from(data) });
-					});
-					return;
+				vscode.postMessage({ type: 'response', requestId, body: editor.getBevaraData()});
+				return;
 				}
 		}
 	});

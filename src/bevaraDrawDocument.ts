@@ -1,4 +1,8 @@
 import * as vscode from 'vscode';
+import * as JSZip from 'jszip';
+import { Utils } from 'vscode-uri';
+
+
 import { BevaraDocumentDelegate } from './bevaraDrawDocumentDelegate';
 import { BevaraDrawEdit } from './bevaraDrawEdit';
 import { Disposable, disposeAll } from './dispose';
@@ -45,9 +49,9 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 	}
 	public get uri() { return this._uri; }
 
-	
+
 	private readonly _onDidDispose = this._register(new vscode.EventEmitter<void>());
-	
+
 	/**
 	 * Fired when the document is disposed of.
 	 */
@@ -89,14 +93,28 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 		this._savedEdits = Array.from(this._edits);
 	}
 
+	async packageData(data: any): Promise<Uint8Array> {
+		const zip = new JSZip();
+		const sourceUri = vscode.Uri.parse(data.uri);
+		const sourceName = Utils.basename(sourceUri);
+		zip.file(sourceName.toString(), data.source);
+		const accessors = data.with
+			.split(';');
+
+		accessors.push(data.core);
+
+		return zip.generateAsync({ type: "uint8array" });
+	}
+
 	/**
 	 * Called by VS Code when the user saves the document to a new location.
 	 */
 	async saveAs(targetResource: vscode.Uri, cancellation: vscode.CancellationToken): Promise<void> {
-		const fileData = await this._delegate.getFileData();
+		const bevaraData = await this._delegate.getFileData();
+		const bevaraFile = await this.packageData(bevaraData);
 		if (cancellation.isCancellationRequested) {
 			return;
 		}
-		await vscode.workspace.fs.writeFile(targetResource, fileData);
+		await vscode.workspace.fs.writeFile(targetResource, bevaraFile);
 	}
 }

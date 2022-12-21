@@ -1,3 +1,3 @@
 export interface BevaraDocumentDelegate {
-	getFileData(): Promise<Uint8Array>;
+	getFileData(): Promise<any>;
 }
