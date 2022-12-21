@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { BevaraDrawDocument } from "./bevaraDrawDocument";
+import { disposeAll } from './dispose';
 import { getNonce } from './util';
 import { WebviewCollection } from './webviewCollection';
 
@@ -9,6 +10,8 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 
 	private static readonly viewType = 'bevara.pipeline';
 	private static newBevaraDrawFileId = 1;
+	private _requestId = 1;
+	private readonly _callbacks = new Map<number, (response: any) => void>();
 
 	/**
 	 * Tracks all known webviews
@@ -17,7 +20,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 
 	constructor(
 		private readonly _context: vscode.ExtensionContext
-	) { 
+	) {
 
 
 	}
@@ -54,7 +57,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 		throw new Error('Method not implemented.');
 	}
 	saveCustomDocumentAs(document: BevaraDrawDocument, destination: vscode.Uri, cancellation: vscode.CancellationToken): Thenable<void> {
-		throw new Error('Method not implemented.');
+		return document.save(cancellation);
 	}
 	revertCustomDocument(document: BevaraDrawDocument, cancellation: vscode.CancellationToken): Thenable<void> {
 		throw new Error('Method not implemented.');
@@ -64,13 +67,63 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 	}
 	async openCustomDocument(uri: vscode.Uri, openContext: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken):
 		Promise<BevaraDrawDocument> {
-		const document: BevaraDrawDocument = await BevaraDrawDocument.create(uri, openContext.backupId);
+		const document: BevaraDrawDocument = await BevaraDrawDocument.create(uri, openContext.backupId, {
+			getFileData: async () => {
+				const webviewsForDocument = Array.from(this.webviews.get(document.uri));
+				if (!webviewsForDocument.length) {
+					throw new Error('Could not find webview to save for');
+				}
+				const panel = webviewsForDocument[0];
+				const response = await this.postMessageWithResponse<number[]>(panel, 'getFileData', {});
+				return new Uint8Array(response);
+			}
+		});
+
+		const listeners: vscode.Disposable[] = [];
+
+		listeners.push(document.onDidChange(e => {
+			// Tell VS Code that the document has been edited by the use.
+			this._onDidChangeCustomDocument.fire({
+				document,
+				...e,
+			});
+		}));
+
+		listeners.push(document.onDidChangeContent(e => {
+			// Update all webviews when the document changes
+			for (const webviewPanel of this.webviews.get(document.uri)) {
+				this.postMessage(webviewPanel, 'update', {
+					edits: e.edits,
+					content: e.content,
+				});
+			}
+		}));
+
+		document.onDidDispose(() => disposeAll(listeners));
 
 		return document;
 	}
 
+	private postMessageWithResponse<R = unknown>(panel: vscode.WebviewPanel, type: string, body: any): Promise<R> {
+		const requestId = this._requestId++;
+		const p = new Promise<R>(resolve => this._callbacks.set(requestId, resolve));
+		panel.webview.postMessage({ type, requestId, body });
+		return p;
+	}
+
 	private postMessage(panel: vscode.WebviewPanel, type: string, body: any): void {
 		panel.webview.postMessage({ type, body });
+	}
+
+	private onMessage(document: BevaraDrawDocument, message: any) {
+		switch (message.type) {
+			case 'response':
+				{
+					const callback = this._callbacks.get(message.requestId);
+					callback?.(message.body);
+					return;
+				}
+		}
 	}
 
 
@@ -83,15 +136,22 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			enableScripts: true,
 		};
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+		webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
 
 		// Wait for the webview to be properly ready before we init
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			if (e.type === 'ready') {
-				this.postMessage(webviewPanel, 'init', {
-					uri: document.uri,
-					value: document.documentData,
-					ext: document.extension
-				});
+
+				if (document.uri.scheme === 'untitled') {
+					this.postMessage(webviewPanel, 'init', {
+						untitled: true
+					});
+				} else {
+					this.postMessage(webviewPanel, 'init', {
+						uri: document.uri,
+						value: document.documentData
+					});
+				}
 			}
 		});
 	}
@@ -110,10 +170,10 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this._context.extensionUri, 'media', 'bevaraDraw.css'));
 
-		const universalImg : vscode.Uri | string =isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-				this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors/universal-img.js";
+		const universalImg: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors/universal-img.js";
 
-				
+
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 
@@ -129,6 +189,12 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			<body>
 			<section>
     		<h1>Bevara editor</h1>
+			
+			<div style="display:none;" class="select-source">
+			<h2>Select source:</h2>
+			<input type="file" onChange="fileLoaded(this)" id="inputTag"></input>
+			</div>
+
 			<h2>Tag:</h2>
 			<textarea id="htmlTag" rows="8" readonly></textarea>
 			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
