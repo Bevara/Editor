@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PreservedDocument } from './PreservedDocument';
+import { PreservedDocument } from '../documents/PreservedDocument';
 
 export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvider<PreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<PreservedDocument>>();

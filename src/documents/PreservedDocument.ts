@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Disposable, disposeAll } from './dispose';
+import { Disposable, disposeAll } from '../dispose';
 
 /**
  * Define the document (the data model) used for bevara draw files.

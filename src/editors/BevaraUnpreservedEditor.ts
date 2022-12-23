@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { UnpreservedDocument } from "./UnpreservedDocument";
-import { disposeAll } from './dispose';
-import { getNonce } from './util';
-import { WebviewCollection } from './webviewCollection';
+import { UnpreservedDocument } from "../documents/UnpreservedDocument";
+import { disposeAll } from '../dispose';
+import { getNonce } from '../util';
+import { WebviewCollection } from '../webviewCollection';
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
