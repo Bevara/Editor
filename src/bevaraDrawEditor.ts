@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { BevaraDrawDocument } from "./bevaraDrawDocument";
+import { UnpreservedDocument } from "./UnpreservedDocument";
 import { disposeAll } from './dispose';
 import { getNonce } from './util';
 import { WebviewCollection } from './webviewCollection';
 
-export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<BevaraDrawDocument> {
-	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<BevaraDrawDocument>>();
+export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
+	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
 	public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
 	private static readonly viewType = 'bevara.pipeline';
@@ -53,21 +53,21 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			});
 	}
 
-	saveCustomDocument(document: BevaraDrawDocument, cancellation: vscode.CancellationToken): Thenable<void> {
+	saveCustomDocument(document: UnpreservedDocument, cancellation: vscode.CancellationToken): Thenable<void> {
 		return document.save(cancellation);
 	}
-	saveCustomDocumentAs(document: BevaraDrawDocument, destination: vscode.Uri, cancellation: vscode.CancellationToken): Thenable<void> {
+	saveCustomDocumentAs(document: UnpreservedDocument, destination: vscode.Uri, cancellation: vscode.CancellationToken): Thenable<void> {
 		return document.saveAs(destination, cancellation);
 	}
-	revertCustomDocument(document: BevaraDrawDocument, cancellation: vscode.CancellationToken): Thenable<void> {
+	revertCustomDocument(document: UnpreservedDocument, cancellation: vscode.CancellationToken): Thenable<void> {
 		throw new Error('Method not implemented.');
 	}
-	backupCustomDocument(document: BevaraDrawDocument, context: vscode.CustomDocumentBackupContext, cancellation: vscode.CancellationToken): Thenable<vscode.CustomDocumentBackup> {
+	backupCustomDocument(document: UnpreservedDocument, context: vscode.CustomDocumentBackupContext, cancellation: vscode.CancellationToken): Thenable<vscode.CustomDocumentBackup> {
 		throw new Error('Method not implemented.');
 	}
 	async openCustomDocument(uri: vscode.Uri, openContext: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken):
-		Promise<BevaraDrawDocument> {
-		const document: BevaraDrawDocument = await BevaraDrawDocument.create(uri, openContext.backupId, {
+		Promise<UnpreservedDocument> {
+		const document: UnpreservedDocument = await UnpreservedDocument.create(uri, openContext.backupId, {
 			getFileData: async () => {
 				const webviewsForDocument = Array.from(this.webviews.get(document.uri));
 				if (!webviewsForDocument.length) {
@@ -114,7 +114,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 		panel.webview.postMessage({ type, body });
 	}
 
-	private onMessage(document: BevaraDrawDocument, message: any) {
+	private onMessage(document: UnpreservedDocument, message: any) {
 		switch (message.type) {
 			case 'response':
 				{
@@ -126,7 +126,7 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 	}
 
 
-	resolveCustomEditor(document: BevaraDrawDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): void | Thenable<void> {
+	resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): void | Thenable<void> {
 		// Add the webview to our internal set of active webviews
 		this.webviews.add(document.uri, webviewPanel);
 

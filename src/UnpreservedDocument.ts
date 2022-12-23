@@ -10,7 +10,7 @@ import { Disposable, disposeAll } from './dispose';
 /**
  * Define the document (the data model) used for bevara draw files.
  */
-export class BevaraDrawDocument extends Disposable implements vscode.CustomDocument {
+export class UnpreservedDocument extends Disposable implements vscode.CustomDocument {
 	private readonly _uri: vscode.Uri;
 	private _documentData: Uint8Array;
 	private _edits: Array<BevaraDrawEdit> = [];
@@ -21,11 +21,11 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 		uri: vscode.Uri,
 		backupId: string | undefined,
 		delegate: BevaraDocumentDelegate
-	): Promise<BevaraDrawDocument | PromiseLike<BevaraDrawDocument>> {
+	): Promise<UnpreservedDocument | PromiseLike<UnpreservedDocument>> {
 		// If we have a backup, read that. Otherwise read the resource from the workspace
 		const dataFile = typeof backupId === 'string' ? vscode.Uri.parse(backupId) : uri;
-		const fileData = await BevaraDrawDocument.readFile(dataFile);
-		return new BevaraDrawDocument(uri, fileData, delegate);
+		const fileData = await UnpreservedDocument.readFile(dataFile);
+		return new UnpreservedDocument(uri, fileData, delegate);
 	}
 
 	private static async readFile(uri: vscode.Uri): Promise<Uint8Array> {

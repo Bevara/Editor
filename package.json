@@ -16,6 +16,18 @@
 				"./html.html-data.json"
 			]
 		},
+		"languages": [
+            {
+                "id": "bev",
+                "aliases": [
+                    "Bevara Archive",
+                    "BEV"
+                ],
+                "extensions": [
+                    ".bev"
+                ]
+            }
+        ],
 		"customEditors": [
 			{
 				"viewType": "bevara.pipeline",
@@ -66,8 +78,21 @@
 				"command": "bevara.pipeline.new",
 				"title": "Create new pipeline Document",
 				"category": "Bevara"
-			}
-		]
+			},
+			{
+                "command": "bevara.pipeline.mountBevFileSystem",
+                "title": "Mount Bevara file"
+            }
+		],
+        "menus": {
+            "explorer/context": [
+                {
+                    "when": "resourceLangId == zip",
+                    "command": "bevara.pipeline.mountBevFileSystem",
+                    "group": "navigation"
+                }
+            ]
+        }
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
