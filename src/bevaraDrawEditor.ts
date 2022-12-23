@@ -194,10 +194,6 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			<input type="file" onChange="fileLoaded(this)" id="inputTag"></input>
 			</div>
 
-			<h2>Tag:</h2>
-			<textarea id="htmlTag" rows="8" readonly></textarea>
-			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
-
 			<h2>Preview:</h2>
 			<div class="drawing-preview"></div>
 			<button class="md-chip md-chip-clickable md-chip-hover" onClick="preserveFile()"> Preserve </button>
@@ -205,7 +201,10 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			<h2>Messages:</h2>
 			<textarea id="output" rows="8" readonly></textarea>
 
-			<h2>Options:</h2>
+			<h2>Tag:</h2>
+			<textarea id="htmlTag" rows="8" readonly></textarea>
+			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
+
 			<table>
 			<tr>
 			<tr>
@@ -214,14 +213,6 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Bev
 			</td>
 			<td>
 			<div class="md-chips tag-buttons"> </div>
-			</td>
-			</tr>
-			<tr>
-			<td>
-			using
-			</td>
-			<td>
-			<div class="md-chips using-buttons"> </div>
 			</td>
 			</tr>
 			<tr>

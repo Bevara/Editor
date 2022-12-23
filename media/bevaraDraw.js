@@ -1,4 +1,5 @@
 let global_editor = null;
+const server_url = "http://bevara.ddns.net/accessors/";
 
 // This script is run within the webview itself
 (function () {
@@ -29,33 +30,42 @@ let global_editor = null;
 
 		async setData(uri, data) {
 
-			const response = await fetch('http://bevara.ddns.net/accessors/recommended.json')
+			const response = await fetch(server_url+'recommended.json')
 			const recommended = await response.json();
 			const ext = uri.split('.').pop();
-			this._tag = recommended.tag[ext];
 			this._mime = recommended.mimeTypes[ext];
-			this._core = recommended.core[ext];
-			this._decoders = recommended.with[ext];
-
+			this._decoders = recommended.with[ext];			
 			this._uri = uri;
 			this._data = data;
-			
+
 			const blob = new Blob([data], { 'type': this._mime });
 			this._url = URL.createObjectURL(blob);
-			updateButtons(this._tag, this._core, this._decoders);
-			this.updateTag();
-
+			if (this._mime){
+				updateButtons(this._mime.split('/')[0], this._decoders);
+				this.updateTag();
+			}
 		}
 
 		get tag() {
 			return {
-				preview: `<${this._tag} src="${this._url}" using="${this._core}" with="${this._decoders}" printerr="#output" controls connections>`,
-				text: `<${this._tag} src="${this._uri}" using="${this._core}" with="${this._decoders}">`,
+				preview: `<${this._tag} src="${this._url}" with="${this._decoders}" printerr="#output" controls connections>`,
+				text: `<${this._tag} src="${this._uri}" with="${this._decoders}">`,
 			};
 		}
 
-		getBevaraData() {
-			return {uri:this._uri, source:this._data, core:this._core, with:this._decoders};
+		async getBevaraData() {
+			const decoders = await Promise.all(this._decoders
+				.split(';')
+				.map(x => {
+					fetch('http://bevara.ddns.net/accessors/' + x)
+						.then((response) => response.arrayBuffer())
+						.then((data) => {
+							console.log("")
+							return { name: x, data: data }
+						});
+				}
+				));
+			return { uri: this._uri, source: this._data, core: this._core, with: this._decoders };
 		}
 
 		set tag(tag) {
@@ -101,8 +111,9 @@ let global_editor = null;
 				}
 			case 'getFileData':
 				{
-				vscode.postMessage({ type: 'response', requestId, body: editor.getBevaraData()});
-				return;
+					const bevaraData = editor.getBevaraData();
+					vscode.postMessage({ type: 'response', requestId, body: bevaraData });
+					return;
 				}
 		}
 	});
@@ -116,7 +127,7 @@ let global_editor = null;
 
 let accessors = null;
 
-fetch('http://bevara.ddns.net/accessors/filter_list.json')
+fetch(server_url+'filter_list.json')
 	.then((response) => response.json())
 	.then((data) => {
 		initButtons(data);
@@ -127,19 +138,19 @@ function initButtons(data) {
 	const tag_buttons = document.querySelector('.tag-buttons');
 
 	let tag_button = "";
-	for (let tag of data.tag) {
-		tag_button += `<input type="checkbox" onClick="toggleTag(this)" name="Tag" value="${tag}" id="${tag}"> 
+	for (let tag in data.tag) {
+		tag_button += `<input type="checkbox" onClick="toggleTag(this)" name="Tag" value="${data.tag[tag]}" id="${tag}"> 
 		<label for="${tag}" class="md-chip md-chip-clickable md-chip-hover">${tag}</label>`;
 	}
 	tag_buttons.innerHTML = tag_button;
-
+/*
 	const using_buttons = document.querySelector('.using-buttons');
 	let using_button = "";
 	for (let using_wasm of data.using) {
 		using_button += `<input type="checkbox" onClick="toggleUsing(this)" name="Using" value="${using_wasm}" id="${using_wasm}"> 
 		<label for="${using_wasm}" class="md-chip md-chip-clickable md-chip-hover">${using_wasm.split('.')[0]}</label>`;
 	}
-	using_buttons.innerHTML = using_button;
+	using_buttons.innerHTML = using_button;*/
 
 	const with_buttons = document.querySelector('.with-buttons');
 	let with_button = "";
@@ -150,16 +161,17 @@ function initButtons(data) {
 	with_buttons.innerHTML = with_button;
 }
 
-function updateButtons(tag, core, decoders) {
+function updateButtons(tag, decoders) {
 	let checkboxes = document.getElementsByName('Tag');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
 		checkboxes[i].checked = checkboxes[i].id == tag;
+		if (checkboxes[i].id == tag) global_editor.tag = checkboxes[i].value;
 	}
 
-	checkboxes = document.getElementsByName('Using');
+	/*checkboxes = document.getElementsByName('Using');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
 		checkboxes[i].checked = checkboxes[i].id == core;
-	}
+	}*/
 
 	if (decoders) {
 		checkboxes = document.getElementsByName('With');
@@ -176,7 +188,7 @@ function toggleTag(source) {
 		tags[i].checked = tags[i] == source;
 	}
 
-	global_editor.tag = source.id;
+	global_editor.tag = source.value;
 }
 
 function toggleUsing(source) {

@@ -25,6 +25,18 @@
 						"filenamePattern": "*.jp2"
 					},
 					{
+						"filenamePattern": "*.jxl"
+					},
+					{
+						"filenamePattern": "*.tif"
+					},
+					{
+						"filenamePattern": "*.cr2"
+					},
+					{
+						"filenamePattern": "*.3fr"
+					},
+					{
 						"filenamePattern": "*.ac3"
 					},
 					{
