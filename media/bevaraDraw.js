@@ -15,6 +15,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._preview = preview;
 			this._fragment = fragment;
 			this._untitled = untitled;
+			this._supported="";
 			this._tag = "";
 			this._mime = "";
 			this._core = "";
@@ -30,17 +31,17 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 		async setData(uri, data) {
 
-			const response = await fetch(server_url+'recommended.json')
+			const response = await fetch(server_url + 'recommended.json')
 			const recommended = await response.json();
 			const ext = uri.split('.').pop();
 			this._mime = recommended.mimeTypes[ext];
-			this._decoders = recommended.with[ext];			
+			this._decoders = recommended.with[ext];
 			this._uri = uri;
 			this._data = data;
 
 			const blob = new Blob([data], { 'type': this._mime });
 			this._url = URL.createObjectURL(blob);
-			if (this._mime){
+			if (this._mime) {
 				updateButtons(this._mime.split('/')[0], this._decoders);
 				this.updateTag();
 			}
@@ -54,23 +55,32 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		async getBevaraData() {
-			const decoders = await Promise.all(this._decoders
-				.split(';')
-				.map(x => {
-					fetch('http://bevara.ddns.net/accessors/' + x)
+			function getWasm(x) {
+				return new Promise((resolve) => {
+					fetch(server_url + x)
 						.then((response) => response.arrayBuffer())
 						.then((data) => {
-							console.log("")
-							return { name: x, data: data }
+							resolve({ name: x, data: data });
 						});
-				}
-				));
-			return { uri: this._uri, source: this._data, core: this._core, with: this._decoders };
+				})
+			}
+
+
+			const decoders = await Promise.all(this._decoders
+				.split(';')
+				.map(x => getWasm(x)));
+			const core = await getWasm(this._core);
+
+			return { supported:this._supported, uri: this._uri, source: this._data, core: core, with: decoders};
 		}
 
 		set tag(tag) {
 			this._tag = tag;
 			this.updateTag();
+		}
+
+		set supported(tag) {
+			this._supported = tag;
 		}
 
 		set core(core) {
@@ -111,7 +121,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 				}
 			case 'getFileData':
 				{
-					const bevaraData = editor.getBevaraData();
+					const bevaraData = await editor.getBevaraData();
 					vscode.postMessage({ type: 'response', requestId, body: bevaraData });
 					return;
 				}
@@ -127,7 +137,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 let accessors = null;
 
-fetch(server_url+'filter_list.json')
+fetch(server_url + 'filter_list.json')
 	.then((response) => response.json())
 	.then((data) => {
 		initButtons(data);
@@ -143,14 +153,14 @@ function initButtons(data) {
 		<label for="${tag}" class="md-chip md-chip-clickable md-chip-hover">${tag}</label>`;
 	}
 	tag_buttons.innerHTML = tag_button;
-/*
-	const using_buttons = document.querySelector('.using-buttons');
-	let using_button = "";
-	for (let using_wasm of data.using) {
-		using_button += `<input type="checkbox" onClick="toggleUsing(this)" name="Using" value="${using_wasm}" id="${using_wasm}"> 
-		<label for="${using_wasm}" class="md-chip md-chip-clickable md-chip-hover">${using_wasm.split('.')[0]}</label>`;
-	}
-	using_buttons.innerHTML = using_button;*/
+	/*
+		const using_buttons = document.querySelector('.using-buttons');
+		let using_button = "";
+		for (let using_wasm of data.using) {
+			using_button += `<input type="checkbox" onClick="toggleUsing(this)" name="Using" value="${using_wasm}" id="${using_wasm}"> 
+			<label for="${using_wasm}" class="md-chip md-chip-clickable md-chip-hover">${using_wasm.split('.')[0]}</label>`;
+		}
+		using_buttons.innerHTML = using_button;*/
 
 	const with_buttons = document.querySelector('.with-buttons');
 	let with_button = "";
@@ -161,12 +171,36 @@ function initButtons(data) {
 	with_buttons.innerHTML = with_button;
 }
 
+function setCore(tag) {
+
+	global_editor.supported = tag;
+
+	//FIXME
+	switch (tag) {
+		case 'image':
+			global_editor.core = "core-img.wasm";
+			break;
+		case 'audio':
+			global_editor.core = "core-audio.wasm";
+			break;
+		case 'video':
+			global_editor.core = "core-video.wasm";
+			break;
+		case 'canvas':
+			global_editor.core = "core-canvas.wasm";
+			break;
+	}
+}
+
 function updateButtons(tag, decoders) {
 	let checkboxes = document.getElementsByName('Tag');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
 		checkboxes[i].checked = checkboxes[i].id == tag;
 		if (checkboxes[i].id == tag) global_editor.tag = checkboxes[i].value;
 	}
+
+	//FIXME
+	setCore(tag);
 
 	/*checkboxes = document.getElementsByName('Using');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
@@ -189,6 +223,9 @@ function toggleTag(source) {
 	}
 
 	global_editor.tag = source.value;
+
+	//FIXME
+	setCore(source.value);
 }
 
 function toggleUsing(source) {

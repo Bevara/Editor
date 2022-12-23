@@ -98,11 +98,19 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 		const sourceUri = vscode.Uri.parse(data.uri);
 		const sourceName = Utils.basename(sourceUri);
 		zip.file(sourceName.toString(), data.source);
-		const accessors = data.with
-			.split(';');
 
-		accessors.push(data.core);
+		for (const decoder of data.with) {
+			zip.file(decoder.name, decoder.data);
+		}
 
+		zip.file(data.core.name, data.core.data);
+		zip.file("meta.json", 
+		JSON.stringify({
+			supported : data.supported,
+			source:sourceName.toString(),
+			core:data.core.name, 
+			decoders:data.with.map((x:any)=>x.name)
+		}));
 		return zip.generateAsync({ type: "uint8array" });
 	}
 
@@ -115,6 +123,13 @@ export class BevaraDrawDocument extends Disposable implements vscode.CustomDocum
 		if (cancellation.isCancellationRequested) {
 			return;
 		}
-		await vscode.workspace.fs.writeFile(targetResource, bevaraFile);
+
+
+		const newTargetResource = Utils.extname(targetResource) == ".bev" ?
+			targetResource :
+			vscode.Uri.parse(targetResource.toString() + ".bev");
+
+
+		await vscode.workspace.fs.writeFile(newTargetResource, bevaraFile);
 	}
 }
