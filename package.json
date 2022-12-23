@@ -65,7 +65,14 @@
 					},
 					{
 						"filenamePattern": "*.wma"
-					},
+					}
+				],
+				"priority": "default"
+			},
+			{
+				"viewType": "bevara.preserved",
+				"displayName": "Open preserved file with Bevara",
+				"selector": [
 					{
 						"filenamePattern": "*.bev"
 					}

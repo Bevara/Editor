@@ -125,11 +125,21 @@ export class UnpreservedDocument extends Disposable implements vscode.CustomDocu
 		}
 
 
-		const newTargetResource = Utils.extname(targetResource) == ".bev" ?
-			targetResource :
+		const newTargetResource = 
 			vscode.Uri.parse(targetResource.toString() + ".bev");
 
 
+		await vscode.workspace.fs.writeFile(newTargetResource, bevaraFile);
+	}
+
+	/**
+	 * Called by VS Code when the user saves the document to a new location.
+	 */
+	async preserve(): Promise<void> {
+		const bevaraData = await this._delegate.getFileData();
+		const bevaraFile = await this.packageData(bevaraData);
+
+		const newTargetResource = vscode.Uri.parse(this.uri.toString() + ".bev");
 		await vscode.workspace.fs.writeFile(newTargetResource, bevaraFile);
 	}
 }

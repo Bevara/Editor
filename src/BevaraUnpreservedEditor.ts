@@ -4,7 +4,7 @@ import { disposeAll } from './dispose';
 import { getNonce } from './util';
 import { WebviewCollection } from './webviewCollection';
 
-export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
+export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
 	public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
@@ -33,15 +33,15 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Unp
 				return;
 			}
 
-			const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, `new-${BevaraDrawEditorProvider.newBevaraDrawFileId++}.bev`)
+			const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, `new-${BevaraUnpreservedEditorProvider.newBevaraDrawFileId++}.bev`)
 				.with({ scheme: 'untitled' });
 
-			vscode.commands.executeCommand('vscode.openWith', uri, BevaraDrawEditorProvider.viewType);
+			vscode.commands.executeCommand('vscode.openWith', uri, BevaraUnpreservedEditorProvider.viewType);
 		});
 
 		return vscode.window.registerCustomEditorProvider(
-			BevaraDrawEditorProvider.viewType,
-			new BevaraDrawEditorProvider(context),
+			BevaraUnpreservedEditorProvider.viewType,
+			new BevaraUnpreservedEditorProvider(context),
 			{
 				// For this demo extension, we enable `retainContextWhenHidden` which keeps the
 				// webview alive even when it is not visible. You should avoid using this setting
@@ -151,6 +151,8 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Unp
 						value: document.documentData
 					});
 				}
+			} else if (e.type === 'save') {
+				document.preserve();
 			}
 		});
 	}
@@ -217,9 +219,9 @@ export class BevaraDrawEditorProvider implements vscode.CustomEditorProvider<Unp
 			</tr>
 			<tr>
 			<td>
-			with
+			decoders
 			<input type="checkbox" onClick="toggleAllWith(this)" id="allWith" />
-    <label for="allWith" class="md-chip md-chip-clickable md-chip-hover"> Enable_all</label>
+    <label for="allWith" class="md-chip md-chip-clickable md-chip-hover"> All</label>
 			</td>
 			<td>
 			<div class="md-chips with-buttons"> </div>

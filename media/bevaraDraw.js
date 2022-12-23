@@ -97,6 +97,10 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
 		}
+
+		async preserve(){
+			vscode.postMessage({ type: 'save' });
+		}
 	}
 
 	const editor = new BevaraDrawEditor(
@@ -134,6 +138,10 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 	global_editor = editor;
 }());
+
+function preserveFile(){
+	global_editor.preserve();
+}
 
 let accessors = null;
 
