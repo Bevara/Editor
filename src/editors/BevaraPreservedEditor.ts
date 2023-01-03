@@ -1,11 +1,18 @@
 import * as vscode from 'vscode';
 import { PreservedDocument } from '../documents/PreservedDocument';
+import { WebviewCollection } from '../webviewCollection';
 
 export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvider<PreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<PreservedDocument>>();
 	public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
 	private static readonly viewType = 'bevara.preserved';
+
+	/**
+	 * Tracks all known webviews
+	 */
+	private readonly webviews = new WebviewCollection();
+
 
 	constructor(
 		private readonly _context: vscode.ExtensionContext
@@ -32,7 +39,34 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 		return document;
 	}
 	resolveCustomEditor(document: PreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): void | Thenable<void> {
-		throw new Error('Method not implemented.');
+		// Add the webview to our internal set of active webviews
+		this.webviews.add(document.uri, webviewPanel);
+
+		// Setup initial content for the webview
+		webviewPanel.webview.options = {
+			enableScripts: true,
+		};
+
+		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+	}
+
+	/**
+	 * Get the static HTML used for in our editor's webviews.
+	 */
+	private getHtmlForWebview(webview: vscode.Webview): string {
+		const universalImg: vscode.Uri | string = "http://bevara.ddns.net/accessors/universal-img.js";
+
+		return /* html */`
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<title>Bevara editor</title>
+			</head>
+			<body>
+			</body>
+			<script src="${universalImg}"></script>
+			</html>`;
 	}
 
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
