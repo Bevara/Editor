@@ -33,7 +33,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				return;
 			}
 
-			const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, `new-${BevaraUnpreservedEditorProvider.newBevaraDrawFileId++}.bev`)
+			const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, `new-${BevaraUnpreservedEditorProvider.newBevaraDrawFileId++}.bvr`)
 				.with({ scheme: 'untitled' });
 
 			vscode.commands.executeCommand('vscode.openWith', uri, BevaraUnpreservedEditorProvider.viewType);

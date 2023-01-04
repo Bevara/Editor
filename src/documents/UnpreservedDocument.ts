@@ -126,7 +126,7 @@ export class UnpreservedDocument extends Disposable implements vscode.CustomDocu
 
 
 		const newTargetResource = 
-			vscode.Uri.parse(targetResource.toString() + ".bev");
+			vscode.Uri.parse(targetResource.toString() + ".bvr");
 
 
 		await vscode.workspace.fs.writeFile(newTargetResource, bevaraFile);
@@ -139,7 +139,7 @@ export class UnpreservedDocument extends Disposable implements vscode.CustomDocu
 		const bevaraData = await this._delegate.getFileData();
 		const bevaraFile = await this.packageData(bevaraData);
 
-		const newTargetResource = vscode.Uri.parse(this.uri.toString() + ".bev");
+		const newTargetResource = vscode.Uri.parse(this.uri.toString() + ".bvr");
 		await vscode.workspace.fs.writeFile(newTargetResource, bevaraFile);
 	}
 }
