@@ -14,12 +14,12 @@
 					this._tag = 'img is=universal-img'
 					break;
 				case 'audio':
-					this._tag = 'audio is=universal-audio'
+					this._tag = 'audio is=universal-audio controls'
 					break;
 				case 'video':
 					this._tag = 'video is=universal-video'
 					break;
-				case 'video':
+				case 'canvas':
 					this._tag = 'canvas is=universal-canvas'
 					break;
 			}
@@ -30,6 +30,12 @@
 			this._preview.innerHTML = `<${this._tag} src="${this._url}"">`;
 		}
 
+		get tag() {
+			return {
+				preview: `<${this._tag} src="${this._url}" with="${this._decoders}" printerr="#output" controls connections>`,
+				text: `<${this._tag} src="${this._uri}" with="${this._decoders}">`,
+			};
+		}
 	}
 
 	const viewer = new BevaraViewer(

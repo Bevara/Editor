@@ -161,7 +161,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	 * Get the static HTML used for in our editor's webviews.
 	 */
 	private getHtmlForWebview(webview: vscode.Webview): string {
-		const isDev = false;
+		const isDev = true;
 
 		// Local path to script for the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(

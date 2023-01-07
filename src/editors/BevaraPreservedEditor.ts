@@ -97,7 +97,10 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 			<body>
 			<section>
 			<h1>Bevara viewer</h1>
+			<h2>Preview:</h2>
 			<div class="drawing-preview"></div>
+			<h2>Tag:</h2>
+			<textarea id="htmlTag" rows="8" readonly></textarea>
 			</section>
 			</body>
 			<script src="${universalImg}"></script>
