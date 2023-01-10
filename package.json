@@ -65,6 +65,27 @@
 					},
 					{
 						"filenamePattern": "*.wma"
+					},
+					{
+						"filenamePattern": "*.aiff"
+					},
+					{
+						"filenamePattern": "*.mp4"
+					},
+					{
+						"filenamePattern": "*.pbm"
+					},
+					{
+						"filenamePattern": "*.pnm"
+					},
+					{
+						"filenamePattern": "*.pgm"
+					},
+					{
+						"filenamePattern": "*.ppm"
+					},
+					{
+						"filenamePattern": "*.rgb"
 					}
 				],
 				"priority": "default"
