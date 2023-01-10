@@ -107,6 +107,12 @@
 					},
 					{
 						"filenamePattern": "*.xv"
+					},
+					{
+						"filenamePattern": "*.mp4"
+					},
+					{
+						"filenamePattern": "*.mpg"
 					}
 				],
 				"priority": "default"
