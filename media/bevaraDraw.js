@@ -48,9 +48,18 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		get tag() {
+			let preview = `<${this._tag} src="${this._url}" printerr="#output" controls connections`;
+			let text = `<${this._tag} src="${this._uri}"`;
+			if (this._decoders){
+				preview += ` with="${this._decoders}"`;
+				text += ` with="${this._decoders}"`;
+			}
+			preview += `>`;
+			text += `>`;
+
 			return {
-				preview: `<${this._tag} src="${this._url}" with="${this._decoders}" printerr="#output" controls connections>`,
-				text: `<${this._tag} src="${this._uri}" with="${this._decoders}">`,
+				preview: preview,
+				text: text,
 			};
 		}
 
