@@ -48,7 +48,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		get tag() {
-			let preview = `<${this._tag} src="${this._url}" printerr="#output" controls connections`;
+			let preview = `<${this._tag} src="${this._url}" print="#output" printerr="#output" controls connections`;
 			let text = `<${this._tag} src="${this._uri}"`;
 			if (this._decoders){
 				preview += ` with="${this._decoders}"`;
