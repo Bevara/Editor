@@ -86,6 +86,27 @@
 					},
 					{
 						"filenamePattern": "*.rgb"
+					},
+					{
+						"filenamePattern": "*.dng"
+					},
+					{
+						"filenamePattern": "*.pcx"
+					},
+					{
+						"filenamePattern": "*.heif"
+					},
+					{
+						"filenamePattern": "*.tga"
+					},
+					{
+						"filenamePattern": "*.xcf"
+					},
+					{
+						"filenamePattern": "*.xpm"
+					},
+					{
+						"filenamePattern": "*.xv"
 					}
 				],
 				"priority": "default"
