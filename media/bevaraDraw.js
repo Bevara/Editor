@@ -33,7 +33,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 			const response = await fetch(server_url + 'recommended.json')
 			const recommended = await response.json();
-			const ext = uri.split('.').pop();
+			const ext = uri.split('.').pop()?.toLowerCase();
 			this._mime = recommended.mimeTypes[ext];
 			this._decoders = recommended.with[ext];
 			this._uri = uri;
