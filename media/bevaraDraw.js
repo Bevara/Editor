@@ -36,6 +36,14 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			const ext = uri.split('.').pop()?.toLowerCase();
 			this._mime = recommended.mimeTypes[ext];
 			this._decoders = recommended.with[ext];
+			console.log("test");
+			if (!this._decoders){
+				const fallback = await fetch(server_url + 'filter_list.json');
+				const fallback_json = await fallback.json();
+				this._decoders = fallback_json["with"].join(";");
+			}
+
+			
 			this._uri = uri;
 			this._data = data;
 
