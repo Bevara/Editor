@@ -52,7 +52,13 @@
 						"filenamePattern": "*.3fr"
 					},
 					{
+						"filenamePattern": "*.aac"
+					},
+					{
 						"filenamePattern": "*.ac3"
+					},
+					{
+						"filenamePattern": "*.ogg"
 					},
 					{
 						"filenamePattern": "*.amr"
@@ -119,6 +125,9 @@
 					},
 					{
 						"filenamePattern": "*.avi"
+					},
+					{
+						"filenamePattern": "*.ogv"
 					}
 				],
 				"priority": "default"
