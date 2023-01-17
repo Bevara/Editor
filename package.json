@@ -37,6 +37,9 @@
 						"filenamePattern": "*.jp2"
 					},
 					{
+						"filenamePattern": "*.j2k"
+					},
+					{
 						"filenamePattern": "*.jxl"
 					},
 					{
@@ -113,6 +116,9 @@
 					},
 					{
 						"filenamePattern": "*.mpg"
+					},
+					{
+						"filenamePattern": "*.avi"
 					}
 				],
 				"priority": "default"

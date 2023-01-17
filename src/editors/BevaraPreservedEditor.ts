@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { PreservedDocument } from '../documents/PreservedDocument';
 import { WebviewCollection } from '../webviewCollection';
-import { getNonce } from '../util';
+import { getNonce, isDev } from '../util';
 
 export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvider<PreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<PreservedDocument>>();
@@ -69,8 +69,6 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 	 * Get the static HTML used for in our editor's webviews.
 	 */
 	private getHtmlForWebview(webview: vscode.Webview): string {
-		const isDev = true;
-
 		// Local path to script for the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this._context.extensionUri, 'media', 'preserved.js'));

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { UnpreservedDocument } from "../documents/UnpreservedDocument";
 import { disposeAll } from '../dispose';
-import { getNonce } from '../util';
+import { getNonce, isDev } from '../util';
 import { WebviewCollection } from '../webviewCollection';
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -161,8 +161,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	 * Get the static HTML used for in our editor's webviews.
 	 */
 	private getHtmlForWebview(webview: vscode.Webview): string {
-		const isDev = true;
-
 		// Local path to script for the webview
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this._context.extensionUri, 'media', 'bevaraDraw.js'));

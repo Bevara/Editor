@@ -6,3 +6,5 @@ export function getNonce() {
 	}
 	return text;
 }
+
+export const isDev = false;
