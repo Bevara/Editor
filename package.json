@@ -79,6 +79,15 @@
 						"filenamePattern": "*.aiff"
 					},
 					{
+						"filenamePattern": "*.aif"
+					},
+					{
+						"filenamePattern": "*.aifc"
+					},
+					{
+						"filenamePattern": "*.snd"
+					},
+					{
 						"filenamePattern": "*.mp4"
 					},
 					{
@@ -101,6 +110,9 @@
 					},
 					{
 						"filenamePattern": "*.pcx"
+					},
+					{
+						"filenamePattern": "*.cdr"
 					},
 					{
 						"filenamePattern": "*.heif"
