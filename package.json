@@ -43,6 +43,9 @@
 						"filenamePattern": "*.jxl"
 					},
 					{
+						"filenamePattern": "*.svg"
+					},
+					{
 						"filenamePattern": "*.tif"
 					},
 					{
@@ -89,6 +92,9 @@
 					},
 					{
 						"filenamePattern": "*.mp4"
+					},
+					{
+						"filenamePattern": "*.wma"
 					},
 					{
 						"filenamePattern": "*.pbm"
