@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { PreservedDocument } from '../documents/PreservedDocument';
 import { WebviewCollection } from '../webviewCollection';
-import { getNonce, isDev } from '../util';
+import { getNonce, isDev, accessor_version } from '../util';
 
 export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvider<PreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<PreservedDocument>>();
@@ -57,6 +57,7 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			if (e.type === 'ready') {
 				this.postMessage(webviewPanel, 'init', {
+					uri: document.uri,
 					value: document.documentData,
 					supported:document.supported
 				});
@@ -78,8 +79,12 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 			this._context.extensionUri, 'media', 'bevaraDraw.css'));
 
 		const universalImg: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors/universal-img.js";
-
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js";
+			const universalAudio: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+				this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js";
+			const universalVideo: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+				this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js";
+			
 
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
@@ -102,6 +107,8 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 			</section>
 			</body>
 			<script src="${universalImg}"></script>
+			<script src="${universalAudio}"></script>
+			<script src="${universalVideo}"></script>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 			</html>`;
 	}

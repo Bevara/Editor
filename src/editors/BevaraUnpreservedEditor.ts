@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { UnpreservedDocument } from "../documents/UnpreservedDocument";
 import { disposeAll } from '../dispose';
-import { getNonce, isDev } from '../util';
+import { getNonce, isDev, accessor_version } from '../util';
 import { WebviewCollection } from '../webviewCollection';
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -170,12 +170,20 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			this._context.extensionUri, 'media', 'bevaraDraw.css'));
 
 		const universalImg: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors/universal-img.js";
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js";
+		const universalAudio: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js";
+		const universalVideo: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js";
+		const universalCanvas: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-canvas.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-canvas.js";
+
+		const artplayer: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
+				this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/artplayer.js";
 
 
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
-
 
 		return /* html */`
 			<!DOCTYPE html>
@@ -205,6 +213,11 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			<textarea id="htmlTag" rows="8" readonly></textarea>
 			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
 
+			<div id="with_artplayer" hidden>
+			<input type="checkbox" onClick="toggleArtPlayer(this)" id="WithPlayer" />
+    		<label for="WithPlayer" class="md-chip md-chip-clickable md-chip-hover"> With ArtPlayer</label>
+			</div>
+
 			<table>
 			<tr>
 			<tr>
@@ -215,7 +228,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			<div class="md-chips tag-buttons"> </div>
 			</td>
 			</tr>
-			<tr>
+			<tr id="decoder_list">
 			<td>
 			decoders
 			<input type="checkbox" onClick="toggleAllWith(this)" id="allWith" />
@@ -229,6 +242,10 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			</section>
 			</body>
 			<script src="${universalImg}"></script>
+			<script src="${universalAudio}"></script>
+			<script src="${universalVideo}"></script>
+			<script src="${universalCanvas}"></script>
+			<script src="${artplayer}"></script>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 			</html>`;
 	}

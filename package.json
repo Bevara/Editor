@@ -1,7 +1,7 @@
 {
 	"name": "bevara-code-editor",
-	"description": "This is a helper plugins for designing and debugging bevara decoders.",
-	"version": "0.0.2",
+	"description": "This is a helper plugins for designing and debugging web assembly decoders.",
+	"version": "0.0.3",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/editor-vscode",
 	"icon": "images/logo.png",
@@ -47,6 +47,12 @@
 					},
 					{
 						"filenamePattern": "*.tif"
+					},
+					{
+						"filenamePattern": "*.xps"
+					},
+					{
+						"filenamePattern": "*.dxf"
 					},
 					{
 						"filenamePattern": "*.cr2"

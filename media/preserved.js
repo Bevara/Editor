@@ -4,11 +4,13 @@
 	const vscode = acquireVsCodeApi();
 
 	class BevaraViewer {
-		constructor(/** @type {HTMLElement} */ preview) {
+		constructor(/** @type {HTMLElement} */ preview,
+		/** @type {HTMLElement} */ fragment) {
 			this._preview = preview;
+			this._fragment = fragment;
 		}
 
-		setData(supported, data) {
+		setData(uri, supported, data) {
 			switch (supported){
 				case 'image':
 					this._tag = 'img is=universal-img'
@@ -27,7 +29,8 @@
 			const blob = new Blob([data], { 'type': 'application/x-bevara' });
 			this._url = URL.createObjectURL(blob);
 
-			this._preview.innerHTML = `<${this._tag} src="${this._url}"">`;
+			this._preview.innerHTML = `<${this._tag} src="${this._url}">`;
+			this._fragment.value = `<${this._tag} src="${uri}">`;
 		}
 
 		get tag() {
@@ -39,7 +42,8 @@
 	}
 
 	const viewer = new BevaraViewer(
-		document.querySelector('.drawing-preview')
+		document.querySelector('.drawing-preview'),
+		document.querySelector('#htmlTag')
 	);
 
 	// Handle messages from the extension
@@ -48,7 +52,7 @@
 		switch (type) {
 			case 'init':
 				{
-					viewer.setData(body.supported, body.value);
+					viewer.setData(body.uri.path, body.supported, body.value);
 					return;
 				}
 		}

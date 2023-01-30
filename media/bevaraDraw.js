@@ -15,7 +15,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._preview = preview;
 			this._fragment = fragment;
 			this._untitled = untitled;
-			this._supported="";
+			this._supported = "";
 			this._tag = "";
 			this._mime = "";
 			this._core = "";
@@ -23,6 +23,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._url = "";
 			this._uri = "";
 			this._data = null;
+			this.script = false;
 		}
 
 		initUntitled() {
@@ -36,13 +37,13 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			const ext = uri.split('.').pop()?.toLowerCase();
 			this._mime = recommended.mimeTypes[ext];
 			this._decoders = recommended.with[ext];
-			if (!this._decoders){
+			if (!this._decoders) {
 				const fallback = await fetch(server_url + 'filter_list.json');
 				const fallback_json = await fallback.json();
 				this._decoders = fallback_json["with"].join(";");
 			}
 
-			
+
 			this._uri = uri;
 			this._data = data;
 
@@ -57,12 +58,32 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		get tag() {
 			let preview = `<${this._tag} src="${this._url}" print="#output" printerr="#output" controls connections`;
 			let text = `<${this._tag} src="${this._uri}"`;
-			if (this._decoders){
+			if (this._decoders) {
 				preview += ` with="${this._decoders}"`;
 				text += ` with="${this._decoders}"`;
 			}
 			preview += `>`;
 			text += `>`;
+
+			if (this.script) {
+
+				preview = `<div class="artplayer-app">
+				` + preview + `
+			</div>`
+
+
+				text = `<div class="artplayer-app">
+	` + text + `
+</div>
+<script src="artplayer.js"></script>
+<script>
+	var art = new Artplayer({
+		container: '.artplayer-app',
+	});
+
+</script>`;
+			}
+
 
 			return {
 				preview: preview,
@@ -87,7 +108,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 				.map(x => getWasm(x)));
 			const core = await getWasm(this._core);
 
-			return { supported:this._supported, uri: this._uri, source: this._data, core: core, with: decoders};
+			return { supported: this._supported, uri: this._uri, source: this._data, core: core, with: decoders };
 		}
 
 		set tag(tag) {
@@ -112,9 +133,15 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		async updateTag() {
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
+
+			if (this.script) {
+				var art = new Artplayer({
+					container: '.artplayer-app',
+				});
+			}
 		}
 
-		async preserve(){
+		async preserve() {
 			vscode.postMessage({ type: 'save' });
 		}
 	}
@@ -155,7 +182,14 @@ const server_url = "http://bevara.ddns.net/accessors/";
 	global_editor = editor;
 }());
 
-function preserveFile(){
+const tags = {
+	"image": "img is='universal-img' using='core-img.wasm' ",
+	"audio": "audio is='universal-audio' using='core-audio.wasm' ",
+	"video": "video is='universal-video' using='core-video.wasm' ",
+	"canvas": "canvas is='universal-canvas' id='canvas'"
+}
+
+function preserveFile() {
 	global_editor.preserve();
 }
 
@@ -172,8 +206,8 @@ function initButtons(data) {
 	const tag_buttons = document.querySelector('.tag-buttons');
 
 	let tag_button = "";
-	for (let tag in data.tag) {
-		tag_button += `<input type="checkbox" onClick="toggleTag(this)" name="Tag" value="${data.tag[tag]}" id="${tag}"> 
+	for (let tag in tags) {
+		tag_button += `<input type="checkbox" onClick="toggleTag(this)" name="Tag" value="${tags[tag]}" id="${tag}"> 
 		<label for="${tag}" class="md-chip md-chip-clickable md-chip-hover">${tag}</label>`;
 	}
 	tag_buttons.innerHTML = tag_button;
@@ -210,9 +244,6 @@ function setCore(tag) {
 		case 'video':
 			global_editor.core = "core-video.wasm";
 			break;
-		case 'canvas':
-			global_editor.core = "core-canvas.wasm";
-			break;
 	}
 }
 
@@ -246,10 +277,35 @@ function toggleTag(source) {
 		tags[i].checked = tags[i] == source;
 	}
 
+	const decoder_list = document.getElementById("decoder_list");
+	const with_artplayer = document.getElementById("with_artplayer");
+
+	global_editor.script = false;
+
+	if (source.id == "canvas") {
+		decoder_list.hidden = true;
+		with_artplayer.hidden = false;
+		global_editor.decoders = null;
+	} else {
+		with_artplayer.hidden = true;
+		decoder_list.hidden = false;
+	}
+
+
 	global_editor.tag = source.value;
 
 	//FIXME
 	setCore(source.value);
+}
+
+function toggleArtPlayer(source) {
+	global_editor.script = source.checked;
+
+	if (source.checked) {
+		global_editor.tag = tags["canvas"] + " class='art-video'";
+	} else {
+		global_editor.tag = tags["canvas"];
+	}
 }
 
 function toggleUsing(source) {
@@ -271,6 +327,8 @@ function toggleWith(source) {
 
 	global_editor.decoders = allWith.join(';');
 }
+
+
 
 function toggleAllWith(source) {
 	checkboxes = document.getElementsByName('With');
