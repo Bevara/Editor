@@ -7,6 +7,6 @@ export function getNonce() {
 	return text;
 }
 
-export const isDev = true;
+export const isDev = false;
 
-export const accessor_version = 137;
+export const accessor_version = 142;

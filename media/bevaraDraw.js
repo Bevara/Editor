@@ -22,15 +22,17 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._decoders = "";
 			this._url = "";
 			this._uri = "";
+			this._scripts = {};
 			this._data = null;
-			this.script = false;
+			this.artplayer = false;
+			this.kind = "";
 		}
 
 		initUntitled() {
 			this._untitled.style.display = "block";
 		}
 
-		async setData(uri, data) {
+		async setData(uri, data, scripts) {
 
 			const response = await fetch(server_url + 'recommended.json')
 			const recommended = await response.json();
@@ -46,6 +48,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 			this._uri = uri;
 			this._data = data;
+			this._scripts = scripts;
 
 			const blob = new Blob([data], { 'type': this._mime });
 			this._url = URL.createObjectURL(blob);
@@ -62,27 +65,9 @@ const server_url = "http://bevara.ddns.net/accessors/";
 				preview += ` with="${this._decoders}"`;
 				text += ` with="${this._decoders}"`;
 			}
+			
 			preview += `>`;
 			text += `>`;
-
-			if (this.script) {
-
-				preview = `<div class="artplayer-app">
-				` + preview + `
-			</div>`
-
-
-				text = `<div class="artplayer-app">
-	` + text + `
-</div>
-<script src="artplayer.js"></script>
-<script>
-	var art = new Artplayer({
-		container: '.artplayer-app',
-	});
-
-</script>`;
-			}
 
 
 			return {
@@ -113,7 +98,6 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 		set tag(tag) {
 			this._tag = tag;
-			this.updateTag();
 		}
 
 		set supported(tag) {
@@ -122,23 +106,53 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 		set core(core) {
 			this._core = core;
-			this.updateTag();
 		}
 
 		set decoders(decoders) {
 			this._decoders = decoders;
-			this.updateTag();
 		}
 
 		async updateTag() {
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
-
-			if (this.script) {
-				var art = new Artplayer({
-					container: '.artplayer-app',
-				});
+			
+			if (this.kind == "canvas"){
+				this._preview.innerHTML += "</canvas>";
+				this._fragment.value += "</canvas>";
 			}
+
+			if (this.artplayer){
+
+				this._fragment.value = '<div class="artplayer-app" style="width:400px;height:300px">'+ this._fragment.value + '</div>';
+				this._preview.innerHTML = '<div class="artplayer-app" style="width:400px;height:300px">' + this._preview.innerHTML + '</div>';
+				
+				var artplayer_script = document.createElement('script');
+				artplayer_script.setAttribute('src',this._scripts["artplayer"]);
+				artplayer_script.addEventListener('load', ()=>{
+					var art = new Artplayer({
+						container: '.artplayer-app',
+					});
+				});
+				
+				this._preview.appendChild(artplayer_script);		
+
+				this._fragment.value += `
+<script src="artplayer.js"></script>
+<script>
+	var art = new Artplayer({
+		container: '.artplayer-app',
+	});
+
+</script>`;
+		
+			}
+
+
+				var universal_script = document.createElement('script');
+				universal_script.setAttribute('src',this._scripts[this.kind]);
+				this._preview.appendChild(universal_script);
+
+			this._fragment.value += `<script src="${this._scripts[this.kind]}"></script>`;
 		}
 
 		async preserve() {
@@ -161,7 +175,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 					if (body.untitled) {
 						editor.initUntitled();
 					} else {
-						await editor.setData(body.uri.path, body.value);
+						await editor.setData(body.uri.path, body.value, body.scripts);
 					}
 
 					return;
@@ -186,7 +200,8 @@ const tags = {
 	"image": "img is='universal-img' using='core-img.wasm' ",
 	"audio": "audio is='universal-audio' using='core-audio.wasm' ",
 	"video": "video is='universal-video' using='core-video.wasm' ",
-	"canvas": "canvas is='universal-canvas' id='canvas'"
+	"canvas": "canvas is='universal-canvas' id='canvas'",
+	"canvas with artplayer": "canvas is='universal-canvas' id='canvas' class='art-video' oncontextmenu='event.preventDefault()'"
 }
 
 function preserveFile() {
@@ -227,6 +242,7 @@ function initButtons(data) {
 		<label for="${with_wasm}" class="md-chip md-chip-clickable md-chip-hover">${with_wasm.split('.')[0]}</label>`;
 	}
 	with_buttons.innerHTML = with_button;
+	global_editor.updateTag();
 }
 
 function setCore(tag) {
@@ -251,7 +267,10 @@ function updateButtons(tag, decoders) {
 	let checkboxes = document.getElementsByName('Tag');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
 		checkboxes[i].checked = checkboxes[i].id == tag;
-		if (checkboxes[i].id == tag) global_editor.tag = checkboxes[i].value;
+		if (checkboxes[i].id == tag){
+			global_editor.kind = tag;
+			global_editor.tag = checkboxes[i].value;
+		}
 	}
 
 	//FIXME
@@ -278,34 +297,29 @@ function toggleTag(source) {
 	}
 
 	const decoder_list = document.getElementById("decoder_list");
-	const with_artplayer = document.getElementById("with_artplayer");
 
-	global_editor.script = false;
+	global_editor.artplayer = false;
 
 	if (source.id == "canvas") {
 		decoder_list.hidden = true;
-		with_artplayer.hidden = false;
 		global_editor.decoders = null;
-	} else {
-		with_artplayer.hidden = true;
+		global_editor.kind = source.id;
+	}else if (source.id == "canvas with artplayer") {
+		decoder_list.hidden = true;
+		global_editor.decoders = null;
+		global_editor.decoders = null;
+		global_editor.artplayer = true;
+		global_editor.kind = "canvas";
+	}else{
 		decoder_list.hidden = false;
+		global_editor.kind = source.id;
 	}
-
 
 	global_editor.tag = source.value;
 
 	//FIXME
 	setCore(source.value);
-}
-
-function toggleArtPlayer(source) {
-	global_editor.script = source.checked;
-
-	if (source.checked) {
-		global_editor.tag = tags["canvas"] + " class='art-video'";
-	} else {
-		global_editor.tag = tags["canvas"];
-	}
+	global_editor.updateTag();
 }
 
 function toggleUsing(source) {
@@ -315,6 +329,7 @@ function toggleUsing(source) {
 	}
 
 	global_editor.using = source.id;
+	global_editor.updateTag();
 }
 
 function toggleWith(source) {
@@ -326,6 +341,7 @@ function toggleWith(source) {
 	}
 
 	global_editor.decoders = allWith.join(';');
+	global_editor.updateTag();
 }
 
 

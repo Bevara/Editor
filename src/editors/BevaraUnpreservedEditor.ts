@@ -148,7 +148,20 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				} else {
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
-						value: document.documentData
+						value: document.documentData,
+						scripts : {
+							"image" : isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js",
+							"audio":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js",
+							"video":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+									this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js",
+							"canvas":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-canvas.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-canvas.js",
+							"artplayer":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/artplayer.js"
+						}
+							
 					});
 				}
 			} else if (e.type === 'save') {
@@ -168,19 +181,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this._context.extensionUri, 'media', 'bevaraDraw.css'));
-
-		const universalImg: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js";
-		const universalAudio: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js";
-		const universalVideo: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js";
-		const universalCanvas: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-canvas.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-canvas.js";
-
-		const artplayer: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-				this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/artplayer.js";
-
 
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
@@ -213,11 +213,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			<textarea id="htmlTag" rows="8" readonly></textarea>
 			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
 
-			<div id="with_artplayer" hidden>
-			<input type="checkbox" onClick="toggleArtPlayer(this)" id="WithPlayer" />
-    		<label for="WithPlayer" class="md-chip md-chip-clickable md-chip-hover"> With ArtPlayer</label>
-			</div>
-
 			<table>
 			<tr>
 			<tr>
@@ -241,11 +236,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			</table>
 			</section>
 			</body>
-			<script src="${universalImg}"></script>
-			<script src="${universalAudio}"></script>
-			<script src="${universalVideo}"></script>
-			<script src="${universalCanvas}"></script>
-			<script src="${artplayer}"></script>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 			</html>`;
 	}
