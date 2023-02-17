@@ -233,6 +233,15 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			<div class="md-chips with-buttons"> </div>
 			</td>
 			</tr>
+			<tr>
+			<td>
+			options
+			</td>
+			<td>
+			<input type="checkbox" onClick="toggleUseCache(this)" name="UseCache" id="useCacheButton"> 
+			<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>;
+			</td>
+			</tr>
 			</table>
 			</section>
 			</body>

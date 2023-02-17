@@ -26,6 +26,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._data = null;
 			this.artplayer = false;
 			this.kind = "";
+			this._useCache=false;
 		}
 
 		initUntitled() {
@@ -65,7 +66,12 @@ const server_url = "http://bevara.ddns.net/accessors/";
 				preview += ` with="${this._decoders}"`;
 				text += ` with="${this._decoders}"`;
 			}
-			
+
+			if (this._useCache) {
+				preview += ` use-cache`;
+				text += ` use-cache`;
+			}
+
 			preview += `>`;
 			text += `>`;
 
@@ -112,29 +118,34 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._decoders = decoders;
 		}
 
+		set useCache(useCache) {
+			this._useCache = useCache;
+			this.updateTag();
+		}
+
 		async updateTag() {
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
-			
-			if (this.kind == "canvas"){
+
+			if (this.kind == "canvas") {
 				this._preview.innerHTML += "</canvas>";
 				this._fragment.value += "</canvas>";
 			}
 
-			if (this.artplayer){
+			if (this.artplayer) {
 
-				this._fragment.value = '<div class="artplayer-app" style="width:400px;height:300px">'+ this._fragment.value + '</div>';
+				this._fragment.value = '<div class="artplayer-app" style="width:400px;height:300px">' + this._fragment.value + '</div>';
 				this._preview.innerHTML = '<div class="artplayer-app" style="width:400px;height:300px">' + this._preview.innerHTML + '</div>';
-				
+
 				var artplayer_script = document.createElement('script');
-				artplayer_script.setAttribute('src',this._scripts["artplayer"]);
-				artplayer_script.addEventListener('load', ()=>{
+				artplayer_script.setAttribute('src', this._scripts["artplayer"]);
+				artplayer_script.addEventListener('load', () => {
 					var art = new Artplayer({
 						container: '.artplayer-app',
 					});
 				});
-				
-				this._preview.appendChild(artplayer_script);		
+
+				this._preview.appendChild(artplayer_script);
 
 				this._fragment.value += `
 <script src="artplayer.js"></script>
@@ -144,15 +155,17 @@ const server_url = "http://bevara.ddns.net/accessors/";
 	});
 
 </script>`;
-		
+
 			}
 
 
+			if (this._scripts[this.kind]) {
 				var universal_script = document.createElement('script');
-				universal_script.setAttribute('src',this._scripts[this.kind]);
+				universal_script.setAttribute('src', this._scripts[this.kind]);
 				this._preview.appendChild(universal_script);
 
-			this._fragment.value += `<script src="${this._scripts[this.kind]}"></script>`;
+				this._fragment.value += `<script src="${this._scripts[this.kind]}"></script>`;
+			}
 		}
 
 		async preserve() {
@@ -267,7 +280,7 @@ function updateButtons(tag, decoders) {
 	let checkboxes = document.getElementsByName('Tag');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
 		checkboxes[i].checked = checkboxes[i].id == tag;
-		if (checkboxes[i].id == tag){
+		if (checkboxes[i].id == tag) {
 			global_editor.kind = tag;
 			global_editor.tag = checkboxes[i].value;
 		}
@@ -304,13 +317,13 @@ function toggleTag(source) {
 		decoder_list.hidden = true;
 		global_editor.decoders = null;
 		global_editor.kind = source.id;
-	}else if (source.id == "canvas with artplayer") {
+	} else if (source.id == "canvas with artplayer") {
 		decoder_list.hidden = true;
 		global_editor.decoders = null;
 		global_editor.decoders = null;
 		global_editor.artplayer = true;
 		global_editor.kind = "canvas";
-	}else{
+	} else {
 		decoder_list.hidden = false;
 		global_editor.kind = source.id;
 	}
@@ -344,7 +357,9 @@ function toggleWith(source) {
 	global_editor.updateTag();
 }
 
-
+function toggleUseCache(source){
+	global_editor.useCache = source.checked;
+}
 
 function toggleAllWith(source) {
 	checkboxes = document.getElementsByName('With');

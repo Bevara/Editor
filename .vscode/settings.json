@@ -6,6 +6,7 @@
     "*.in": "cpp",
     "jpeglib.h": "c",
     "__threading_support": "c",
-    "xvid.h": "c"
+    "xvid.h": "c",
+    "libjxl.h": "c"
   }
 }
