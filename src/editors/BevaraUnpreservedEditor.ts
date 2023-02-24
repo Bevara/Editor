@@ -239,7 +239,24 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			</td>
 			<td>
 			<input type="checkbox" onClick="toggleUseCache(this)" name="UseCache" id="useCacheButton"> 
-			<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>;
+			<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>
+			<input type="checkbox" onClick="toggleShowProgess(this)" name="ShowProgess" id="showProgessButton"> 
+			<label for="showProgessButton" class="md-chip md-chip-clickable md-chip-hover">Show progess</label>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			out
+			</td>
+			<td>
+			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="png"> 
+			<label for="png" class="md-chip md-chip-clickable md-chip-hover">png</label>
+			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="jpg"> 
+			<label for="jpg" class="md-chip md-chip-clickable md-chip-hover">jpg</label>
+			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgb"> 
+			<label for="rgb" class="md-chip md-chip-clickable md-chip-hover">rgb</label>
+			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgba"> 
+			<label for="rgba" class="md-chip md-chip-clickable md-chip-hover">rgba</label>
 			</td>
 			</tr>
 			</table>

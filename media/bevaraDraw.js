@@ -27,6 +27,8 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this.artplayer = false;
 			this.kind = "";
 			this._useCache=false;
+			this._showProgess=false;
+			this._outFormat=null;
 		}
 
 		initUntitled() {
@@ -68,8 +70,18 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			}
 
 			if (this._useCache) {
-				preview += ` use-cache`;
-				text += ` use-cache`;
+				preview += ` use-cache `;
+				text += ` use-cache `;
+			}
+
+			if (this._showProgess) {
+				preview += ` progress `;
+				text += ` progress `;
+			}
+
+			if (this._outFormat){
+				preview += ` out="${this._outFormat}" `;
+				text += `out="${this._outFormat}" `;
 			}
 
 			preview += `>`;
@@ -120,6 +132,16 @@ const server_url = "http://bevara.ddns.net/accessors/";
 
 		set useCache(useCache) {
 			this._useCache = useCache;
+			this.updateTag();
+		}
+
+		set outFormat(outFormat) {
+			this._outFormat = outFormat;
+			this.updateTag();
+		}
+
+		set showProgess(showProgess) {
+			this._showProgess = showProgess;
 			this.updateTag();
 		}
 
@@ -359,6 +381,19 @@ function toggleWith(source) {
 
 function toggleUseCache(source){
 	global_editor.useCache = source.checked;
+}
+
+function toggleShowProgess(source){
+	global_editor.showProgess = source.checked;
+}
+
+function toggleOUT(source){
+	const ouformats = document.getElementsByName('ouformat');
+	for (var i = 0, n = ouformats.length; i < n; i++) {
+		ouformats[i].checked = ouformats[i] == source;
+	}
+
+	global_editor.outFormat= source.id;
 }
 
 function toggleAllWith(source) {
