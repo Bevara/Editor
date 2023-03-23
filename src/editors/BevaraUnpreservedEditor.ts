@@ -149,6 +149,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
 						value: document.documentData,
+						scriptsDirectory:"http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/",
 						scripts : {
 							"image" : isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
 								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js",
@@ -242,6 +243,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>
 			<input type="checkbox" onClick="toggleShowProgess(this)" name="ShowProgess" id="showProgessButton"> 
 			<label for="showProgessButton" class="md-chip md-chip-clickable md-chip-hover">Show progess</label>
+			<input type="checkbox" onClick="toggleNoWorker(this)" name="NoWorker" id="NoWorkerButton"> 
+			<label for="NoWorkerButton" class="md-chip md-chip-clickable md-chip-hover">Without workers</label>
 			</td>
 			</tr>
 			<tr>

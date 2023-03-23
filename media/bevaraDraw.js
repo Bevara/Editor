@@ -23,19 +23,22 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._url = "";
 			this._uri = "";
 			this._scripts = {};
+			this._scriptsDirectory ="";
 			this._data = null;
 			this.artplayer = false;
 			this.kind = "";
 			this._useCache=false;
+			this._noWorker=false;
 			this._showProgess=false;
 			this._outFormat=null;
+			this._workerScript=null;
 		}
 
 		initUntitled() {
 			this._untitled.style.display = "block";
 		}
 
-		async setData(uri, data, scripts) {
+		async setData(uri, data, scripts, scriptsDirectory) {
 
 			const response = await fetch(server_url + 'recommended.json')
 			const recommended = await response.json();
@@ -52,6 +55,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this._uri = uri;
 			this._data = data;
 			this._scripts = scripts;
+			this._scriptsDirectory = scriptsDirectory;
 
 			const blob = new Blob([data], { 'type': this._mime });
 			this._url = URL.createObjectURL(blob);
@@ -62,8 +66,14 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		get tag() {
-			let preview = `<${this._tag} src="${this._url}" print="#output" printerr="#output" controls connections`;
-			let text = `<${this._tag} src="${this._uri}"`;
+			let preview = `<${this._tag.tag} src="${this._url}" print="#output" printerr="#output" script-directory="${this._scriptsDirectory}" controls connections `;
+			let text = `<${this._tag.tag} src="${this._uri}" script-directory="${this._scriptsDirectory}" `;
+
+			if (this._tag.using){
+				preview += ` using="${this._noWorker? this._tag.using:this._workerScript}"`;
+				text += ` using="${this._tag.using}"`;
+			}
+
 			if (this._decoders) {
 				preview += ` with="${this._decoders}"`;
 				text += ` with="${this._decoders}"`;
@@ -74,6 +84,11 @@ const server_url = "http://bevara.ddns.net/accessors/";
 				text += ` use-cache `;
 			}
 
+			if (this._noWorker) {
+				preview += ` no-worker `;
+				text += ` no-worker `;
+			}
+
 			if (this._showProgess) {
 				preview += ` progress `;
 				text += ` progress `;
@@ -82,7 +97,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			if (this._outFormat){
 				preview += ` out="${this._outFormat}" `;
 				text += `out="${this._outFormat}" `;
-			}
+			}		
 
 			preview += `>`;
 			text += `>`;
@@ -135,6 +150,11 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			this.updateTag();
 		}
 
+		set noWorker(noWorker) {
+			this._noWorker = noWorker;
+			this.updateTag();
+		}
+
 		set outFormat(outFormat) {
 			this._outFormat = outFormat;
 			this.updateTag();
@@ -146,6 +166,14 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		async updateTag() {
+			if(this._scriptsDirectory == "")return;
+
+			if(this._tag.using && !this._noWorker){
+				const response = await fetch(this._scriptsDirectory+"/"+this._tag.using+".js");
+				const blob = await response.blob();
+				this._workerScript = URL.createObjectURL(blob);
+			}
+			
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
 
@@ -210,7 +238,7 @@ const server_url = "http://bevara.ddns.net/accessors/";
 					if (body.untitled) {
 						editor.initUntitled();
 					} else {
-						await editor.setData(body.uri.path, body.value, body.scripts);
+						await editor.setData(body.uri.path, body.value, body.scripts, body.scriptsDirectory);
 					}
 
 					return;
@@ -232,11 +260,24 @@ const server_url = "http://bevara.ddns.net/accessors/";
 }());
 
 const tags = {
-	"image": "img is='universal-img' using='core-img.wasm' ",
-	"audio": "audio is='universal-audio' using='core-audio.wasm' ",
-	"video": "video is='universal-video' using='core-video.wasm' ",
-	"canvas": "canvas is='universal-canvas' id='canvas'",
-	"canvas with artplayer": "canvas is='universal-canvas' id='canvas' class='art-video' oncontextmenu='event.preventDefault()'"
+	"image": {
+		tag: "img is='universal-img'",
+		using : "core-img"
+	},
+	"audio": {
+		tag: "audio is='universal-audio'",
+		using : "core-audio"
+	},
+	"video": {
+		tag: "video is='universal-video'",
+		using: "core-video"
+	},
+	"canvas": {
+		tag:"canvas is='universal-canvas' id='canvas'"
+	},
+	"canvas with artplayer": {
+		tag: "canvas is='universal-canvas' id='canvas' class='art-video' oncontextmenu='event.preventDefault()'"
+	}
 }
 
 function preserveFile() {
@@ -257,7 +298,7 @@ function initButtons(data) {
 
 	let tag_button = "";
 	for (let tag in tags) {
-		tag_button += `<input type="checkbox" onClick="toggleTag(this)" name="Tag" value="${tags[tag]}" id="${tag}"> 
+		tag_button += `<input type="checkbox" onClick="toggleTag(this)" name="Tag" value="${tag}" id="${tag}"> 
 		<label for="${tag}" class="md-chip md-chip-clickable md-chip-hover">${tag}</label>`;
 	}
 	tag_buttons.innerHTML = tag_button;
@@ -287,13 +328,13 @@ function setCore(tag) {
 	//FIXME
 	switch (tag) {
 		case 'image':
-			global_editor.core = "core-img.wasm";
+			global_editor.core = "core-img";
 			break;
 		case 'audio':
-			global_editor.core = "core-audio.wasm";
+			global_editor.core = "core-audio";
 			break;
 		case 'video':
-			global_editor.core = "core-video.wasm";
+			global_editor.core = "core-video";
 			break;
 	}
 }
@@ -304,7 +345,7 @@ function updateButtons(tag, decoders) {
 		checkboxes[i].checked = checkboxes[i].id == tag;
 		if (checkboxes[i].id == tag) {
 			global_editor.kind = tag;
-			global_editor.tag = checkboxes[i].value;
+			global_editor.tag = tags[checkboxes[i].value];
 		}
 	}
 
@@ -382,6 +423,11 @@ function toggleWith(source) {
 function toggleUseCache(source){
 	global_editor.useCache = source.checked;
 }
+
+function toggleNoWorker(source){
+	global_editor.noWorker = source.checked;
+}
+
 
 function toggleShowProgess(source){
 	global_editor.showProgess = source.checked;

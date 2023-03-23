@@ -4,7 +4,7 @@
 	"version": "0.0.6",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/editor-vscode",
-	"icon": "images/logo.png",
+	"icon": "https://bevara.com/wp-content/uploads/2013/12/cropped-Bevara-icon-128px-on-blue1-32x32.png",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
