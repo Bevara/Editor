@@ -23,15 +23,15 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			this._url = "";
 			this._uri = "";
 			this._scripts = {};
-			this._scriptsDirectory ="";
+			this._scriptsDirectory = "";
 			this._data = null;
 			this.artplayer = false;
 			this.kind = "";
-			this._useCache=false;
-			this._noWorker=false;
-			this._showProgess=false;
-			this._outFormat=null;
-			this._workerScript=null;
+			this._useCache = false;
+			this._noWorker = false;
+			this._showProgess = false;
+			this._outFormat = null;
+			this._workerScript = null;
 		}
 
 		initUntitled() {
@@ -39,16 +39,22 @@ let server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		async setData(uri, data, scripts, scriptsDirectory) {
-			if (scriptsDirectory != ""){
+			if (scriptsDirectory != "") {
 				server_url = scriptsDirectory;
 			}
-			
+
 			const response = await fetch(server_url + 'recommended.json')
 			const recommended = await response.json();
 			const ext = uri.split('.').pop()?.toLowerCase();
 			this._mime = recommended.mimeTypes[ext];
-			this._decoders = recommended.with[ext];
-			if (!this._decoders) {
+			if (ext in recommended.using) {
+				this._core = recommended.using[ext];
+				this._decoders = null;
+			} else if (ext in recommended.with) {
+				this._core = "core";
+				this._decoders = recommended.with[ext];
+			} else {
+				this._core = "core";
 				const fallback = await fetch(server_url + 'filter_list.json');
 				const fallback_json = await fallback.json();
 				this._decoders = fallback_json["with"].join(";");
@@ -63,7 +69,7 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			const blob = new Blob([data], { 'type': this._mime });
 			this._url = URL.createObjectURL(blob);
 			if (this._mime) {
-				updateButtons(this._mime.split('/')[0], this._decoders);
+				updateButtons(this._mime.split('/')[0], this._core, this._decoders);
 				this.updateTag();
 			}
 		}
@@ -72,9 +78,9 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			let preview = `<${this._tag.tag} src="${this._url}" print="#output" printerr="#output" script-directory="${this._scriptsDirectory}" controls connections `;
 			let text = `<${this._tag.tag} src="${this._uri}" script-directory="${this._scriptsDirectory}" `;
 
-			if (this._tag.using){
-				preview += ` using="${this._noWorker? this._tag.using:this._workerScript}"`;
-				text += ` using="${this._tag.using}"`;
+			if (this._core) {
+				preview += ` using="${this._noWorker ? this._core : this._workerScript}"`;
+				text += ` using="${this._core}"`;
 			}
 
 			if (this._decoders) {
@@ -97,10 +103,10 @@ let server_url = "http://bevara.ddns.net/accessors/";
 				text += ` progress `;
 			}
 
-			if (this._outFormat){
+			if (this._outFormat) {
 				preview += ` out="${this._outFormat}" `;
 				text += `out="${this._outFormat}" `;
-			}		
+			}
 
 			preview += `>`;
 			text += `>`;
@@ -124,13 +130,13 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			}
 
 
-			const decoders = await Promise.all(this._decoders
+			const decoders = this._decoders? await Promise.all(this._decoders
 				.split(';')
-				.map(x => getWasm(x)));
-			const core = await getWasm(this._core+".wasm");
-			const js = await getWasm(this._core+".js");
+				.map(x => getWasm(x))) : [];
+			const core = await getWasm(this._core + ".wasm");
+			const js = await getWasm(this._core + ".js");
 
-			return { supported: this._supported, uri: this._uri, source: this._data, js:js, core: core, with: decoders };
+			return { supported: this._supported, uri: this._uri, source: this._data, js: js, core: core, with: decoders };
 		}
 
 		set tag(tag) {
@@ -170,14 +176,14 @@ let server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		async updateTag() {
-			if(this._scriptsDirectory == "")return;
+			if (this._scriptsDirectory == "") return;
 
-			if(this._tag.using && !this._noWorker){
-				const response = await fetch(this._scriptsDirectory+"/"+this._tag.using+".js");
+			if (this._core && !this._noWorker) {
+				const response = await fetch(this._scriptsDirectory + "/" + this._core + ".js");
 				const blob = await response.blob();
 				this._workerScript = URL.createObjectURL(blob);
 			}
-			
+
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
 
@@ -265,24 +271,23 @@ let server_url = "http://bevara.ddns.net/accessors/";
 
 const tags = {
 	"image": {
-		tag: "img is='universal-img'",
-		using : "core-img"
+		tag: "img is='universal-img'"
 	},
 	"audio": {
-		tag: "audio is='universal-audio'",
-		using : "core-audio"
+		tag: "audio is='universal-audio'"
 	},
 	"video": {
-		tag: "video is='universal-video'",
-		using: "core-video"
+		tag: "video is='universal-video'"
 	},
 	"canvas": {
-		tag:"canvas is='universal-canvas' id='canvas'"
+		tag: "canvas is='universal-canvas' id='canvas'"
 	},
 	"canvas with artplayer": {
 		tag: "canvas is='universal-canvas' id='canvas' class='art-video' oncontextmenu='event.preventDefault()'"
 	}
 }
+
+const usings = ["core", "jp2", "jxl"];
 
 function preserveFile() {
 	global_editor.preserve();
@@ -299,6 +304,7 @@ fetch(server_url + 'filter_list.json')
 function initButtons(data) {
 
 	const tag_buttons = document.querySelector('.tag-buttons');
+	const using_buttons = document.querySelector('.using-buttons');
 
 	let tag_button = "";
 	for (let tag in tags) {
@@ -306,14 +312,16 @@ function initButtons(data) {
 		<label for="${tag}" class="md-chip md-chip-clickable md-chip-hover">${tag}</label>`;
 	}
 	tag_buttons.innerHTML = tag_button;
-	/*
-		const using_buttons = document.querySelector('.using-buttons');
-		let using_button = "";
-		for (let using_wasm of data.using) {
-			using_button += `<input type="checkbox" onClick="toggleUsing(this)" name="Using" value="${using_wasm}" id="${using_wasm}"> 
-			<label for="${using_wasm}" class="md-chip md-chip-clickable md-chip-hover">${using_wasm.split('.')[0]}</label>`;
-		}
-		using_buttons.innerHTML = using_button;*/
+
+	let tag_using = "";
+	
+	for (let using of usings) {
+			tag_using += `<input type="checkbox" onClick="toggleUsing(this)" name="Using" value="${using}" id="${using}"> 
+				<label for="${using}" class="md-chip md-chip-clickable md-chip-hover">${using}</label>`;
+	}
+	
+	using_buttons.innerHTML = tag_using;
+
 
 	const with_buttons = document.querySelector('.with-buttons');
 	let with_button = "";
@@ -325,25 +333,7 @@ function initButtons(data) {
 	global_editor.updateTag();
 }
 
-function setCore(tag) {
-
-	global_editor.supported = tag;
-
-	//FIXME
-	switch (tag) {
-		case 'image':
-			global_editor.core = "core-img";
-			break;
-		case 'audio':
-			global_editor.core = "core-audio";
-			break;
-		case 'video':
-			global_editor.core = "core-video";
-			break;
-	}
-}
-
-function updateButtons(tag, decoders) {
+function updateButtons(tag, core, decoders) {
 	let checkboxes = document.getElementsByName('Tag');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
 		checkboxes[i].checked = checkboxes[i].id == tag;
@@ -353,8 +343,12 @@ function updateButtons(tag, decoders) {
 		}
 	}
 
-	//FIXME
-	setCore(tag);
+	global_editor.supported = tag;
+
+	checkboxes = document.getElementsByName('Using');
+	for (var i = 0, n = checkboxes.length; i < n; i++) {
+		checkboxes[i].checked = checkboxes[i].id == core;
+	}
 
 	/*checkboxes = document.getElementsByName('Using');
 	for (var i = 0, n = checkboxes.length; i < n; i++) {
@@ -408,7 +402,7 @@ function toggleUsing(source) {
 		usings[i].checked = usings[i] == source;
 	}
 
-	global_editor.using = source.id;
+	global_editor.core = source.id;
 	global_editor.updateTag();
 }
 
@@ -424,26 +418,26 @@ function toggleWith(source) {
 	global_editor.updateTag();
 }
 
-function toggleUseCache(source){
+function toggleUseCache(source) {
 	global_editor.useCache = source.checked;
 }
 
-function toggleNoWorker(source){
+function toggleNoWorker(source) {
 	global_editor.noWorker = source.checked;
 }
 
 
-function toggleShowProgess(source){
+function toggleShowProgess(source) {
 	global_editor.showProgess = source.checked;
 }
 
-function toggleOUT(source){
+function toggleOUT(source) {
 	const ouformats = document.getElementsByName('ouformat');
 	for (var i = 0, n = ouformats.length; i < n; i++) {
 		ouformats[i].checked = ouformats[i] == source;
 	}
 
-	global_editor.outFormat= source.id;
+	global_editor.outFormat = source.id;
 }
 
 function toggleAllWith(source) {

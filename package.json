@@ -1,7 +1,7 @@
 {
 	"name": "bevara-code-editor",
 	"description": "This is a helper plugins for designing and debugging web assembly decoders.",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/editor-vscode",
 	"icon": "https://bevara.com/wp-content/uploads/2013/12/cropped-Bevara-icon-128px-on-blue1-32x32.png",

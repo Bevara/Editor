@@ -216,12 +216,19 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 			<table>
 			<tr>
-			<tr>
 			<td>
 			tag
 			</td>
 			<td>
 			<div class="md-chips tag-buttons"> </div>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			using
+			</td>
+			<td>
+			<div class="md-chips using-buttons"> </div>
 			</td>
 			</tr>
 			<tr id="decoder_list">
@@ -249,7 +256,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			</tr>
 			<tr>
 			<td>
-			out
+			Force output
 			</td>
 			<td>
 			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="png"> 
