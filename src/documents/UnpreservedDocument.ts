@@ -104,10 +104,12 @@ export class UnpreservedDocument extends Disposable implements vscode.CustomDocu
 		}
 
 		zip.file(data.core.name, data.core.data);
+		zip.file(data.js.name, data.js.data);
 		zip.file("meta.json", 
 		JSON.stringify({
 			supported : data.supported,
 			source:sourceName.toString(),
+			js:data.js.name, 
 			core:data.core.name, 
 			decoders:data.with.map((x:any)=>x.name)
 		}));

@@ -1,5 +1,5 @@
 let global_editor = null;
-const server_url = "http://bevara.ddns.net/accessors/";
+let server_url = "http://bevara.ddns.net/accessors/";
 
 // This script is run within the webview itself
 (function () {
@@ -39,7 +39,10 @@ const server_url = "http://bevara.ddns.net/accessors/";
 		}
 
 		async setData(uri, data, scripts, scriptsDirectory) {
-
+			if (scriptsDirectory != ""){
+				server_url = scriptsDirectory;
+			}
+			
 			const response = await fetch(server_url + 'recommended.json')
 			const recommended = await response.json();
 			const ext = uri.split('.').pop()?.toLowerCase();
@@ -124,9 +127,10 @@ const server_url = "http://bevara.ddns.net/accessors/";
 			const decoders = await Promise.all(this._decoders
 				.split(';')
 				.map(x => getWasm(x)));
-			const core = await getWasm(this._core);
+			const core = await getWasm(this._core+".wasm");
+			const js = await getWasm(this._core+".js");
 
-			return { supported: this._supported, uri: this._uri, source: this._data, core: core, with: decoders };
+			return { supported: this._supported, uri: this._uri, source: this._data, js:js, core: core, with: decoders };
 		}
 
 		set tag(tag) {
