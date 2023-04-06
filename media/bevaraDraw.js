@@ -79,7 +79,8 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			let text = `<${this._tag.tag} src="${this._uri}" script-directory="${this._scriptsDirectory}" `;
 
 			if (this._core) {
-				preview += ` using="${this._noWorker ? this._core : this._workerScript}"`;
+				//preview += ` using="${this._noWorker ? this._core : this._workerScript}"`;
+				preview += ` using="${this._core}"`;
 				text += ` using="${this._core}"`;
 			}
 
@@ -178,11 +179,11 @@ let server_url = "http://bevara.ddns.net/accessors/";
 		async updateTag() {
 			if (this._scriptsDirectory == "") return;
 
-			if (this._core && !this._noWorker) {
-				const response = await fetch(this._scriptsDirectory + "/" + this._core + ".js");
-				const blob = await response.blob();
-				this._workerScript = URL.createObjectURL(blob);
-			}
+			// if (this._core && !this._noWorker) {
+			// 	const response = await fetch(this._scriptsDirectory + "/" + this._core + ".js");
+			// 	const blob = await response.blob();
+			// 	this._workerScript = URL.createObjectURL(blob);
+			// }
 
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
