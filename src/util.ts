@@ -9,4 +9,4 @@ export function getNonce() {
 
 export const isDev = false;
 
-export const accessor_version = 296;
+export const accessor_version = 302;

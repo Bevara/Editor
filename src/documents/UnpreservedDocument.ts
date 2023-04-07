@@ -100,17 +100,16 @@ export class UnpreservedDocument extends Disposable implements vscode.CustomDocu
 		zip.file(sourceName.toString(), data.source);
 
 		for (const decoder of data.with) {
-			zip.file(decoder.name, decoder.data);
+			zip.file(decoder.name+".wasm", decoder.data);
 		}
 
-		zip.file(data.core.name, data.core.data);
-		zip.file(data.js.name, data.js.data);
+		zip.file(data.core_js.name, data.core_js.data);
+		zip.file(data.core_wasm.name, data.core_wasm.data);
 		zip.file("meta.json", 
 		JSON.stringify({
 			supported : data.supported,
 			source:sourceName.toString(),
-			js:data.js.name, 
-			core:data.core.name, 
+			core:data.core, 
 			decoders:data.with.map((x:any)=>x.name)
 		}));
 		return zip.generateAsync({ type: "uint8array" });

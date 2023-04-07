@@ -51,6 +51,6 @@ export class PreservedDocument extends Disposable implements vscode.CustomDocume
 	public get uri() { return this._uri; }
 
 	public get supported(){
-		return this._meta.supported;
+		return this._meta.supported[0];
 	}
 }

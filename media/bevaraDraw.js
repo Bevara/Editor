@@ -79,7 +79,9 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			let text = `<${this._tag.tag} src="${this._uri}" script-directory="${this._scriptsDirectory}" `;
 
 			if (this._core) {
-				//preview += ` using="${this._noWorker ? this._core : this._workerScript}"`;
+				if (!this._noWorker){
+					preview += ` js="${this._workerScript}"`;
+				}
 				preview += ` using="${this._core}"`;
 				text += ` using="${this._core}"`;
 			}
@@ -134,10 +136,10 @@ let server_url = "http://bevara.ddns.net/accessors/";
 			const decoders = this._decoders? await Promise.all(this._decoders
 				.split(';')
 				.map(x => getWasm(x))) : [];
-			const core = await getWasm(this._core + ".wasm");
-			const js = await getWasm(this._core + ".js");
+			const core_wasm = await getWasm(this._core + ".wasm");
+			const core_js = await getWasm(this._core + ".js");
 
-			return { supported: this._supported, uri: this._uri, source: this._data, js: js, core: core, with: decoders };
+			return { supported: [this._supported], out:[this._outFormat], uri: this._uri, source: this._data, core:this._core, core_js: core_js, core_wasm: core_wasm, with: decoders };
 		}
 
 		set tag(tag) {
@@ -179,11 +181,11 @@ let server_url = "http://bevara.ddns.net/accessors/";
 		async updateTag() {
 			if (this._scriptsDirectory == "") return;
 
-			// if (this._core && !this._noWorker) {
-			// 	const response = await fetch(this._scriptsDirectory + "/" + this._core + ".js");
-			// 	const blob = await response.blob();
-			// 	this._workerScript = URL.createObjectURL(blob);
-			// }
+			if (this._core && !this._noWorker) {
+				const response = await fetch(this._scriptsDirectory + "/" + this._core + ".js");
+				const blob = await response.blob();
+				this._workerScript = URL.createObjectURL(blob);
+			}
 
 			this._preview.innerHTML = this.tag.preview;
 			this._fragment.value = this.tag.text;
