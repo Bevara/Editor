@@ -7,6 +7,13 @@
     "jpeglib.h": "c",
     "__threading_support": "c",
     "xvid.h": "c",
-    "libjxl.h": "c"
-  }
+    "libjxl.h": "c",
+    "filters.h": "c",
+    "tools.h": "c",
+    "setup.h": "c",
+    "path2d.h": "c",
+    "maths.h": "c"
+  },
+  "cmake.sourceDirectory": "${workspaceFolder}/player/third_parties/emsdk/upstream/emscripten/cache/ports/vorbis/Vorbis-version_1/lib",
+  "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
 }

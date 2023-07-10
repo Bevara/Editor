@@ -1,5 +1,5 @@
 let global_editor = null;
-let server_url = "http://bevara.ddns.net/accessors/";
+let server_url = "https://bevara.ddns.net/accessors/";
 
 // This script is run within the webview itself
 (function () {

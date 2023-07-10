@@ -79,11 +79,11 @@ export class BevaraPreservedEditorProvider implements vscode.CustomEditorProvide
 			this._context.extensionUri, 'media', 'bevaraDraw.css'));
 
 		const universalImg: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js";
+			this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js";
 			const universalAudio: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-				this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js";
+				this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js";
 			const universalVideo: vscode.Uri | string = isDev ? webview.asWebviewUri(vscode.Uri.joinPath(
-				this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js";
+				this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js";
 			
 
 		// Use a nonce to whitelist which scripts can be run

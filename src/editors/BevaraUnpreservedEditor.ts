@@ -149,18 +149,18 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
 						value: document.documentData,
-						scriptsDirectory:"http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/",
+						scriptsDirectory:"https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/",
 						scripts : {
 							"image" : isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js",
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js",
 							"audio":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-								this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js",
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js",
 							"video":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-									this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js",
+									this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js",
 							"canvas":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-								this._context.extensionUri, 'player', 'build', 'dist', 'universal-canvas.js')) : "http://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-canvas.js",
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-canvas.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-canvas.js",
 							"artplayer":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-								this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "http://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/artplayer.js"
+								this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/artplayer.js"
 						}
 							
 					});

@@ -1,0 +1,100 @@
+diff --git a/applications/gpac/Makefile b/applications/gpac/Makefile
+index 0bbc7e0e3..dcb23fd18 100644
+--- a/applications/gpac/Makefile
++++ b/applications/gpac/Makefile
+@@ -61,8 +61,10 @@ endif
+ #common objs - insert after ../static if any to overwrite list of objects
+ OBJS=gpac.o compositor_tools.o gpac_help.o
+ ifeq ($(CONFIG_EMSCRIPTEN),yes)
++ifeq ($(DISABLE_ISOFF),no)
+ OBJS+= ../mp4box/mp4box.o ../mp4box/filedump.o ../mp4box/fileimport.o
+ endif
++endif
+ 
+ 
+ SRCS := $(OBJS:.o=.c)
+diff --git a/configure b/configure
+index 9ce84c923..444e766de 100755
+--- a/configure
++++ b/configure
+@@ -1971,7 +1971,7 @@ fi
+ 
+ 
+ if test "$disable_player" = "yes" ; then
+-disable_compositor= $disable_player;
++disable_compositor=$disable_player;
+ fi
+ 
+ if test "$disable_compositor" = "yes" ; then
+diff --git a/modules/ft_font/ft_font.c b/modules/ft_font/ft_font.c
+index b51f3e25f..3a4d91e0f 100644
+--- a/modules/ft_font/ft_font.c
++++ b/modules/ft_font/ft_font.c
+@@ -852,7 +852,9 @@ const u32 *QueryInterfaces()
+ GPAC_MODULE_EXPORT
+ GF_BaseInterface *LoadInterface(u32 InterfaceType)
+ {
++	#if !defined(GPAC_DISABLE_EVG)
+ 	if (InterfaceType == GF_FONT_READER_INTERFACE) return (GF_BaseInterface *)ft_load();
++	#endif
+ 	return NULL;
+ }
+ 
+diff --git a/modules/sdl_out/video.c b/modules/sdl_out/video.c
+index aaf242440..385ecccf6 100644
+--- a/modules/sdl_out/video.c
++++ b/modules/sdl_out/video.c
+@@ -432,6 +432,7 @@ static void SDLVid_DestroyObjects(SDLVidCtx *ctx)
+ #include <gpac/media_tools.h>
+ void SDLVid_SetIcon(SDLVidCtx *ctx)
+ {
++	#ifdef GPAC_HAS_PNG
+ 	u8 *buffer, *dec_buf;
+ 	u32 size, w, h, pf, Bpp, dst_size=0;
+ 	const char cfg[GF_MAX_PATH];
+@@ -457,6 +458,7 @@ void SDLVid_SetIcon(SDLVidCtx *ctx)
+ 	}
+ 	gf_free(buffer);
+ 	gf_free(dec_buf);
++	#endif
+ }
+ #endif
+ 
+diff --git a/src/filters/reframe_truehd.c b/src/filters/reframe_truehd.c
+index b9c2e9cbd..7395ed825 100644
+--- a/src/filters/reframe_truehd.c
++++ b/src/filters/reframe_truehd.c
+@@ -27,6 +27,8 @@
+ #include <gpac/constants.h>
+ #include <gpac/filters.h>
+ 
++#ifndef GPAC_DISABLE_AV_PARSERS
++
+ typedef struct
+ {
+ 	u64 pos;
+@@ -812,4 +814,9 @@ const GF_FilterRegister *dynCall_truehd_register(GF_FilterSession *session)
+ {
+ 	return &TrueHDDmxRegister;
+ }
+-
++#else
++const GF_FilterRegister *dynCall_truehd_register(GF_FilterSession *session)
++{
++	return NULL;
++}
++#endif
+\ No newline at end of file
+diff --git a/src/utils/path2d.c b/src/utils/path2d.c
+index 8b11074d4..f642f5151 100644
+--- a/src/utils/path2d.c
++++ b/src/utils/path2d.c
+@@ -26,7 +26,7 @@
+ 
+ #include <gpac/path2d.h>
+ 
+-#if !defined(GPAC_DISABLE_EVG) || defined(GPAC_HAS_FREETYPE)
++#if !defined(GPAC_DISABLE_EVG) 
+ 
+ GF_EXPORT
+ GF_Path *gf_path_new()
