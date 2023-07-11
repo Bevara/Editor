@@ -189,6 +189,9 @@
         }
 	},
 	"scripts": {
+		"install:all": "npm install && cd Interface && npm install && ./configure",
+		"start:webview": "cd Interface && npm run start",
+		"build:webview": "cd Interface && npm run build",
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"lint": "eslint \"src/**/*.ts\"",

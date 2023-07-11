@@ -134,6 +134,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
+
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 		webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
 
