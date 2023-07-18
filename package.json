@@ -189,7 +189,7 @@
         }
 	},
 	"scripts": {
-		"install:all": "npm install && cd Interface && npm install && ./configure",
+		"install:all": "npm install && git submodule init && git submodule update && cd Interface && npm install && ./configure",
 		"start:webview": "cd Interface && npm run start",
 		"build:webview": "cd Interface && npm run build",
 		"vscode:prepublish": "npm run compile",

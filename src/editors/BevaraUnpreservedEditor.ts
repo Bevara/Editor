@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { UnpreservedDocument } from "../documents/UnpreservedDocument";
 import { disposeAll } from '../dispose';
-import { getNonce, isDev, accessor_version } from '../util';
+import { getNonce, isDev, accessor_version, getUri } from '../util';
 import { WebviewCollection } from '../webviewCollection';
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -150,20 +150,20 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
 						value: document.documentData,
-						scriptsDirectory:"https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/",
-						scripts : {
-							"image" : isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/universal-img.js",
-							"audio":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+						scriptsDirectory: "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/",
+						scripts: {
+							"image": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-img.js",
+							"audio": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
 								this._context.extensionUri, 'player', 'build', 'dist', 'universal-audio.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-audio.js",
-							"video":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-									this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js",
-							"canvas":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+							"video": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'universal-video.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-video.js",
+							"canvas": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
 								this._context.extensionUri, 'player', 'build', 'dist', 'universal-canvas.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-canvas.js",
-							"artplayer":isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
-								this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "https://bevara.ddns.net/accessors-build/accessors-"+accessor_version+"/artplayer.js"
+							"artplayer": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
+								this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/artplayer.js"
 						}
-							
+
 					});
 				}
 			} else if (e.type === 'save') {
@@ -172,108 +172,156 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		});
 	}
 
-	/**
-	 * Get the static HTML used for in our editor's webviews.
-	 */
+  /**
+   * Defines and returns the HTML that should be rendered within the webview panel.
+   *
+   * @remarks This is also the place where references to the Angular webview build files
+   * are created and inserted into the webview HTML.
+   *
+   * @param webview A reference to the extension webview
+   * @param extensionUri The URI of the directory containing the extension
+   * @returns A template string literal containing the HTML that should be
+   * rendered within the webview panel
+   */
 	private getHtmlForWebview(webview: vscode.Webview): string {
-		// Local path to script for the webview
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'media', 'bevaraDraw.js'));
-
-
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-			this._context.extensionUri, 'media', 'bevaraDraw.css'));
-
-		// Use a nonce to whitelist which scripts can be run
+		// The CSS file from the Angular build output
+		const stylesUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "styles.css"]);
+		// The JS files from the Angular build output
+		const runtimeUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "runtime.js"]);
+		const polyfillsUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "polyfills.js"]);
+		const scriptUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "main.js"]);
+		const scripstUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "scripts.js"]);
+	
 		const nonce = getNonce();
-
-		return /* html */`
-			<!DOCTYPE html>
-			<html lang="en">
+	
+		// Tip: Install the es6-string-html VS Code extension to enable code highlighting below
+		return /*html*/ `
+		  <!DOCTYPE html>
+		  <html lang="en">
 			<head>
-				<meta charset="UTF-8">
-				<link href="${styleMainUri}" rel="stylesheet" />
-				<title>Bevara editor</title>
+			  <meta charset="UTF-8" />
+			  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+			  <link rel="preconnect" href="https://fonts.gstatic.com">
+			  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+			  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+			  <base href="/">  
+			  <link rel="stylesheet" type="text/css" href="${stylesUri}">
+			  <title>Bevara - future-proof your data</title>
 			</head>
-			<body>
-			<section>
-    		<h1>Bevara editor</h1>
-			
-			<div style="display:none;" class="select-source">
-			<h2>Select source:</h2>
-			<input type="file" onChange="fileLoaded(this)" id="inputTag"></input>
-			</div>
-
-			<h2>Preview:</h2>
-			<div class="drawing-preview"></div>
-			<button class="md-chip md-chip-clickable md-chip-hover" onClick="preserveFile()"> Preserve </button>
-
-			<h2>Messages:</h2>
-			<textarea id="output" rows="8" readonly></textarea>
-
-			<h2>Tag:</h2>
-			<textarea id="htmlTag" rows="8" readonly></textarea>
-			<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
-
-			<table>
-			<tr>
-			<td>
-			tag
-			</td>
-			<td>
-			<div class="md-chips tag-buttons"> </div>
-			</td>
-			</tr>
-			<tr>
-			<td>
-			using
-			</td>
-			<td>
-			<div class="md-chips using-buttons"> </div>
-			</td>
-			</tr>
-			<tr id="decoder_list">
-			<td>
-			decoders
-			<input type="checkbox" onClick="toggleAllWith(this)" id="allWith" />
-    <label for="allWith" class="md-chip md-chip-clickable md-chip-hover"> All</label>
-			</td>
-			<td>
-			<div class="md-chips with-buttons"> </div>
-			</td>
-			</tr>
-			<tr>
-			<td>
-			options
-			</td>
-			<td>
-			<input type="checkbox" onClick="toggleUseCache(this)" name="UseCache" id="useCacheButton"> 
-			<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>
-			<input type="checkbox" onClick="toggleShowProgess(this)" name="ShowProgess" id="showProgessButton"> 
-			<label for="showProgessButton" class="md-chip md-chip-clickable md-chip-hover">Show progess</label>
-			<input type="checkbox" onClick="toggleNoWorker(this)" name="NoWorker" id="NoWorkerButton"> 
-			<label for="NoWorkerButton" class="md-chip md-chip-clickable md-chip-hover">Without workers</label>
-			</td>
-			</tr>
-			<tr>
-			<td>
-			Force output
-			</td>
-			<td>
-			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="png"> 
-			<label for="png" class="md-chip md-chip-clickable md-chip-hover">png</label>
-			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="jpg"> 
-			<label for="jpg" class="md-chip md-chip-clickable md-chip-hover">jpg</label>
-			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgb"> 
-			<label for="rgb" class="md-chip md-chip-clickable md-chip-hover">rgb</label>
-			<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgba"> 
-			<label for="rgba" class="md-chip md-chip-clickable md-chip-hover">rgba</label>
-			</td>
-			</tr>
-			</table>
-			</section>
+			<body class="mat-typography mat-app-background">
+			  <app-root></app-root>
+			  <script type="module" nonce="${nonce}" src="${runtimeUri}"></script>
+			  <script type="module" nonce="${nonce}" src="${polyfillsUri}"></script>
+			  <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+			  <script type="module" nonce="${nonce}" src="${scripstUri}"></script>
 			</body>
-			<script nonce="${nonce}" src="${scriptUri}"></script>
-			</html>`;
+		  </html>
+		`;
 	}
+
+
+	// /**
+	//  * Get the static HTML used for in our editor's webviews.
+	//  */
+	// private getHtmlForWebview(webview: vscode.Webview): string {
+	// 	// Local path to script for the webview
+	// 	const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
+	// 		this._context.extensionUri, 'media', 'bevaraDraw.js'));
+
+
+	// 	const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
+	// 		this._context.extensionUri, 'media', 'bevaraDraw.css'));
+
+	// 	// Use a nonce to whitelist which scripts can be run
+	// 	const nonce = getNonce();
+
+	// 	return /* html */`
+	// 		<!DOCTYPE html>
+	// 		<html lang="en">
+	// 		<head>
+	// 			<meta charset="UTF-8">
+	// 			<link href="${styleMainUri}" rel="stylesheet" />
+	// 			<title>Bevara editor</title>
+	// 		</head>
+	// 		<body>
+	// 		<section>
+	// 		<h1>Bevara editor</h1>
+
+	// 		<div style="display:none;" class="select-source">
+	// 		<h2>Select source:</h2>
+	// 		<input type="file" onChange="fileLoaded(this)" id="inputTag"></input>
+	// 		</div>
+
+	// 		<h2>Preview:</h2>
+	// 		<div class="drawing-preview"></div>
+	// 		<button class="md-chip md-chip-clickable md-chip-hover" onClick="preserveFile()"> Preserve </button>
+
+	// 		<h2>Messages:</h2>
+	// 		<textarea id="output" rows="8" readonly></textarea>
+
+	// 		<h2>Tag:</h2>
+	// 		<textarea id="htmlTag" rows="8" readonly></textarea>
+	// 		<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
+
+	// 		<table>
+	// 		<tr>
+	// 		<td>
+	// 		tag
+	// 		</td>
+	// 		<td>
+	// 		<div class="md-chips tag-buttons"> </div>
+	// 		</td>
+	// 		</tr>
+	// 		<tr>
+	// 		<td>
+	// 		using
+	// 		</td>
+	// 		<td>
+	// 		<div class="md-chips using-buttons"> </div>
+	// 		</td>
+	// 		</tr>
+	// 		<tr id="decoder_list">
+	// 		<td>
+	// 		decoders
+	// 		<input type="checkbox" onClick="toggleAllWith(this)" id="allWith" />
+	// <label for="allWith" class="md-chip md-chip-clickable md-chip-hover"> All</label>
+	// 		</td>
+	// 		<td>
+	// 		<div class="md-chips with-buttons"> </div>
+	// 		</td>
+	// 		</tr>
+	// 		<tr>
+	// 		<td>
+	// 		options
+	// 		</td>
+	// 		<td>
+	// 		<input type="checkbox" onClick="toggleUseCache(this)" name="UseCache" id="useCacheButton"> 
+	// 		<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>
+	// 		<input type="checkbox" onClick="toggleShowProgess(this)" name="ShowProgess" id="showProgessButton"> 
+	// 		<label for="showProgessButton" class="md-chip md-chip-clickable md-chip-hover">Show progess</label>
+	// 		<input type="checkbox" onClick="toggleNoWorker(this)" name="NoWorker" id="NoWorkerButton"> 
+	// 		<label for="NoWorkerButton" class="md-chip md-chip-clickable md-chip-hover">Without workers</label>
+	// 		</td>
+	// 		</tr>
+	// 		<tr>
+	// 		<td>
+	// 		Force output
+	// 		</td>
+	// 		<td>
+	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="png"> 
+	// 		<label for="png" class="md-chip md-chip-clickable md-chip-hover">png</label>
+	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="jpg"> 
+	// 		<label for="jpg" class="md-chip md-chip-clickable md-chip-hover">jpg</label>
+	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgb"> 
+	// 		<label for="rgb" class="md-chip md-chip-clickable md-chip-hover">rgb</label>
+	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgba"> 
+	// 		<label for="rgba" class="md-chip md-chip-clickable md-chip-hover">rgba</label>
+	// 		</td>
+	// 		</tr>
+	// 		</table>
+	// 		</section>
+	// 		</body>
+	// 		<script nonce="${nonce}" src="${scriptUri}"></script>
+	// 		</html>`;
+	// }
 }
