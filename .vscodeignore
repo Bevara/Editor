@@ -1,3 +1,5 @@
-player/
 src/
 .vscode/
+Interface/*
+Interface/*/
+!Interface/build/
