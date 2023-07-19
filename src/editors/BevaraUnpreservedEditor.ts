@@ -168,6 +168,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				}
 			} else if (e.type === 'save') {
 				document.preserve();
+			}else if (e.type === 'open_link') {
+				vscode.env.openExternal(vscode.Uri.parse(e.url));
 			}
 		});
 	}
@@ -218,110 +220,4 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		  </html>
 		`;
 	}
-
-
-	// /**
-	//  * Get the static HTML used for in our editor's webviews.
-	//  */
-	// private getHtmlForWebview(webview: vscode.Webview): string {
-	// 	// Local path to script for the webview
-	// 	const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-	// 		this._context.extensionUri, 'media', 'bevaraDraw.js'));
-
-
-	// 	const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-	// 		this._context.extensionUri, 'media', 'bevaraDraw.css'));
-
-	// 	// Use a nonce to whitelist which scripts can be run
-	// 	const nonce = getNonce();
-
-	// 	return /* html */`
-	// 		<!DOCTYPE html>
-	// 		<html lang="en">
-	// 		<head>
-	// 			<meta charset="UTF-8">
-	// 			<link href="${styleMainUri}" rel="stylesheet" />
-	// 			<title>Bevara editor</title>
-	// 		</head>
-	// 		<body>
-	// 		<section>
-	// 		<h1>Bevara editor</h1>
-
-	// 		<div style="display:none;" class="select-source">
-	// 		<h2>Select source:</h2>
-	// 		<input type="file" onChange="fileLoaded(this)" id="inputTag"></input>
-	// 		</div>
-
-	// 		<h2>Preview:</h2>
-	// 		<div class="drawing-preview"></div>
-	// 		<button class="md-chip md-chip-clickable md-chip-hover" onClick="preserveFile()"> Preserve </button>
-
-	// 		<h2>Messages:</h2>
-	// 		<textarea id="output" rows="8" readonly></textarea>
-
-	// 		<h2>Tag:</h2>
-	// 		<textarea id="htmlTag" rows="8" readonly></textarea>
-	// 		<button class="md-chip md-chip-clickable md-chip-hover" onClick="copyTag()"> Copy this tag to clipboard </button>
-
-	// 		<table>
-	// 		<tr>
-	// 		<td>
-	// 		tag
-	// 		</td>
-	// 		<td>
-	// 		<div class="md-chips tag-buttons"> </div>
-	// 		</td>
-	// 		</tr>
-	// 		<tr>
-	// 		<td>
-	// 		using
-	// 		</td>
-	// 		<td>
-	// 		<div class="md-chips using-buttons"> </div>
-	// 		</td>
-	// 		</tr>
-	// 		<tr id="decoder_list">
-	// 		<td>
-	// 		decoders
-	// 		<input type="checkbox" onClick="toggleAllWith(this)" id="allWith" />
-	// <label for="allWith" class="md-chip md-chip-clickable md-chip-hover"> All</label>
-	// 		</td>
-	// 		<td>
-	// 		<div class="md-chips with-buttons"> </div>
-	// 		</td>
-	// 		</tr>
-	// 		<tr>
-	// 		<td>
-	// 		options
-	// 		</td>
-	// 		<td>
-	// 		<input type="checkbox" onClick="toggleUseCache(this)" name="UseCache" id="useCacheButton"> 
-	// 		<label for="useCacheButton" class="md-chip md-chip-clickable md-chip-hover">Use cache</label>
-	// 		<input type="checkbox" onClick="toggleShowProgess(this)" name="ShowProgess" id="showProgessButton"> 
-	// 		<label for="showProgessButton" class="md-chip md-chip-clickable md-chip-hover">Show progess</label>
-	// 		<input type="checkbox" onClick="toggleNoWorker(this)" name="NoWorker" id="NoWorkerButton"> 
-	// 		<label for="NoWorkerButton" class="md-chip md-chip-clickable md-chip-hover">Without workers</label>
-	// 		</td>
-	// 		</tr>
-	// 		<tr>
-	// 		<td>
-	// 		Force output
-	// 		</td>
-	// 		<td>
-	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="png"> 
-	// 		<label for="png" class="md-chip md-chip-clickable md-chip-hover">png</label>
-	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="jpg"> 
-	// 		<label for="jpg" class="md-chip md-chip-clickable md-chip-hover">jpg</label>
-	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgb"> 
-	// 		<label for="rgb" class="md-chip md-chip-clickable md-chip-hover">rgb</label>
-	// 		<input type="checkbox" onClick="toggleOUT(this)" name="ouformat" id="rgba"> 
-	// 		<label for="rgba" class="md-chip md-chip-clickable md-chip-hover">rgba</label>
-	// 		</td>
-	// 		</tr>
-	// 		</table>
-	// 		</section>
-	// 		</body>
-	// 		<script nonce="${nonce}" src="${scriptUri}"></script>
-	// 		</html>`;
-	// }
 }
