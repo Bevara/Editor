@@ -189,9 +189,9 @@
         }
 	},
 	"scripts": {
-		"install:all": "npm install && git submodule init && git submodule update && cd Interface && npm install && ./configure",
+		"install:all": "npm install && git submodule init && git submodule update && cd Interface && ./configure && npm run build:webview",
 		"start:webview": "cd Interface && npm run start",
-		"build:webview": "cd Interface && npm run build",
+		"build:webview": "cd Interface && npm run build:vscode",
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"lint": "eslint \"src/**/*.ts\"",
