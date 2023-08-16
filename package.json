@@ -34,6 +34,9 @@
 				"displayName": "Open with Bevara viewer",
 				"selector": [
 					{
+						"filenamePattern": "*.jpg"
+					},
+					{
 						"filenamePattern": "*.jp2"
 					},
 					{
