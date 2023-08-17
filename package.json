@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "This is a helper plugins for designing and debugging web assembly decoders.",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/editor-vscode",
 	"icon": "images/logo.png",
@@ -33,6 +33,9 @@
 				"viewType": "bevara.pipeline",
 				"displayName": "Open with Bevara viewer",
 				"selector": [
+					{
+						"filenamePattern": "*.bmp"
+					},
 					{
 						"filenamePattern": "*.jpg"
 					},
