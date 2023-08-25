@@ -12,7 +12,11 @@
     "tools.h": "c",
     "setup.h": "c",
     "path2d.h": "c",
-    "maths.h": "c"
+    "maths.h": "c",
+    "regex": "cpp",
+    "sstream": "cpp",
+    "strstream": "cpp",
+    "compare": "cpp"
   },
   "cmake.sourceDirectory": "${workspaceFolder}/player/third_parties/emsdk/upstream/emscripten/cache/ports/vorbis/Vorbis-version_1/lib",
   "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
