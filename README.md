@@ -1,8 +1,6 @@
-# Bevara access
+# Bevara Access
 
-This is yet a small extension to help debugging decoders from Bevara products.
-
-[Source code](https://github.com/Bevara/Editor) [Help](https://bevara.com/documentation/) [Terms of services](https://bevara.com/terms_of_service/)
+[Source code](https://github.com/Bevara/Editor) &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; [Help](https://bevara.com/documentation/) &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;  [Terms of services](https://bevara.com/terms_of_service/)
 
 ## Use the extension from source code
 

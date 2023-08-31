@@ -16,7 +16,10 @@
     "regex": "cpp",
     "sstream": "cpp",
     "strstream": "cpp",
-    "compare": "cpp"
+    "compare": "cpp",
+    "filter_session.h": "c",
+    "ios": "cpp",
+    "format": "cpp"
   },
   "cmake.sourceDirectory": "${workspaceFolder}/player/third_parties/emsdk/upstream/emscripten/cache/ports/vorbis/Vorbis-version_1/lib",
   "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
