@@ -204,6 +204,7 @@
 		"install:all": "npm install && git submodule init && git submodule update && cd Interface && ./configure && npm run build:webview",
 		"start:webview": "cd Interface && npm run start",
 		"build:webview": "cd Interface && npm run build:components && npm run build:vscode",
+		"build:webview-debug": "cd Interface && npm run build:components && npm run build:vscode-debug",
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"lint": "eslint \"src/**/*.ts\"",
