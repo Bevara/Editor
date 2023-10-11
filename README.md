@@ -1,6 +1,9 @@
 # Bevara Access
+By installing and using you confirm that you agree to the [Terms of Service](https://bevara.com/terms_of_service/).
 
-[Source code](https://github.com/Bevara/Editor) &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; [Help](https://bevara.com/documentation/) &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;  [Terms of services](https://bevara.com/terms_of_service/)
+An easy-to-use tool based on Bevara open-source libraries to create a decoding and presentation pipeline. Use the auto-suggested pipeline elements or tailor the elements to your needs. Drop the generated HTML into your website for easy display and playback of many types of file formats.
+
+[Source code](https://github.com/Bevara/Editor) &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; [Help](https://bevara.com/documentation/)
 
 ## Use the extension from source code
 

@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.0.17",
+	"version": "1.0.22",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
@@ -40,7 +40,13 @@
 						"filenamePattern": "*.jpg"
 					},
 					{
+						"filenamePattern": "*.jpeg"
+					},
+					{
 						"filenamePattern": "*.jp2"
+					},
+					{
+						"filenamePattern": "*.mj2"
 					},
 					{
 						"filenamePattern": "*.j2k"
@@ -164,6 +170,12 @@
 					},
 					{
 						"filenamePattern": "*.pdf"
+					},
+					{
+						"filenamePattern": "*.ts"
+					},
+					{
+						"filenamePattern": "*.cbz"
 					}
 				],
 				"priority": "default"
