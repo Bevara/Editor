@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.0.23",
+	"version": "1.0.31",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
@@ -176,6 +176,9 @@
 					},
 					{
 						"filenamePattern": "*.cbz"
+					},
+					{
+						"filenamePattern": "*.wav"
 					}
 				],
 				"priority": "default"
