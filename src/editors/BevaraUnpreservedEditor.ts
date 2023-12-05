@@ -170,6 +170,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				document.preserve();
 			}else if (e.type === 'open_link') {
 				vscode.env.openExternal(vscode.Uri.parse(e.url));
+			}else if (e.type === 'explore') {
+				vscode.commands.executeCommand('bevexplorer.exploreBevFile', e.url);
 			}
 		});
 	}

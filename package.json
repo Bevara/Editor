@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.0.31",
+	"version": "1.0.32",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
@@ -17,17 +17,26 @@
 			]
 		},
 		"languages": [
-            {
-                "id": "bvr",
-                "aliases": [
-                    "Bevara Archive",
-                    "BVR"
-                ],
-                "extensions": [
-                    ".bvr"
-                ]
-            }
-        ],
+			{
+				"id": "bvr",
+				"aliases": [
+					"Bevara Archive",
+					"BVR"
+				],
+				"extensions": [
+					".bvr"
+				]
+			},
+			{
+				"id": "accessor",
+				"aliases": [
+					"Accessor Archive"
+				],
+				"extensions": [
+					".accessor"
+				]
+			}
+		],
 		"customEditors": [
 			{
 				"viewType": "bevara.pipeline",
@@ -201,19 +210,54 @@
 				"category": "Bevara"
 			},
 			{
-                "command": "bevara.pipeline.mountBevFileSystem",
-                "title": "Mount Bevara file"
-            }
+				"command": "bevara.pipeline.mountBevFileSystem",
+				"title": "Mount Bevara file"
+			},
+			{
+				"command": "openBevResource",
+				"title": "Open Bevara Resource"
+			},
+			{
+				"command": "bevexplorer.exploreBevFile",
+				"title": "Explore Bevara File"
+			},
+			{
+				"command": "openBevResource",
+				"title": "Open Bevara Resource"
+			},
+			{
+				"command": "bevexplorer.clear",
+				"title": "Clear explorer"
+			}
 		],
-        "menus": {
-            "explorer/context": [
-                {
-                    "when": "resourceLangId == zip",
-                    "command": "bevara.pipeline.mountBevFileSystem",
-                    "group": "navigation"
-                }
-            ]
-        }
+		"menus": {
+			"explorer/context": [
+				{
+					"when": "resourceLangId == zip",
+					"command": "bevara.pipeline.mountBevFileSystem",
+					"group": "navigation"
+				},
+				{
+					"when": "resourceLangId == accessor",
+					"command": "bevexplorer.exploreBevFile",
+					"group": "access"
+				}
+			],
+			"view/title": [
+				{
+					"command": "bevexplorer.clear",
+					"when": "view == bevExplorer"
+				}
+			]
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "bevExplorer",
+					"name": "Bevara Explorer"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"install:all": "npm install && git submodule init && git submodule update && cd Interface && ./configure && npm run build:webview",
@@ -226,6 +270,7 @@
 		"watch": "tsc -w -p ./"
 	},
 	"devDependencies": {
+		"@types/adm-zip": "^0.5.5",
 		"@types/node": "^16.11.7",
 		"@types/vscode": "^1.73.0",
 		"@typescript-eslint/eslint-plugin": "^5.42.0",
@@ -235,7 +280,11 @@
 	},
 	"dependencies": {
 		"@types/jszip": "^3.4.1",
+		"adm-zip": "^0.5.10",
+		"axios": "^1.6.2",
 		"jszip": "^3.10.1",
+		"lodash.groupby": "^4.6.0",
+		"path.join": "^1.0.0",
 		"vscode-uri": "^3.0.7"
 	}
 }
