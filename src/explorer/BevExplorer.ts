@@ -13,7 +13,7 @@ export class BevRoot implements IBevNode {
 	private _zip: AdmZip;
 
 
-	constructor(private _buffer: Buffer, private _uri:string) {
+	constructor(private _buffer: Buffer, private _uri:Uri) {
 			const files: any[] = [];
 			this._zip = new AdmZip(_buffer);
 
@@ -22,15 +22,25 @@ export class BevRoot implements IBevNode {
 			.forEach((e:any) => {
 				files.push(e.entryName);
 			});
-			const label = this._uri.substring(0, this._uri.indexOf('.accessor'));
-			this._tree = treeFromPaths(files,
-				path.basename(label));
+			const name = path.basename(this._uri.fsPath);
+			const label = name.substring(0, name.indexOf('.accessor'));
+	
+			this._tree = treeFromPaths(files, _uri,
+                label);
 	}
 
-	
+	public getText(filePath: string): Thenable<string> {
+        return new Promise((resolve, reject) => {
+            try {
+                this._zip.readAsTextAsync(filePath, resolve);
+            } catch (error : any) {
+                reject(error.toString());
+            }
+        });
+    }
 
-	public get sourceUri(): Uri | undefined {
-		return undefined;
+	public get sourceUri(): Uri  {
+		return this._uri;
 	}
 	public get label(): string {
 		return this._tree.label;
@@ -50,15 +60,21 @@ class BevModel {
 
 	public getContent(uri: Uri): Thenable<string> {
 		return new Promise((resolve, reject) => {
-			resolve("test");
+			this._bevRoots.forEach(zip => {
+                if (uri.fsPath.startsWith(zip.sourceUri.fsPath)) {
+                    const filePath = uri.path.substr(zip.sourceUri.path.length + 1);
+                    resolve(zip.getText(filePath) );
+                }
+            });
 		});
 	}
 
-	public async openBev(url: string) {
-		const body = await axios.get(url, {
+	public async openBev(uri: Uri) {
+		const url = "";
+		const body = await axios.get(uri.toString(), {
 			responseType: 'arraybuffer',
 		});
-		this._bevRoots.push(new BevRoot(body.data, url));
+		this._bevRoots.push(new BevRoot(body.data, uri));
 	}
 
 	public get roots() {
@@ -80,16 +96,17 @@ export class BevTreeDataProvider implements TreeDataProvider<IBevNode>, TextDocu
         this._onDidChangeTreeData.fire(null);
     }
 
-	getTreeItem(element: IBevNode): TreeItem | Thenable<TreeItem> {
+	getTreeItem(element: IBevNode): TreeItem {
 		const isFile = this.getType(element) === 'file';
 		let command = undefined;
 
-		if (isFile && element.label) {
+		if (isFile) {
             command = {
                 command: 'openBevResource',
-                arguments: [
-					joinPath(element.label, element.parent, element.label)
-				],
+                arguments: [element.sourceUri.with({
+                    scheme: 'accessor',
+                    path: joinPath(element.sourceUri.path, element.parent, element.label)
+                })],
                 title: 'Open Bevara Resource'
             };
         }
@@ -130,8 +147,8 @@ export class BevTreeDataProvider implements TreeDataProvider<IBevNode>, TextDocu
 		return this.model.getContent(uri);
 	}
 
-	public openBev(url: string) {
-		this.model.openBev(url)
+	public openBev(uri: Uri) {
+		this.model.openBev(uri)
 		.then(()=>{
 			this._onDidChangeTreeData.fire(null);
 		});

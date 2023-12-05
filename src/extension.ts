@@ -11,7 +11,8 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.registerTextDocumentContentProvider('accessor', bevExplorerProvider);
 
 	vscode.commands.registerCommand('bevexplorer.exploreBevFile', (url: string) => {
-        bevExplorerProvider.openBev(url);
+		const uri = vscode.Uri.parse(url);
+        bevExplorerProvider.openBev(uri);
     });
 
 	vscode.commands.registerCommand('bevexplorer.clear', () => {

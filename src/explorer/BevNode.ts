@@ -5,7 +5,7 @@ const _ = {
 };
 
 export interface IBevNode {
-    sourceUri: Uri | undefined;
+    sourceUri: Uri ;
     label: string;
     parent: string | null ;
 
@@ -13,16 +13,16 @@ export interface IBevNode {
 }
 
 
-export function treeFromPaths (files :any[], label = '') : IBevNode {
+export function treeFromPaths (files :any[], sourceUri : Uri, label = '') : IBevNode {
     return {
-      sourceUri: undefined,
+      sourceUri: sourceUri,
       label: label,
       parent: null,
-      nodes: childNodesFromPaths(files, '', undefined)
+      nodes: childNodesFromPaths(files, '', sourceUri)
     };
   }
   
-  export function childNodesFromPaths (files:any[], parent:string, sourceUri:Uri | undefined) : IBevNode[] {
+  export function childNodesFromPaths (files:any[], parent:string, sourceUri:Uri) : IBevNode[] {
     // Group by first path element
     var groups = _.groupBy(files, (file: string) => file.match(/^[^/]*\/?/));
     return Object.keys(groups).map(function (groupKey) {
