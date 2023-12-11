@@ -10,9 +10,14 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider('bevExplorer', bevExplorerProvider);
 	vscode.workspace.registerTextDocumentContentProvider('accessor', bevExplorerProvider);
 
-	vscode.commands.registerCommand('bevexplorer.exploreBevFile', (url: string) => {
-		const uri = vscode.Uri.parse(url);
-        bevExplorerProvider.openBev(uri);
+	vscode.commands.registerCommand('bevexplorer.exploreBevFile', (url: string, filter:string | null) => {
+		if (url){
+			const uri = vscode.Uri.parse(url);
+			bevExplorerProvider.openBev(uri, filter);
+		}else {
+			throw new Error("No sources provided for the current accessor.");
+		}
+
     });
 
 	vscode.commands.registerCommand('bevexplorer.clear', () => {

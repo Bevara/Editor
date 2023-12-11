@@ -1,4 +1,4 @@
-import { window, CancellationToken, Event, EventEmitter, ProviderResult, TextDocumentContentProvider, TreeDataProvider, TreeItem, Uri, TreeItemCollapsibleState } from "vscode";
+import { commands, CancellationToken, Event, EventEmitter, ProviderResult, TextDocumentContentProvider, TreeDataProvider, TreeItem, Uri, TreeItemCollapsibleState } from "vscode";
 import { IBevNode, treeFromPaths } from "./BevNode";
 
 import * as AdmZip from 'adm-zip';
@@ -70,11 +70,17 @@ class BevModel {
 	}
 
 	public async openBev(uri: Uri) {
-		const url = "";
+		const root = this._bevRoots.find(x => x.sourceUri.path == uri.path);
+		if (root){
+			return root;
+		}
+
 		const body = await axios.get(uri.toString(), {
 			responseType: 'arraybuffer',
 		});
-		this._bevRoots.push(new BevRoot(body.data, uri));
+		const new_root = new BevRoot(body.data, uri);
+		this._bevRoots.push(new_root);
+		return new_root;
 	}
 
 	public get roots() {
@@ -113,7 +119,7 @@ export class BevTreeDataProvider implements TreeDataProvider<IBevNode>, TextDocu
 
 		return {
             label: element.label,
-            collapsibleState: isFile ? void 0 : TreeItemCollapsibleState.Collapsed,
+            collapsibleState: isFile ? void 0 : TreeItemCollapsibleState.Expanded,
             command: command,
             iconPath: undefined,
             contextValue: this.getType(element)
@@ -147,9 +153,17 @@ export class BevTreeDataProvider implements TreeDataProvider<IBevNode>, TextDocu
 		return this.model.getContent(uri);
 	}
 
-	public openBev(uri: Uri) {
+	public openBev(uri: Uri, filter : string | null) {
 		this.model.openBev(uri)
-		.then(()=>{
+		.then((root)=>{
+
+			if (filter){
+				const uri = root.sourceUri.with({
+					scheme: 'accessor',
+					path: joinPath(root.sourceUri.path, filter)
+				});
+				commands.executeCommand('openBevResource', uri);
+			}
 			this._onDidChangeTreeData.fire(null);
 		});
 	}
