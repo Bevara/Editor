@@ -3,11 +3,11 @@ LICENSE information
 
 By using the Bevara Access software you agree to be bound by the EULA as found at: https://bevara.com/terms_of_service/.
 
-By using the Bevara Access Develop IDE and/or creating or modifying any filters, you agree to be bound by the Developer's EULA as found at: 
+By using the Bevara Access Develop IDE and/or creating or modifying any code in this repository, you agree to be bound by the Developer's EULA as found at: 
 
 The code in this repository is covered by multiple licenses. Code developed by Bevara Technologies, LLC, whether or not marked with a notice, is covered by the LGPL (see text below).
 
-All other code in this repository are subject to licenses as listed in their respective directories. By using the Bevara Access Develop IDE and/or creating or modifying any filters, you agree to these individual licenses. 
+All other code in this repository are subject to licenses as listed in their respective directories or files. By using the Bevara Access Develop IDE and/or creating or modifying any filters, you agree to these individual licenses. 
 
 Further, by adding code you agree to a broad license, such as MIT or LGPL, that permits use of your code for both non-commercial and commercial applications. 
 
