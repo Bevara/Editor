@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.0.36",
+	"version": "1.0.37",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
