@@ -257,7 +257,13 @@
 					"name": "Bevara Explorer"
 				}
 			]
-		}
+		},
+		"viewsWelcome": [
+			{
+			  "view": "bevExplorer",
+			  "contents": "No accessors has been opened yet [learn more](https://bevara.com/).\n[View accessors](command:bevara.pipeline.new)"
+			}
+		]
 	},
 	"scripts": {
 		"install:all": "npm install && git submodule init && git submodule update && cd Interface && ./configure && npm run build:webview",

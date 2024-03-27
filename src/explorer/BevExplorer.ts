@@ -26,7 +26,7 @@ export class BevRoot implements IBevNode {
 			const label = name.substring(0, name.indexOf('.accessor'));
 	
 			this._tree = treeFromPaths(files, _uri,
-                label);
+                name);
 	}
 
 	public getText(filePath: string): Thenable<string> {
