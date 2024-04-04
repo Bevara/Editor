@@ -13,7 +13,7 @@ export class BevRoot implements IBevNode {
 	private _zip: AdmZip;
 
 
-	constructor(private _buffer: Buffer, private _uri:Uri) {
+	constructor(private _buffer: Buffer, private _uri:Uri, private _filter : string) {
 			const files: any[] = [];
 			this._zip = new AdmZip(_buffer);
 
@@ -22,11 +22,9 @@ export class BevRoot implements IBevNode {
 			.forEach((e:any) => {
 				files.push(e.entryName);
 			});
-			const name = path.basename(this._uri.fsPath);
-			const label = name.substring(0, name.indexOf('.accessor'));
 	
 			this._tree = treeFromPaths(files, _uri,
-                name);
+                _filter);
 	}
 
 	public getText(filePath: string): Thenable<string> {
@@ -69,7 +67,7 @@ class BevModel {
 		});
 	}
 
-	public async openBev(uri: Uri) {
+	public async openBev(uri: Uri, filter: string) {
 		const root = this._bevRoots.find(x => x.sourceUri.path == uri.path);
 		if (root){
 			return root;
@@ -78,7 +76,7 @@ class BevModel {
 		const body = await axios.get(uri.toString(), {
 			responseType: 'arraybuffer',
 		});
-		const new_root = new BevRoot(body.data, uri);
+		const new_root = new BevRoot(body.data, uri, filter);
 		this._bevRoots.push(new_root);
 		return new_root;
 	}
@@ -153,8 +151,8 @@ export class BevTreeDataProvider implements TreeDataProvider<IBevNode>, TextDocu
 		return this.model.getContent(uri);
 	}
 
-	public openBev(uri: Uri, filter : string | null) {
-		this.model.openBev(uri)
+	public openBev(uri: Uri, filter : string) {
+		this.model.openBev(uri, filter)
 		.then((root)=>{
 
 			if (filter){

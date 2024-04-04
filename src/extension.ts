@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider('bevExplorer', bevExplorerProvider);
 	vscode.workspace.registerTextDocumentContentProvider('accessor', bevExplorerProvider);
 
-	vscode.commands.registerCommand('bevexplorer.exploreBevFile', (url: string, filter:string | null) => {
+	vscode.commands.registerCommand('bevexplorer.exploreBevFile', (url: string, filter:string) => {
 		if (url){
 			const uri = vscode.Uri.parse(url);
 			bevExplorerProvider.openBev(uri, filter);

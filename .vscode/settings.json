@@ -28,7 +28,8 @@
     "set": "c",
     "unordered_map": "c",
     "unordered_set": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "media_dev.h": "c"
   },
   "cmake.sourceDirectory": "${workspaceFolder}/player/third_parties/emsdk/upstream/emscripten/cache/ports/vorbis/Vorbis-version_1/lib",
   "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
