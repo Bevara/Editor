@@ -151,6 +151,9 @@
 						"filenamePattern": "*.heif"
 					},
 					{
+						"filenamePattern": "*.heic"
+					},
+					{
 						"filenamePattern": "*.tga"
 					},
 					{
