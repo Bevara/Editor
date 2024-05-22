@@ -1,0 +1,234 @@
+{
+  "libpng_1.wasm": {
+    "name": "libpng",
+    "description": "PNG encoder and decoder",
+    "filters": [
+      "rfpng",
+      "pngdec",
+      "encpng"
+    ],
+    "help": "This filter encodes and decodes to PNG using libpng.",
+    "support": [
+      "image"
+    ],
+    "sources": "https://codeload.github.com/Bevara/libpng/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/libpng/releases/download/1/libpng_1.wasm",
+    "filter_source": {
+      "rfpng": "reframe_png.c",
+      "pngdec": "dec_png.c",
+      "encpng": "enc_png.c"
+    },
+    "licence_required": false
+  },
+  "libjpeg_1.wasm": {
+    "name": "libjpeg",
+    "description": "JPG encoder and decoder",
+    "filters": [
+      "rfjpeg",
+      "jpegdec",
+      "encjpg"
+    ],
+    "help": "This filter encodes and decodes to JPEG using libjpeg.",
+    "support": [
+      "image"
+    ],
+    "sources": "https://codeload.github.com/Bevara/libjpeg/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/libjpeg/releases/download/1/libjpeg_1.wasm",
+    "filter_source": {
+      "rfjpeg": "reframe_jpeg.c",
+      "jpegdec": "dec_jpeg.c",
+      "encjpg": "enc_jpg.c"
+    },
+    "licence_required": false
+  },
+  "libjxl_1.wasm": {
+    "name": "libjxl",
+    "description": "JXL decoder",
+    "filters": [
+      "jxldec",
+      "rfjxl"
+    ],
+    "help": "This filter decodes JXL images using libjxl.",
+    "support": [
+      "image"
+    ],
+    "sources": "https://codeload.github.com/Bevara/libjxl/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/libjxl/releases/download/1/libjxl_1.wasm",
+    "filter_source": {
+      "jxldec": "dec_jxl.c",
+      "rfjxl": "reframe_jxl.c"
+    },
+    "licence_required": false
+  },
+  "openjpeg_1.wasm": {
+    "name": "openjpeg",
+    "description": "JP2000 decoder",
+    "filters": [
+      "rfjp2",
+      "j2kdec"
+    ],
+    "help": "This filter decodes JPEG2000 streams through OpenJPEG library.",
+    "support": [
+      "image"
+    ],
+    "sources": "https://codeload.github.com/Bevara/openjpeg/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/openjpeg/releases/download/1/openjpeg_1.wasm",
+    "filter_source": {
+      "rfjp2": "reframe_jp2.c",
+      "j2kdec": "dec_j2k.c"
+    },
+    "licence_required": false
+  },
+  "qdbmp_1.wasm": {
+    "name": "qdbmp",
+    "description": "Quick n' Dirty BMP Library",
+    "filters": [
+      "QDBMP"
+    ],
+    "help": "QDBMP (Quick n' Dirty BMP) is a minimalistic C library for handling BMP image files.",
+    "support": [
+      "image"
+    ],
+    "sources": "https://codeload.github.com/Bevara/qdbmp/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/qdbmp/releases/download/1/qdbmp_1.wasm",
+    "filter_source": {
+      "QDBMP": "qdbmp.c"
+    },
+    "licence_required": false
+  },
+  "ffmpeg-flac_1.wasm": {
+    "name": "ffmpeg-flac",
+    "description": "ffmpeg flac decoder",
+    "filters": [
+      "rfflac",
+      "ffdec-flac"
+    ],
+    "help": "This is a reduced version of ffmpeg adapted to decode flac content.",
+    "support": [
+      "audio"
+    ],
+    "sources": "https://codeload.github.com/Bevara/ffmpeg-flac/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/ffmpeg-flac/releases/download/1/ffmpeg-flac_1.wasm",
+    "filter_source": {
+      "rfflac": "reframe_flac.c",
+      "ffdec-flac": "ff_dec-flac.c"
+    },
+    "licence_required": false
+  },
+  "ffmpeg-mpeg1_1.wasm": {
+    "name": "ffmpeg-mpeg1",
+    "description": "ffmpeg mpeg1 decoder",
+    "filters": [
+      "ffdec",
+      "rfmpgvid",
+      "m2psdmx"
+    ],
+    "help": "This is a reduced version of ffmpeg adapted to decode mpeg1 contents in a canvas.",
+    "support": [
+      "video"
+    ],
+    "sources": "https://codeload.github.com/Bevara/ffmpeg-mpeg1/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/ffmpeg-mpeg1/releases/download/1/ffmpeg-mpeg1_1.wasm",
+    "filter_source": {
+      "ffdec": "ff_dec-mpeg1.c",
+      "rfmpgvid": "reframe_mpegvid.c",
+      "m2psdmx": "dmx_mpegps.c"
+    },
+    "licence_required": false
+  },
+  "ffmpeg-hevc_1.wasm": {
+    "name": "ffmpeg-hevc",
+    "description": "ffmpeg hevc decoder",
+    "filters": [
+      "ffdec-hevc",
+      "ffsws-hevc"
+    ],
+    "help": "This is a reduced version of ffmpeg adapted to decode hevc content.",
+    "support": [
+      "image",
+      "video"
+    ],
+    "sources": "https://codeload.github.com/Bevara/ffmpeg-hevc/zip/refs/heads/main",
+    "filter_source": {
+      "ffdec-hevc": "ff_dec-hevc.c",
+      "ffsws-hevc": "ff_rescale-hevc.c"
+    },
+    "licence_required": true
+  },
+  "rfpcm_1.wasm": {
+    "name": "rfpcm",
+    "description": "PCM reframer",
+    "filters": [
+      "rfpcm"
+    ],
+    "help": "This filter parses raw PCM file/data or WAVE files and outputs corresponding raw audio.",
+    "support": [
+      "audio"
+    ],
+    "sources": "https://codeload.github.com/Bevara/rfpcm/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/rfpcm/releases/download/1/rfpcm_1.wasm",
+    "filter_source": {
+      "rfpcm": "reframe_rawpcm.c"
+    },
+    "licence_required": false
+  },
+  "liba52_1.wasm": {
+    "name": "liba52",
+    "description": "A52 decoder",
+    "filters": [
+      "rfac3",
+      "a52dec"
+    ],
+    "help": "This filter decodes AC3 streams through a52dec library.",
+    "support": [
+      "audio"
+    ],
+    "sources": "https://codeload.github.com/Bevara/liba52/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/liba52/releases/download/1/liba52_1.wasm",
+    "filter_source": {
+      "rfac3": "reframe_ac3.c",
+      "a52dec": "dec_ac52.c"
+    },
+    "licence_required": false
+  },
+  "vorbis_1.wasm": {
+    "name": "vorbis",
+    "description": "vorbis decoder",
+    "filters": [
+      "oggdmx",
+      "vorbisdec"
+    ],
+    "help": "This filter decodes Ogg and Vorbis streams through libogg and libvorbis library.",
+    "support": [
+      "audio"
+    ],
+    "sources": "https://codeload.github.com/Bevara/vorbis/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/vorbis/releases/download/1/vorbis_1.wasm",
+    "filter_source": {
+      "oggdmx": "dmx_ogg.c",
+      "vorbisdec": "dec_vorbis.c"
+    },
+    "licence_required": false
+  },
+  "isobmff_1.wasm": {
+    "name": "isobmff",
+    "description": "ISOBMF demultiplexer/multiplexer",
+    "filters": [
+      "mp4dmx",
+      "mp4mx"
+    ],
+    "help": "This filter multiplexes and demultiplexes ISOBMF (14496-12 and derived specifications).",
+    "support": [
+      "image",
+      "audio",
+      "video"
+    ],
+    "sources": "https://codeload.github.com/Bevara/isobmff/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/isobmff/releases/download/1/isobmff_1.wasm",
+    "filter_source": {
+      "mp4dmx": "isoffin_read.c",
+      "mp4mx": "mux_isom.c"
+    },
+    "licence_required": false
+  }
+}

@@ -3,6 +3,12 @@ import { UnpreservedDocument } from "../documents/UnpreservedDocument";
 import { disposeAll } from '../dispose';
 import { getNonce, isDev, accessor_version, getUri } from '../util';
 import { WebviewCollection } from '../webviewCollection';
+import * as https from 'https';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as filter_list from './filter_list.json';
+import { buffer } from 'stream/consumers';
+
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
@@ -12,6 +18,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	private static newBevaraDrawFileId = 1;
 	private _requestId = 1;
 	private readonly _callbacks = new Map<number, (response: any) => void>();
+	private _filter_list = filter_list;
 
 	/**
 	 * Tracks all known webviews
@@ -126,14 +133,67 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		}
 	}
 
+	async downloadWasms(webview: vscode.Webview, ids: string[]) {
+		// Assurez-vous que le répertoire existe
+		if (!fs.existsSync(this._context.globalStoragePath)) {
+			fs.mkdirSync(this._context.globalStoragePath, { recursive: true });
+		}
+
+		function fetchWasm(file: string, url: string, maxRedirects = 5) {
+			return new Promise<Buffer>((resolve, reject) => {
+				https.get(url, async (res) => {
+					if (res.statusCode == 302 && res.headers.location && maxRedirects > 0) {
+						const redirectUrl = new URL(res.headers.location, url).toString();
+						resolve(await fetchWasm(file, redirectUrl, maxRedirects - 1));
+					} else if (res.statusCode === 200) {
+						const data: Uint8Array[] = [];
+						res.on('data', (chunk: Uint8Array) => data.push(chunk));
+						res.on('end', () => {
+							const buffer = Buffer.concat(data);
+
+							if (vscode.workspace.workspaceFolders) {
+								fs.writeFileSync(file, buffer);
+							}
+							resolve(buffer);
+						});
+					} if (res.statusCode !== 200) {
+						reject(`Failed to fetch file. Status code: ${res.statusCode}`);
+					}
+				});
+			});
+		}
+
+		const wasms: any = {};
+
+		for (let id of ids) {
+			const wasmFilter = id + ".wasm";
+			if (wasmFilter in filter_list) {
+				const filter = (filter_list as any)[wasmFilter];
+				const file = vscode.Uri.joinPath(this._context.globalStorageUri, wasmFilter).fsPath;
+				let buffer = null;
+				if (!fs.existsSync(file)) {
+					buffer = await fetchWasm(file, filter.binaries);
+				} 
+				wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
+			}
+		}
+
+		return wasms;
+	}
 
 	resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): void | Thenable<void> {
+		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri,["/"]);
+		
 		// Add the webview to our internal set of active webviews
 		this.webviews.add(document.uri, webviewPanel);
 
 		// Setup initial content for the webview
 		webviewPanel.webview.options = {
 			enableScripts: true,
+			localResourceRoots: [
+				this._context.extensionUri,
+				this._context.globalStorageUri
+			]
 		};
 
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
@@ -151,7 +211,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
 						value: document.documentData,
-						scriptsDirectory: "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/",
+						scriptsDirectory:  `${scriptDirectoryUri}`,
+						filter_list: filter_list,
 						scripts: {
 							"image": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
 								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-img.js",
@@ -164,41 +225,54 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 							"artplayer": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
 								this._context.extensionUri, 'player', 'build', 'dist', 'artplayer.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/artplayer.js"
 						}
-
 					});
 				}
 			} else if (e.type === 'save') {
 				document.preserve();
-			}else if (e.type === 'open_link') {
+			} else if (e.type === 'open_link') {
 				vscode.env.openExternal(vscode.Uri.parse(e.url));
-			}else if (e.type === 'explore') {
+			} else if (e.type === 'explore') {
 				vscode.commands.executeCommand('bevexplorer.exploreBevFile', e.url, e.filter);
+			}
+			else if (e.type === 'getWasms') {
+
+				this.downloadWasms(webviewPanel.webview, e.libs)
+					.then((wasms) => {
+						this.postMessage(webviewPanel, 'wasmReady', {
+							wasms : wasms
+						});
+					});
+			}else if (e.type === 'inject') {
+				console.log(e.html);
 			}
 		});
 	}
 
-  /**
-   * Defines and returns the HTML that should be rendered within the webview panel.
-   *
-   * @remarks This is also the place where references to the Angular webview build files
-   * are created and inserted into the webview HTML.
-   *
-   * @param webview A reference to the extension webview
-   * @param extensionUri The URI of the directory containing the extension
-   * @returns A template string literal containing the HTML that should be
-   * rendered within the webview panel
-   */
+	/**
+	 * Defines and returns the HTML that should be rendered within the webview panel.
+	 *
+	 * @remarks This is also the place where references to the Angular webview build files
+	 * are created and inserted into the webview HTML.
+	 *
+	 * @param webview A reference to the extension webview
+	 * @param extensionUri The URI of the directory containing the extension
+	 * @returns A template string literal containing the HTML that should be
+	 * rendered within the webview panel
+	 */
 	private getHtmlForWebview(webview: vscode.Webview): string {
 		// The CSS file from the Angular build output
 		const stylesUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "styles.css"]);
 		// The JS files from the Angular build output
 		const runtimeUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "runtime.js"]);
 		const polyfillsUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "polyfills.js"]);
-		const scriptUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "main.js"]);
+		const mainUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "main.js"]);
 		const scripstUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "scripts.js"]);
-	
+		const solverUri = getUri(webview, this._context.globalStorageUri,["solver_1.js"]);
+		const testUri = getUri(webview, this._context.globalStorageUri,["test.js"]);
+		const universalUri = getUri(webview, this._context.extensionUri, ["Interface", "player","dist", "universal-tags_1.js"]);
+
 		const nonce = getNonce();
-	
+
 		// Tip: Install the es6-string-html VS Code extension to enable code highlighting below
 		return /*html*/ `
 		  <!DOCTYPE html>
@@ -214,11 +288,11 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			  <title>Bevara - future-proof your data</title>
 			</head>
 			<body class="mat-typography mat-app-background">
-			  <app-root></app-root>
-			  <script type="module" nonce="${nonce}" src="${runtimeUri}"></script>
-			  <script type="module" nonce="${nonce}" src="${polyfillsUri}"></script>
-			  <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-			  <script type="module" nonce="${nonce}" src="${scripstUri}"></script>
+			<app-root></app-root>
+			<script type="module" nonce="${nonce}" src="${runtimeUri}"></script>
+			<script type="module" nonce="${nonce}" src="${polyfillsUri}"></script>
+			<script type="module" nonce="${nonce}" src="${mainUri}"></script>
+			<script type="module" nonce="${nonce}" src="${scripstUri}"></script>
 			</body>
 		  </html>
 		`;

@@ -263,8 +263,8 @@
 		},
 		"viewsWelcome": [
 			{
-			  "view": "bevExplorer",
-			  "contents": "No accessors has been opened yet [learn more](https://bevara.com/).\n[View accessors](command:bevara.pipeline.new)"
+				"view": "bevExplorer",
+				"contents": "No accessors has been opened yet [learn more](https://bevara.com/).\n[View accessors](command:bevara.pipeline.new)"
 			}
 		]
 	},
@@ -291,6 +291,7 @@
 		"@types/jszip": "^3.4.1",
 		"adm-zip": "^0.5.10",
 		"axios": "^1.6.2",
+		"https": "^1.0.0",
 		"jszip": "^3.10.1",
 		"lodash.groupby": "^4.6.0",
 		"path.join": "^1.0.0",
