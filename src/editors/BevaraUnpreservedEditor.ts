@@ -163,6 +163,17 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			});
 		}
 
+		async function checkSolver(storageUri : vscode.Uri, file : string){
+			const release = "https://github.com/Bevara/solver/releases/download/1/"+file;
+			const uri = vscode.Uri.joinPath(storageUri, file).fsPath;
+			if (!fs.existsSync(file)) {
+				await fetchWasm(uri, release);
+			}
+		}
+
+		await checkSolver(this._context.globalStorageUri, "solver_1.js");
+		await checkSolver(this._context.globalStorageUri, "solver_1.wasm");
+
 		const wasms: any = {};
 
 		for (let id of ids) {
