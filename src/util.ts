@@ -1,5 +1,4 @@
 import { Uri, Webview } from "vscode";
-const build = require("../Interface/player/version.js").build;
 
 /**
  * A helper function that returns a unique alphanumeric identifier called a nonce.
@@ -37,4 +36,4 @@ export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) 
 
 export const isDev = false;
 
-export const accessor_version = build;
+export const accessor_version = 1;

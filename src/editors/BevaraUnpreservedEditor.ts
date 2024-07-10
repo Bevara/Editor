@@ -8,6 +8,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as filter_list from './filter_list.json';
 import { buffer } from 'stream/consumers';
+import { Session } from 'inspector';
+import { BevaraAuthenticationProvider } from '../auth/authProvider';
 
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -163,8 +165,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			});
 		}
 
-		async function checkSolver(storageUri : vscode.Uri, file : string){
-			const release = "https://github.com/Bevara/solver/releases/download/1/"+file;
+		async function checkSolver(storageUri: vscode.Uri, file: string) {
+			const release = "https://github.com/Bevara/solver/releases/download/1/" + file;
 			const uri = vscode.Uri.joinPath(storageUri, file).fsPath;
 			if (!fs.existsSync(file)) {
 				await fetchWasm(uri, release);
@@ -184,7 +186,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				let buffer = null;
 				if (!fs.existsSync(file)) {
 					buffer = await fetchWasm(file, filter.binaries);
-				} 
+				}
 				wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
 			}
 		}
@@ -192,9 +194,24 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		return wasms;
 	}
 
+	async login(){
+		const session = await vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: true });
+
+		try {
+			https.get("https://wwww.example.com", async (res) => {
+				vscode.window.showInformationMessage('OK!');
+			});
+		} catch (e: any) {
+			if (e.message === 'Unauthorized') {
+				vscode.window.showErrorMessage('Failed to get profile. You need to use a PAT that has access to all organizations. Please sign out and try again.');
+			}
+			throw e;
+		}
+	}
+
 	resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): void | Thenable<void> {
-		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri,["/"]);
-		
+		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri, ["/"]);
+
 		// Add the webview to our internal set of active webviews
 		this.webviews.add(document.uri, webviewPanel);
 
@@ -222,7 +239,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
 						value: document.documentData,
-						scriptsDirectory:  `${scriptDirectoryUri}`,
+						scriptsDirectory: `${scriptDirectoryUri}`,
 						filter_list: filter_list,
 						scripts: {
 							"image": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
@@ -250,11 +267,17 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				this.downloadWasms(webviewPanel.webview, e.libs)
 					.then((wasms) => {
 						this.postMessage(webviewPanel, 'wasmReady', {
-							wasms : wasms
+							wasms: wasms
 						});
 					});
-			}else if (e.type === 'inject') {
+			} else if (e.type === 'inject') {
 				console.log(e.html);
+			} else if (e.type === 'login') {
+				this.login();
+			} else if (e.type === 'getToken') {
+				console.log('getToken :' + e.token);
+			} else if (e.type === 'setToken') {
+				console.log('setToken :' + e.token);
 			}
 		});
 	}
@@ -278,9 +301,9 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		const polyfillsUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "polyfills.js"]);
 		const mainUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "main.js"]);
 		const scripstUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "scripts.js"]);
-		const solverUri = getUri(webview, this._context.globalStorageUri,["solver_1.js"]);
-		const testUri = getUri(webview, this._context.globalStorageUri,["test.js"]);
-		const universalUri = getUri(webview, this._context.extensionUri, ["Interface", "player","dist", "universal-tags_1.js"]);
+		const solverUri = getUri(webview, this._context.globalStorageUri, ["solver_1.js"]);
+		const testUri = getUri(webview, this._context.globalStorageUri, ["test.js"]);
+		const universalUri = getUri(webview, this._context.extensionUri, ["Interface", "player", "dist", "universal-tags_1.js"]);
 
 		const nonce = getNonce();
 

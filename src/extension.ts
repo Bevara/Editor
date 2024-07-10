@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { BevaraPreservedEditorProvider } from './editors/BevaraPreservedEditor';
 import { BevaraUnpreservedEditorProvider } from './editors/BevaraUnpreservedEditor';
 import { BevTreeDataProvider } from './explorer/BevExplorer';
+import { BevaraAuthenticationProvider } from './auth/authProvider';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraUnpreservedEditorProvider.register(context));
@@ -9,6 +10,16 @@ export function activate(context: vscode.ExtensionContext) {
 	const bevExplorerProvider = new BevTreeDataProvider();
 	vscode.window.registerTreeDataProvider('bevExplorer', bevExplorerProvider);
 	vscode.workspace.registerTextDocumentContentProvider('accessor', bevExplorerProvider);
+
+
+
+	context.subscriptions.push(vscode.authentication.registerAuthenticationProvider(
+		BevaraAuthenticationProvider.id,
+		'Bevara Authentification',
+		new BevaraAuthenticationProvider(context.secrets),
+	));
+
+
 
 	vscode.commands.registerCommand('bevexplorer.exploreBevFile', (url: string, filter:string) => {
 		if (url){
