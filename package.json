@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.1.1",
+	"version": "1.1.5",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
@@ -12,10 +12,11 @@
 	"main": "./out/extension.js",
 	"contributes": {
 		"authentication": [
-		{
-			"id": "bevaraSessionToken",
-			"label": "Azure DevOps PAT"
-		}],
+			{
+				"id": "bevaraSessionToken",
+				"label": "Azure DevOps PAT"
+			}
+		],
 		"html": {
 			"customData": [
 				"./html.html-data.json"

@@ -5,10 +5,7 @@ import { getNonce, isDev, accessor_version, getUri } from '../util';
 import { WebviewCollection } from '../webviewCollection';
 import * as https from 'https';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as filter_list from './filter_list.json';
-import { buffer } from 'stream/consumers';
-import { Session } from 'inspector';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 
 
@@ -17,7 +14,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
 	private static readonly viewType = 'bevara.pipeline';
-	private static newBevaraDrawFileId = 1;
 	private _requestId = 1;
 	private readonly _callbacks = new Map<number, (response: any) => void>();
 	private _filter_list = filter_list;
@@ -28,13 +24,15 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	private readonly webviews = new WebviewCollection();
 
 	constructor(
-		private readonly _context: vscode.ExtensionContext
+		private readonly _context: vscode.ExtensionContext,
+		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider,
 	) {
 
 
 	}
 
-	public static register(context: vscode.ExtensionContext): vscode.Disposable {
+	public static register(context: vscode.ExtensionContext, bevaraAuthenticationProvider : BevaraAuthenticationProvider): vscode.Disposable {
+
 		vscode.commands.registerCommand('bevara.pipeline.new', () => {
 			const workspaceFolders = vscode.workspace.workspaceFolders;
 			if (!workspaceFolders) {
@@ -51,7 +49,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		return vscode.window.registerCustomEditorProvider(
 			BevaraUnpreservedEditorProvider.viewType,
-			new BevaraUnpreservedEditorProvider(context),
+			new BevaraUnpreservedEditorProvider(context, bevaraAuthenticationProvider),
 			{
 				// For this demo extension, we enable `retainContextWhenHidden` which keeps the
 				// webview alive even when it is not visible. You should avoid using this setting
@@ -194,23 +192,9 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		return wasms;
 	}
 
-	async login(){
-		const session = await vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: true });
-
-		try {
-			https.get("https://wwww.example.com", async (res) => {
-				vscode.window.showInformationMessage('OK!');
-			});
-		} catch (e: any) {
-			if (e.message === 'Unauthorized') {
-				vscode.window.showErrorMessage('Failed to get profile. You need to use a PAT that has access to all organizations. Please sign out and try again.');
-			}
-			throw e;
-		}
-	}
-
-	resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): void | Thenable<void> {
+	async resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
 		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri, ["/"]);
+
 
 		// Add the webview to our internal set of active webviews
 		this.webviews.add(document.uri, webviewPanel);
@@ -226,14 +210,38 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 		webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
+		
+		this._bevaraAuthenticationProvider.onDidChangeSessions(async (e)=>{
+			const sessions = await this._bevaraAuthenticationProvider.getSessions();
+			if (sessions.length>0){
+				const accessToken  = sessions[0].accessToken;
+				const info = await this._bevaraAuthenticationProvider.info(accessToken);
+				this.postMessage(webviewPanel, 'updateProfile', {
+					account: info
+				});
+			}else{
+				this.postMessage(webviewPanel, 'updateProfile', {
+					account: null
+				});
+			}
+		});
 
 		// Wait for the webview to be properly ready before we init
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			if (e.type === 'ready') {
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], {createIfNone :false})
+				.then( async (session) => {
+					if (session){
+						const info = await this._bevaraAuthenticationProvider.info(session.accessToken);
+						this.postMessage(webviewPanel, 'updateProfile', {
+							account: info
+						});
+					}
+				});
 
 				if (document.uri.scheme === 'untitled') {
 					this.postMessage(webviewPanel, 'init', {
-						untitled: true
+						untitled: true,
 					});
 				} else {
 					this.postMessage(webviewPanel, 'init', {
@@ -273,11 +281,12 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			} else if (e.type === 'inject') {
 				console.log(e.html);
 			} else if (e.type === 'login') {
-				this.login();
-			} else if (e.type === 'getToken') {
-				console.log('getToken :' + e.token);
-			} else if (e.type === 'setToken') {
-				console.log('setToken :' + e.token);
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], {createIfNone :true});
+			}
+			else if (e.type === 'switchUser') {
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], {forceNewSession :true});
+			}else if (e.type === 'logout') {
+				this._bevaraAuthenticationProvider.removeSession("");
 			}
 		});
 	}

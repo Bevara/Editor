@@ -230,5 +230,75 @@
       "mp4mx": "mux_isom.c"
     },
     "licence_required": false
+  },
+  "libmad_1.wasm": {
+    "name": "libmad",
+    "description": "MAD decoder",
+    "filters": [
+      "maddec",
+      "rfmp3"
+    ],
+    "help": "This filter decodes MPEG 1/2 audio streams through libmad library.",
+    "support": [
+      "audio"
+    ],
+    "sources": "https://codeload.github.com/Bevara/libmad/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/libmad/releases/download/1/libmad_1.wasm",
+    "filter_source": {
+      "maddec": "dec_mad.c",
+      "rfmp3": "reframe_mp3.c"
+    },
+    "licence_required": false
+  },
+  "avidmx_1.wasm": {
+    "name": "avidmx",
+    "description": "AVI demultiplexer",
+    "filters": [
+      "avidmx"
+    ],
+    "help": "This filter demultiplexes AVI.",
+    "support": [
+      "video"
+    ],
+    "sources": "https://codeload.github.com/Bevara/avidmx/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/avidmx/releases/download/1/avidmx_1.wasm",
+    "filter_source": {
+      "avidmx": "dmx_avi.c"
+    },
+    "licence_required": false
+  },
+  "libxvid_1.wasm": {
+    "name": "libxvid",
+    "description": "XVid decoder",
+    "filters": [
+      "xviddec",
+      "rfmpgvid"
+    ],
+    "help": "This filter decodes MPEG-4 part 2 (and DivX) through libxvidcore library.",
+    "support": [
+      "video"
+    ],
+    "sources": "https://codeload.github.com/Bevara/libxvid/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/libxvid/releases/download/1/libxvid_1.wasm",
+    "filter_source": {
+      "xviddec": "dec_xvid.c",
+      "rfmpgvid": "reframe_mpegvid.c"
+    },
+    "licence_required": false
+  },
+  "theora_1.wasm": {
+    "name": "theora",
+    "description": "Theora decoder",
+    "filters":["theoradec"],
+    "help": "This filter decodes Theora streams through libtheora library.",
+    "support": [
+        "video"
+    ],
+    "sources":"https://codeload.github.com/Bevara/theora/zip/refs/heads/main",
+    "binaries": "https://github.com/Bevara/theora/releases/download/1/theora_1.wasm",
+    "filter_source":{
+        "theoradec" : "dec_theora.c"
+    },
+    "licence_required": false
   }
 }
