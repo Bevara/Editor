@@ -14,7 +14,7 @@
 		"authentication": [
 			{
 				"id": "bevaraSessionToken",
-				"label": "Azure DevOps PAT"
+				"label": "Bevara Token"
 			}
 		],
 		"html": {

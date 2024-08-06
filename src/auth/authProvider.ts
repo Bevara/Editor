@@ -240,7 +240,7 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 		}
 
 		await secretStorage.store(BevaraAuthenticationProvider.secretKey, token);
-		console.log('Successfully logged in to Azure DevOps');
+		console.log('Successfully logged in to Bevara');
 
 		return new BevaraSession(token);
 
