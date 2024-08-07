@@ -13,11 +13,10 @@ import {
 	Uri
 } from 'vscode';
 import * as https from 'https';
-import * as http from 'http';
 
 const config = {
-	casdoorUrl: "http://192.168.1.120:8000",
-	serverUrl: "http://192.168.1.120:5000",
+	casdoorUrl: "https://bevara-auth.ddns.net",
+	serverUrl: "https://bevara.ddns.net/api",
 	clientId: "1a1be4e3933c8d2ee041",
 	organizationName: "bevara_access",
 	appName: "app-casnode",
@@ -56,7 +55,7 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 
 	async info(accessToken:string){
 		return new Promise((resolve, reject) => {
-			http.get(`${config.serverUrl.trim()}/api/getUserInfo?token=${accessToken}`, (res) => {
+			https.get(`${config.serverUrl.trim()}/api/getUserInfo?token=${accessToken}`, (res) => {
 				if (res.statusCode == 200) {
 					let data = '';
 
@@ -201,7 +200,7 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 
 		async function getOauthToken(uri: string): Promise<string | undefined> {
 			return new Promise((resolve, reject) => {
-				http.get(uri, (res) => {
+				https.get(uri, (res) => {
 					if (res.statusCode == 200) {
 						let data = '';
 
