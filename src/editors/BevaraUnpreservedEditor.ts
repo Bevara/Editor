@@ -5,9 +5,10 @@ import { getNonce, isDev, accessor_version, getUri } from '../util';
 import { WebviewCollection } from '../webviewCollection';
 import * as https from 'https';
 import * as fs from 'fs';
-import * as filter_list from './filter_list.json';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
-
+import * as Octokit from '@octokit/rest';
+import { parse } from 'ini';
+import * as path from 'path';
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
@@ -16,7 +17,10 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	private static readonly viewType = 'bevara.pipeline';
 	private _requestId = 1;
 	private readonly _callbacks = new Map<number, (response: any) => void>();
-	private _filter_list = filter_list;
+	private _filter_list = {};
+	private _octokit = new Octokit.Octokit({
+		'auth': '20ca9332049bdcf5f6b9721e1bf2b2ec4a346f6a'
+	});
 
 	/**
 	 * Tracks all known webviews
@@ -27,11 +31,22 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		private readonly _context: vscode.ExtensionContext,
 		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider,
 	) {
+		const filter_list: any = this._context.globalState.get("filterList");
 
+		/*try {
+			const json = JSON.stringify(filter_list);
+			fs.writeFileSync(this._context.globalStoragePath + "/filterList.json", json, 'utf8');
+		} catch (error) {
+			console.error("Error fetching or parsing the JSON file:", error);
+		}*/
+
+		if (filter_list) {
+			this._filter_list = filter_list;
+		}
 
 	}
 
-	public static register(context: vscode.ExtensionContext, bevaraAuthenticationProvider : BevaraAuthenticationProvider): vscode.Disposable {
+	public static register(context: vscode.ExtensionContext, bevaraAuthenticationProvider: BevaraAuthenticationProvider): vscode.Disposable {
 
 		vscode.commands.registerCommand('bevara.pipeline.new', () => {
 			const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -133,6 +148,122 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		}
 	}
 
+	async getDescFromRepo(owner: string, repo: string, branch?: string) {
+		const response = await this._octokit.repos.getContent({
+			owner: owner,
+			repo: repo,
+			path: repo + ".json",
+			ref: branch, // Optional, default is the repository’s default branch (usually main)
+		});
+
+		// The content is base64 encoded, so you need to decode it
+		const content = Buffer.from((response.data as any).content, 'base64').toString('utf8');
+
+		// Parse the content as JSON
+		return JSON.parse(content);
+	}
+
+	async getAllReleaseTags(owner: string, repo: string) {
+		const releasesResponse = await this._octokit.repos.listReleases({
+			owner: owner,
+			repo: repo
+		});
+
+		return releasesResponse.data;
+	}
+
+	async parseReleaseAssets(owner: string, repo: string, data: any) {
+		const source = data.zipball_url;
+		const binaries = data.assets.filter((x: any) => x.content_type == 'application/wasm');
+		const descs = data.assets.filter((x: any) => x.content_type == 'application/json');
+		const filters: any = {};
+		for (const binary of binaries) {
+			const name = path.parse(binary.name).name;
+			const desc = descs.find((x: any) => path.parse(x.name).name == name);
+			const filter_desc = await this._octokit.repos.getReleaseAsset({
+				owner: owner,
+				repo: repo,
+				asset_id: desc.id,
+				headers: {
+					accept: "application/octet-stream", // GitHub's API requires this header to download binary data
+				},
+			}
+			);
+
+			const content = Buffer.from((filter_desc.data as any), 'base64').toString('utf8');
+			const jsonData = JSON.parse(content);
+			jsonData.sources = source;
+			jsonData.binaries = binary.id;
+			jsonData.owner = owner;
+			jsonData.repo = repo;
+			filters[binary.name] = jsonData;
+		}
+		return filters;
+
+	}
+
+	async initFiltersList(webviewPanel: vscode.WebviewPanel) {
+		const lastCommitHash = await this.getLastCommitHash("Bevara", "filters");
+		this._context.globalState.update("filterListHash", lastCommitHash);
+		// Fetch the .gitmodules file
+		const response = await this._octokit.repos.getContent({
+			owner: "Bevara",
+			repo: "filters",
+			path: ".gitmodules",
+			ref: "master", // Optional, default is the repository’s default branch (usually main)
+		});
+
+		// The content is base64 encoded, so you need to decode it
+		const content = Buffer.from((response.data as any).content, 'base64').toString('utf8');
+
+		// Parse the content as an INI file
+		const submodules = parse(content);
+		let filters: any = {};
+		const total = Object.keys(submodules).length;
+		let counter = 0;
+		for (const key in submodules) {
+			const submodule = submodules[key];
+			if (submodule.path == "third_parties") continue;
+			const end_url = submodule.url.replace("https://github.com/", "");
+			const owner = end_url.split("/")[0];
+			const repo = end_url.split("/")[1].replace(".git", "");
+			try {
+				const all_releases = await this.getAllReleaseTags(owner, repo);
+				if (all_releases.length > 0) {
+					const assests = await this.parseReleaseAssets(owner, repo, all_releases[0]);
+					filters = Object.assign({}, filters, assests);
+				}
+			} catch (error) {
+				console.error("Error fetching or parsing the JSON from repository ", repo, "from owner ", owner, " : ", error);
+			}
+			counter++;
+			this.postMessage(webviewPanel, 'updatingList', {
+				counter: counter,
+				total: total
+			});
+		}
+
+		this._context.globalState.update("filterList", filters);
+		return filters;
+	}
+
+	async getLastCommitHash(owner: string, repo: string) {
+		try {
+			const { data } = await this._octokit.repos.listCommits({
+				owner: owner,
+				repo: repo,
+				per_page: 1,
+			});
+
+			const lastCommitHash = data[0].sha;
+			console.log(`Last commit hash: ${lastCommitHash}`);
+
+			return lastCommitHash;
+		} catch (error) {
+			console.error('Error fetching the last commit:', error);
+		}
+	}
+
 	async downloadWasms(webview: vscode.Webview, ids: string[]) {
 		// Assurez-vous que le répertoire existe
 		if (!fs.existsSync(this._context.globalStoragePath)) {
@@ -178,12 +309,23 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		for (let id of ids) {
 			const wasmFilter = id + ".wasm";
-			if (wasmFilter in filter_list) {
-				const filter = (filter_list as any)[wasmFilter];
+			if (wasmFilter in this._filter_list) {
+				const filter = (this._filter_list as any)[wasmFilter];
 				const file = vscode.Uri.joinPath(this._context.globalStorageUri, wasmFilter).fsPath;
-				let buffer = null;
 				if (!fs.existsSync(file)) {
-					buffer = await fetchWasm(file, filter.binaries);
+					const response = await this._octokit.repos.getReleaseAsset({
+						owner: filter.owner,
+						repo: filter.repo,
+						asset_id: filter.binaries,
+						headers: {
+							accept: "application/octet-stream", // GitHub's API requires this header to download binary data
+						},
+					}
+					);
+					if (vscode.workspace.workspaceFolders) {
+						const wasmData = Buffer.from(response.data as any);
+						fs.writeFileSync(file, wasmData);
+					}
 				}
 				wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
 			}
@@ -194,7 +336,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 	async resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
 		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri, ["/"]);
-
 
 		// Add the webview to our internal set of active webviews
 		this.webviews.add(document.uri, webviewPanel);
@@ -210,16 +351,16 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 		webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
-		
-		this._bevaraAuthenticationProvider.onDidChangeSessions(async (e)=>{
+
+		this._bevaraAuthenticationProvider.onDidChangeSessions(async (e) => {
 			const sessions = await this._bevaraAuthenticationProvider.getSessions();
-			if (sessions.length>0){
-				const accessToken  = sessions[0].accessToken;
+			if (sessions.length > 0) {
+				const accessToken = sessions[0].accessToken;
 				const info = await this._bevaraAuthenticationProvider.info(accessToken);
 				this.postMessage(webviewPanel, 'updateProfile', {
 					account: info
 				});
-			}else{
+			} else {
 				this.postMessage(webviewPanel, 'updateProfile', {
 					account: null
 				});
@@ -227,17 +368,40 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		});
 
 		// Wait for the webview to be properly ready before we init
-		webviewPanel.webview.onDidReceiveMessage(e => {
+		webviewPanel.webview.onDidReceiveMessage(async e => {
 			if (e.type === 'ready') {
-				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], {createIfNone :false})
-				.then( async (session) => {
-					if (session){
-						const info = await this._bevaraAuthenticationProvider.info(session.accessToken);
-						this.postMessage(webviewPanel, 'updateProfile', {
-							account: info
+				// Check user authentification to Bevara
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: false })
+					.then(async (session) => {
+						if (session) {
+							const info = await this._bevaraAuthenticationProvider.info(session.accessToken);
+							this.postMessage(webviewPanel, 'updateProfile', {
+								account: info
+							});
+						}
+					});
+
+				//this._filter_list = await this.initFiltersList(webviewPanel); // Force update
+
+				// Check if filterlist has to be initialized or updates
+				const filterListHash = this._context.globalState.get("filterListHash");
+				const lastCommitHash = await this.getLastCommitHash("Bevara", "filters");
+				if (!filterListHash) {
+					try {
+						this._filter_list = await this.initFiltersList(webviewPanel);
+						this.postMessage(webviewPanel, 'updatingList', {
+							end: true
+						});
+					} catch (error) {
+						console.error("Error innitializing filter list :", error);
+						this.postMessage(webviewPanel, 'updatingList', {
+							end: true
 						});
 					}
-				});
+				} else if (filterListHash != lastCommitHash) {
+					this.postMessage(webviewPanel, 'UpdateAvailable', {
+					});
+				}
 
 				if (document.uri.scheme === 'untitled') {
 					this.postMessage(webviewPanel, 'init', {
@@ -248,7 +412,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 						uri: document.uri,
 						value: document.documentData,
 						scriptsDirectory: `${scriptDirectoryUri}`,
-						filter_list: filter_list,
+						filter_list: this._filter_list,
 						scripts: {
 							"image": isDev ? webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(
 								this._context.extensionUri, 'player', 'build', 'dist', 'universal-img.js')) : "https://bevara.ddns.net/accessors-build/accessors-" + accessor_version + "/universal-img.js",
@@ -281,12 +445,31 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			} else if (e.type === 'inject') {
 				console.log(e.html);
 			} else if (e.type === 'login') {
-				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], {createIfNone :true});
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: true });
 			}
 			else if (e.type === 'switchUser') {
-				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], {forceNewSession :true});
-			}else if (e.type === 'logout') {
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { forceNewSession: true });
+			} else if (e.type === 'logout') {
 				this._bevaraAuthenticationProvider.removeSession("");
+			} else if (e.type === 'addAccessor') {
+				this.getDescFromRepo(e.owner, e.repo, e.branch)
+					.then(() => {
+						this.postMessage(webviewPanel, 'newAccessor', {
+							status: "OK",
+						});
+					});
+			} else if (e.type === 'updateList') {
+				try {
+					this._filter_list = await this.initFiltersList(webviewPanel);
+					this.postMessage(webviewPanel, 'updatingList', {
+						end: true
+					});
+				} catch (error) {
+					console.error("Error innitializing filter list :", error);
+					this.postMessage(webviewPanel, 'updatingList', {
+						end: true
+					});
+				}
 			}
 		});
 	}
