@@ -452,12 +452,20 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			} else if (e.type === 'logout') {
 				this._bevaraAuthenticationProvider.removeSession("");
 			} else if (e.type === 'addAccessor') {
-				this.getDescFromRepo(e.owner, e.repo, e.branch)
-					.then(() => {
-						this.postMessage(webviewPanel, 'newAccessor', {
-							status: "OK",
-						});
+				try {
+					const assests = await this.parseReleaseAssets(e.owner, e.repo, e.release);
+					this._filter_list = Object.assign({}, this._filter_list, assests);
+					this._context.globalState.update("filterList", this._filter_list);
+					this.postMessage(webviewPanel, 'newAccessor', {
+						status: "OK",
+						filter_list : this._filter_list
 					});
+				} catch (error : any) {
+					console.error("Error innitializing filter list :", error);
+					this.postMessage(webviewPanel, 'newAccessor', {
+						status: error.message
+					});
+				}
 			} else if (e.type === 'updateList') {
 				try {
 					this._filter_list = await this.initFiltersList(webviewPanel);
@@ -468,6 +476,18 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					console.error("Error innitializing filter list :", error);
 					this.postMessage(webviewPanel, 'updatingList', {
 						end: true
+					});
+				}
+			}else if (e.type === 'getReleases') {
+				try {
+					const releases = await this.getAllReleaseTags(e.owner, e.repo);
+					this.postMessage(webviewPanel, 'releaseList', {
+						releases: releases
+					});
+				} catch (error) {
+					console.error("Error innitializing filter list :", error);
+					this.postMessage(webviewPanel, 'releaseList', {
+						error: error
 					});
 				}
 			}
