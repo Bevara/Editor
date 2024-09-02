@@ -8,7 +8,9 @@
 	"engines": {
 		"vscode": "^1.74.0"
 	},
-	"activationEvents": [],
+	"activationEvents": [
+		"workspaceContains:.bevara"
+	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"authentication": [
@@ -234,6 +236,18 @@
 			{
 				"command": "bevexplorer.clear",
 				"title": "Clear explorer"
+			},
+			{
+				"command": "extension.showBevaraCompiler",
+				"title": "Show Bevara compiler"
+			},
+			{
+				"command": "bevara-compiler.refreshEntry",
+				"title": "Refresh",
+				"icon": {
+					"light": "images/light/refresh.svg",
+					"dark": "images/dark/refresh.svg"
+				}
 			}
 		],
 		"menus": {
@@ -253,10 +267,24 @@
 				{
 					"command": "bevexplorer.clear",
 					"when": "view == bevExplorer"
+				},
+				{
+					"command": "bevara-compiler.refreshEntry",
+					"when": "view == bevara-compiler",
+					"group": "navigation"
 				}
 			]
 		},
 		"views": {
+			"bevara-sdk": [
+				{
+					"id": "bevara-compiler",
+					"name": "Bevara Compiler",
+					"icon": "images/BEVARA_B_COLOR-BLUE.svg",
+					"contextualTitle": "Bevara Compiler",
+					"when": "showSDK"
+				}
+			],
 			"explorer": [
 				{
 					"id": "bevExplorer",
@@ -269,7 +297,16 @@
 				"view": "bevExplorer",
 				"contents": "No accessors has been opened yet [learn more](https://bevara.com/).\n[View accessors](command:bevara.pipeline.new)"
 			}
-		]
+		],
+		"viewsContainers": {
+			"activitybar": [
+			  {
+				"id": "bevara-sdk",
+				"title": "Bevara SDK",
+				"icon": "images/BEVARA_B_COLOR-BLUE.svg"
+			  }
+			]
+		}
 	},
 	"scripts": {
 		"install:all": "npm install && git submodule init && git submodule update && cd Interface && ./configure && npm run build:webview",
@@ -293,6 +330,7 @@
 	},
 	"dependencies": {
 		"@octokit/rest": "^18.0.0",
+		"@types/git": "^0.0.21",
 		"@types/jszip": "^3.4.1",
 		"adm-zip": "^0.5.10",
 		"axios": "^1.6.2",
