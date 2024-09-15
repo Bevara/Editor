@@ -18,7 +18,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	private static readonly viewType = 'bevara.pipeline';
 	private _requestId = 1;
 	private readonly _callbacks = new Map<number, (response: any) => void>();
-	private _filter_list = {};
+	private _filter_list :any= {};
 	private _credentials = new Credentials();
 	private _gitExt: ScmGitApi | undefined = undefined;
 
@@ -172,7 +172,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		return releasesResponse.data;
 	}
 
-	async parseReleaseAssets(owner: string, repo: string, data: any) {
+	async parseReleaseAssets(owner: string, repo: string, data: any, imported:boolean) {
 		const source = data.zipball_url;
 		const binaries = data.assets.filter((x: any) => x.content_type == 'application/wasm');
 		const descs = data.assets.filter((x: any) => x.content_type == 'application/json');
@@ -196,6 +196,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			jsonData.binaries = binary.id;
 			jsonData.owner = owner;
 			jsonData.repo = repo;
+			jsonData.imported = imported;
 			filters[binary.name] = jsonData;
 		}
 		return filters;
@@ -230,7 +231,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			try {
 				const all_releases = await this.getAllReleaseTags(owner, repo);
 				if (all_releases.length > 0) {
-					const assests = await this.parseReleaseAssets(owner, repo, all_releases[0]);
+					const assests = await this.parseReleaseAssets(owner, repo, all_releases[0], false);
 					filters = Object.assign({}, filters, assests);
 				}
 			} catch (error) {
@@ -543,7 +544,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				this._bevaraAuthenticationProvider.removeSession("");
 			} else if (e.type === 'addAccessor') {
 				try {
-					const assests = await this.parseReleaseAssets(e.owner, e.repo, e.release);
+					const assests = await this.parseReleaseAssets(e.owner, e.repo, e.release, true);
 					this._filter_list = Object.assign({}, this._filter_list, assests);
 					this._context.globalState.update("filterList", this._filter_list);
 					this.postMessage(webviewPanel, 'newAccessor', {
@@ -568,6 +569,18 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 						end: true
 					});
 				}
+			}else if (e.type === 'removeFromList') {
+				for (const keys in this._filter_list){
+					const filter_desc = this._filter_list[keys];
+					if (filter_desc.name == e.filter){
+						delete this._filter_list[keys];
+					}
+				}
+
+				this._context.globalState.update("filterList", this._filter_list);
+				this.postMessage(webviewPanel, 'refreshList', {
+					filter_list: this._filter_list
+				});
 			} else if (e.type === 'getReleases') {
 				try {
 					const releases = await this.getAllReleaseTags(e.owner, e.repo);
