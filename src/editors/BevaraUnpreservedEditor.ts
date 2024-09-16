@@ -7,9 +7,7 @@ import * as https from 'https';
 import * as fs from 'fs';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
-import * as path from 'path';
 import { Credentials } from '../auth/credentials';
-import { GitExtension, API as ScmGitApi } from '../git/vscode.git';
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
@@ -18,9 +16,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	private static readonly viewType = 'bevara.pipeline';
 	private _requestId = 1;
 	private readonly _callbacks = new Map<number, (response: any) => void>();
-	private _filter_list :any= {};
+	private _filter_list: any = {};
 	private _credentials = new Credentials();
-	private _gitExt: ScmGitApi | undefined = undefined;
 
 	/**
 	 * Tracks all known webviews
@@ -148,63 +145,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		}
 	}
 
-	async getDescFromRepo(owner: string, repo: string, branch?: string) {
-		const response = await this._credentials.octokit.repos.getContent({
-			owner: owner,
-			repo: repo,
-			path: repo + ".json",
-			ref: branch, // Optional, default is the repository’s default branch (usually main)
-		});
-
-		// The content is base64 encoded, so you need to decode it
-		const content = Buffer.from((response.data as any).content, 'base64').toString('utf8');
-
-		// Parse the content as JSON
-		return JSON.parse(content);
-	}
-
-	async getAllReleaseTags(owner: string, repo: string) {
-		const releasesResponse = await this._credentials.octokit.repos.listReleases({
-			owner: owner,
-			repo: repo
-		});
-
-		return releasesResponse.data;
-	}
-
-	async parseReleaseAssets(owner: string, repo: string, data: any, imported:boolean) {
-		const source = data.zipball_url;
-		const binaries = data.assets.filter((x: any) => x.content_type == 'application/wasm');
-		const descs = data.assets.filter((x: any) => x.content_type == 'application/json');
-		const filters: any = {};
-		for (const binary of binaries) {
-			const name = path.parse(binary.name).name;
-			const desc = descs.find((x: any) => path.parse(x.name).name == name);
-			const filter_desc = await this._credentials.octokit.repos.getReleaseAsset({
-				owner: owner,
-				repo: repo,
-				asset_id: desc.id,
-				headers: {
-					accept: "application/octet-stream", // GitHub's API requires this header to download binary data
-				},
-			}
-			);
-
-			const content = Buffer.from((filter_desc.data as any), 'base64').toString('utf8');
-			const jsonData = JSON.parse(content);
-			jsonData.sources = source;
-			jsonData.binaries = binary.id;
-			jsonData.owner = owner;
-			jsonData.repo = repo;
-			jsonData.imported = imported;
-			filters[binary.name] = jsonData;
-		}
-		return filters;
-
-	}
-
 	async initFiltersList(webviewPanel: vscode.WebviewPanel) {
-		const lastCommitHash = await this.getLastCommitHash("Bevara", "filters");
+		const lastCommitHash = await this._credentials.getLastCommitHash("Bevara", "filters");
 		this._context.globalState.update("filterListHash", lastCommitHash);
 		// Fetch the .gitmodules file
 		const response = await this._credentials.octokit.repos.getContent({
@@ -229,9 +171,9 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			const owner = end_url.split("/")[0];
 			const repo = end_url.split("/")[1].replace(".git", "");
 			try {
-				const all_releases = await this.getAllReleaseTags(owner, repo);
+				const all_releases = await this._credentials.getAllReleaseTags(owner, repo);
 				if (all_releases.length > 0) {
-					const assests = await this.parseReleaseAssets(owner, repo, all_releases[0], false);
+					const assests = await this._credentials.parseReleaseAssets(owner, repo, all_releases[0], false);
 					filters = Object.assign({}, filters, assests);
 				}
 			} catch (error) {
@@ -246,79 +188,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		this._context.globalState.update("filterList", filters);
 		return filters;
-	}
-
-	async getLastCommitHash(owner: string, repo: string) {
-		try {
-			const { data } = await this._credentials.octokit.repos.listCommits({
-				owner: owner,
-				repo: repo,
-				per_page: 1,
-			});
-
-			const lastCommitHash = data[0].sha;
-			console.log(`Last commit hash: ${lastCommitHash}`);
-
-			return lastCommitHash;
-		} catch (error) {
-			console.error('Error fetching the last commit:', error);
-		}
-	}
-
-	async forkGenericFilter(name: string, owner: string, repo: string) {
-		try {
-			const response = await this._credentials.octokit.repos.createFork({
-				owner: owner,  // Replace with the owner of the repository you want to fork
-				repo: repo,           // Replace with the repository name you want to fork
-				name: name
-			});
-
-			
-			console.log('Repository forked successfully:', response.data);
-
-			const new_owner = response.data.owner.login;
-			await this._credentials.octokit.request('PUT /repos/{owner}/{repo}/actions/permissions', {
-				owner : new_owner,
-				repo: name,
-				enabled: true
-			});
-
-			console.log(`GitHub Actions enabled for ${owner}/${repo}`);
-
-			return response.data;
-		} catch (error) {
-			console.error('Error forking the repository:', error);
-			return null;
-		}
-	}
-
-	async cloneGenericFilter(repository: any) {
-
-		if (this._gitExt == undefined || repository == null) {
-			return;
-		}
-		try {
-
-			const destinationUri = await vscode.window.showOpenDialog({
-				canSelectFolders: true,
-				canSelectFiles: false,
-				canSelectMany: false,
-				openLabel: 'Select a folder to store locally the filter sources',
-			});
-
-			if (!destinationUri || destinationUri.length === 0) {
-				vscode.window.showErrorMessage('No folder selected');
-				return;
-			}
-
-			const localPath = destinationUri[0].fsPath;
-			await vscode.commands.executeCommand('git.clone', repository.clone_url, localPath);
-
-			console.log(`Repository cloned to ${localPath}`);
-			return localPath;
-		} catch (error: any) {
-			console.error('Error cloning the repository:', error.message);
-		}
 	}
 
 	async downloadWasms(webview: vscode.Webview, ids: string[]) {
@@ -391,18 +260,6 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		return wasms;
 	}
 
-	async getBuiltInGitApi(): Promise<ScmGitApi | undefined> {
-		try {
-			const extension = vscode.extensions.getExtension<GitExtension>('vscode.git');
-			if (extension == null) return undefined;
-
-			const gitExtension = extension.isActive ? extension.exports : await extension.activate();
-			return gitExtension?.getAPI(1);
-		} catch {
-			return undefined;
-		}
-	}
-
 	async resolveCustomEditor(document: UnpreservedDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
 		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri, ["/"]);
 
@@ -421,62 +278,18 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 		webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
 
-		this._bevaraAuthenticationProvider.onDidChangeSessions(async (e) => {
-			const sessions = await this._bevaraAuthenticationProvider.getSessions();
-			if (sessions.length > 0) {
-				const accessToken = sessions[0].accessToken;
-				const info = await this._bevaraAuthenticationProvider.info(accessToken);
-				this.postMessage(webviewPanel, 'updateProfile', {
-					account: info
-				});
-			} else {
-				this.postMessage(webviewPanel, 'updateProfile', {
-					logout: true
-				});
-			}
-		});
-
-		// Get github credentials
-		this._credentials.initialize(this._context)
-			.then(async isAuthentificated => {
-				if (isAuthentificated) {
-					const octokit = await this._credentials.login();
-					const userInfo = await octokit.users.getAuthenticated();
-					this.postMessage(webviewPanel, 'updateProfile', {
-						github: userInfo.data
-					});
-				}
-			});
-
-		// Get git extension
-		this.getBuiltInGitApi().then((extension) => {
-			if (extension != undefined) {
-				this._gitExt = extension;
-				this.postMessage(webviewPanel, 'updateProfile', {
-					hasGit: true
-				});
-			}
-		});
 
 		// Wait for the webview to be properly ready before we init
 		webviewPanel.webview.onDidReceiveMessage(async e => {
 			if (e.type === 'ready') {
-				// Check user authentification to Bevara
-				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: false })
-					.then(async (session) => {
-						if (session) {
-							const info = await this._bevaraAuthenticationProvider.info(session.accessToken);
-							this.postMessage(webviewPanel, 'updateProfile', {
-								account: info
-							});
-						}
-					});
+				// Get all credentials
+				this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel);
 
 				//this._filter_list = await this.initFiltersList(webviewPanel); // Force update
 
 				// Check if filterlist has to be initialized or updates
 				const filterListHash = this._context.globalState.get("filterListHash");
-				const lastCommitHash = await this.getLastCommitHash("Bevara", "filters");
+				const lastCommitHash = await this._credentials.getLastCommitHash("Bevara", "filters");
 				if (!filterListHash) {
 					try {
 						this._filter_list = await this.initFiltersList(webviewPanel);
@@ -544,7 +357,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				this._bevaraAuthenticationProvider.removeSession("");
 			} else if (e.type === 'addAccessor') {
 				try {
-					const assests = await this.parseReleaseAssets(e.owner, e.repo, e.release, true);
+					const assests = await this._credentials.parseReleaseAssets(e.owner, e.repo, e.release, true);
 					this._filter_list = Object.assign({}, this._filter_list, assests);
 					this._context.globalState.update("filterList", this._filter_list);
 					this.postMessage(webviewPanel, 'newAccessor', {
@@ -569,10 +382,10 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 						end: true
 					});
 				}
-			}else if (e.type === 'removeFromList') {
-				for (const keys in this._filter_list){
+			} else if (e.type === 'removeFromList') {
+				for (const keys in this._filter_list) {
 					const filter_desc = this._filter_list[keys];
-					if (filter_desc.name == e.filter){
+					if (filter_desc.name == e.filter) {
 						delete this._filter_list[keys];
 					}
 				}
@@ -583,7 +396,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				});
 			} else if (e.type === 'getReleases') {
 				try {
-					const releases = await this.getAllReleaseTags(e.owner, e.repo);
+					const releases = await this._credentials.getAllReleaseTags(e.owner, e.repo);
 					this.postMessage(webviewPanel, 'releaseList', {
 						releases: releases
 					});
@@ -594,14 +407,36 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					});
 				}
 			} else if (e.type === 'loginToGithub') {
-				const octokit = await this._credentials.login();
+				const octokit = await this._credentials.loginToGithub();
 				const userInfo = await octokit.users.getAuthenticated();
 				vscode.window.showInformationMessage(`Logged into GitHub as ${userInfo.data.login}`);
 			} else if (e.type === 'createAccessor') {
-				const repository = await this.forkGenericFilter(e.name, e.owner, e.repo);
-				await this.cloneGenericFilter(repository);
+
+				// if (e.owner == "Bevara" && e.repo == "base_filter"){
+				// 	const repository = await this._credentials.createRepo(e.name, "");
+				// 	const localPath = await this._credentials.cloneRepository(repository.git_url);
+				// 	const downloadUrl = this._credentials.downloadRepoArchive(e.owner, e.repo, "main");
+
+
+				// }else {
+					const repository = await this._credentials.forkExistingFilter(e.name, e.owner, e.repo);
+					await this._credentials.cloneRepository(repository);
+				//}
 			} else if (e.type === 'openExtension') {
 				vscode.commands.executeCommand('extension.open', e.name);
+			} else if (e.type === 'checkIfRepoExists') {
+				const repoExist = await this._credentials.checkIfRepoExists(e.owner, e.repo);
+
+				this.postMessage(webviewPanel, 'repoExist', {
+					repoExist: repoExist,
+					isTemplate : e.isTemplate
+				});
+			}else if (e.type === 'checkIfForkExists') {
+				const forkExist = await this._credentials.checkIfForkExists(e.owner, e.repo, e.username);
+
+				this.postMessage(webviewPanel, 'forkExist', {
+					forkExist: forkExist
+				});
 			}
 		});
 	}
