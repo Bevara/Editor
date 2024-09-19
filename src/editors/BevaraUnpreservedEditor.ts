@@ -9,6 +9,8 @@ import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
 
+import {getGitHubContext} from "../git/repository";
+
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
 	public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;

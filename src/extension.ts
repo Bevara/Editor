@@ -7,6 +7,7 @@ import { BevaraAuthenticationProvider } from './auth/authProvider';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CompilationTreeProvider } from './sdk/compilationTree';
+import { RunStore } from './workflows/store';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));
@@ -73,9 +74,8 @@ export function activate(context: vscode.ExtensionContext) {
 	updateActivityBarVisibility();
 	vscode.workspace.onDidChangeWorkspaceFolders(updateActivityBarVisibility);
 
-	const rootPath = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0))
-		? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
-	const nodeDependenciesProvider = new CompilationTreeProvider(rootPath);
+	const store = new RunStore();
+	const nodeDependenciesProvider = new CompilationTreeProvider(store);
 	vscode.window.registerTreeDataProvider('bevara-compiler', nodeDependenciesProvider);
 	vscode.commands.registerCommand('bevara-compiler.refreshEntry', () => nodeDependenciesProvider.refresh());
 

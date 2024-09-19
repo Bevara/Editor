@@ -1,87 +1,81 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Credentials } from '../auth/credentials';
+import { getCurrentBranch, getGitHubContext, GitHubRepoContext } from '../git/repository';
+import { WorkflowRunNode } from '../workflows/workflowRunNode';
+import { WorkflowRunTreeDataProvider } from '../workflows/workflowRunTreeDataProvider';
+import {RunStore} from "./../workflows/store";
 
-export class CompilationTreeProvider implements vscode.TreeDataProvider<Dependency> {
+type CurrentBranchTreeNode =
+  | CurrentBranchRepoNode
+  | WorkflowRunNode;
 
-	private _onDidChangeTreeData: vscode.EventEmitter<Dependency | undefined | void> = new vscode.EventEmitter<Dependency | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<Dependency | undefined | void> = this._onDidChangeTreeData.event;
+export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
+	implements vscode.TreeDataProvider<CurrentBranchTreeNode> {
 
-	constructor(private workspaceRoot: string | undefined) {
+	private _onDidChangeTreeData: vscode.EventEmitter<CurrentBranchRepoNode | undefined | void> = new vscode.EventEmitter<CurrentBranchRepoNode | undefined | void>();
+	readonly onDidChangeTreeData: vscode.Event<CurrentBranchRepoNode | undefined | void> = this._onDidChangeTreeData.event;
+	private _credentials = new Credentials();
+
+	constructor(store: RunStore
+	) {
+		super(store);
 	}
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
 	}
 
-	getTreeItem(element: Dependency): vscode.TreeItem {
+	getTreeItem(element: CurrentBranchRepoNode): vscode.TreeItem {
 		return element;
 	}
 
-	getChildren(element?: Dependency): Thenable<Dependency[]> {
-		if (!this.workspaceRoot) {
-			vscode.window.showInformationMessage('No dependency in empty workspace');
-			return Promise.resolve([]);
-		}
+	async getChildren(element?: CurrentBranchTreeNode): Promise<CurrentBranchTreeNode[]> {
 
-		if (element) {
-			return Promise.resolve(this.getDepsInPackageJson(path.join(this.workspaceRoot, 'node_modules', element.label, 'package.json')));
-		} else {
-			const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
-			if (this.pathExists(packageJsonPath)) {
-				return Promise.resolve(this.getDepsInPackageJson(packageJsonPath));
-			} else {
-				vscode.window.showInformationMessage('Workspace has no package.json');
-				return Promise.resolve([]);
+		if (!element) {
+			const gitHubContext = await getGitHubContext();
+
+			if (!gitHubContext) {
+				return [];
+			}
+
+			if (gitHubContext.repos.length === 1) {
+				const repoContext = gitHubContext.repos[0];
+				const currentBranch = getCurrentBranch(repoContext.repositoryState);
+				if (!currentBranch) {
+					//log(`Could not find current branch for ${repoContext.name}`);
+					return [];
+				}
+				return (await this.getRuns(repoContext, currentBranch)) || [];
+
 			}
 		}
-
+		return Promise.resolve([]);
 	}
 
-	/**
-	 * Given the path to package.json, read all its dependencies and devDependencies.
-	 */
-	private getDepsInPackageJson(packageJsonPath: string): Dependency[] {
-		const workspaceRoot = this.workspaceRoot;
-		if (this.pathExists(packageJsonPath) && workspaceRoot) {
-			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+	private async getRuns(gitHubRepoContext: GitHubRepoContext, currentBranchName: string): Promise<WorkflowRunNode[]> {
+		// logDebug("Getting workflow runs for branch");
 
-			const toDep = (moduleName: string, version: string): Dependency => {
-				if (this.pathExists(path.join(workspaceRoot, 'node_modules', moduleName))) {
-					return new Dependency(moduleName, version, vscode.TreeItemCollapsibleState.Collapsed);
-				} else {
-					return new Dependency(moduleName, version, vscode.TreeItemCollapsibleState.None, {
-						command: 'extension.openPackageOnNpm',
-						title: '',
-						arguments: [moduleName]
-					});
-				}
-			};
+		const result = await gitHubRepoContext.client.actions.listWorkflowRunsForRepo({
+			owner: gitHubRepoContext.owner,
+			repo: gitHubRepoContext.name,
+			branch: currentBranchName,
+			per_page: 100
+		});
 
-			const deps = packageJson.dependencies
-				? Object.keys(packageJson.dependencies).map(dep => toDep(dep, packageJson.dependencies[dep]))
-				: [];
-			const devDeps = packageJson.devDependencies
-				? Object.keys(packageJson.devDependencies).map(dep => toDep(dep, packageJson.devDependencies[dep]))
-				: [];
-			return deps.concat(devDeps);
-		} else {
-			return [];
-		}
-	}
-
-	private pathExists(p: string): boolean {
-		try {
-			fs.accessSync(p);
-		} catch (err) {
-			return false;
+		const resp = result.data;
+		const runs = resp.workflow_runs;
+		// We are removing newlines from workflow names for presentation purposes
+		for (const run of runs) {
+			run.name = run.name?.replace(/(\r\n|\n|\r)/gm, " ");
 		}
 
-		return true;
+		return this.runNodes(gitHubRepoContext, runs, true);
 	}
 }
 
-export class Dependency extends vscode.TreeItem {
+export class CurrentBranchRepoNode extends vscode.TreeItem {
 
 	constructor(
 		public readonly label: string,

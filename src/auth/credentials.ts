@@ -17,6 +17,7 @@ export class Credentials {
 	private _githubUserInfo: any = null;
 	private _bevaraUserInfo: any = null;
 	private _gitExt: ScmGitApi | undefined = undefined;
+	private _gitHubSession : vscode.AuthenticationSession | undefined = undefined;
 
 	async initialize(context: vscode.ExtensionContext,
 		bevaraAuthenticationProvider: BevaraAuthenticationProvider,
@@ -38,11 +39,11 @@ export class Credentials {
 		 * An entry for the sample extension will be added under the menu to sign in. This allows quietly 
 		 * prompting the user to sign in.
 		 * */
-		const session = await vscode.authentication.getSession(GITHUB_AUTH_PROVIDER_ID, SCOPES, { createIfNone: false });
+		this._gitHubSession = await vscode.authentication.getSession(GITHUB_AUTH_PROVIDER_ID, SCOPES, { createIfNone: false });
 
-		if (session) {
+		if (this._gitHubSession) {
 			this.octokit = new Octokit.Octokit({
-				auth: session.accessToken
+				auth: this._gitHubSession.accessToken
 			});
 
 			const octokit = await this.loginToGithub();
@@ -321,5 +322,25 @@ export class Credentials {
 			console.error('Error checking fork:', error);
 			return false;
 		}
+	}
+
+	async getWorkflow(owner: string, repo: string, workflow_id: string) {
+		try {
+			const workflow = await this.octokit.actions.getWorkflow({
+				owner,
+				repo,
+				workflow_id,
+			});
+			console.log(workflow.data);
+		} catch (error) {
+			console.error(`Error retrieving workflow: ${error}`);
+		}
+	}
+
+	async getGitHubSession(){
+		if (!this._gitHubSession){
+			await this.setOctokit();
+		}
+		return this._gitHubSession;
 	}
 }

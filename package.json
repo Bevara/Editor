@@ -300,11 +300,11 @@
 		],
 		"viewsContainers": {
 			"activitybar": [
-			  {
-				"id": "bevara-sdk",
-				"title": "Bevara SDK",
-				"icon": "images/BEVARA_B_COLOR-BLUE.svg"
-			  }
+				{
+					"id": "bevara-sdk",
+					"title": "Bevara SDK",
+					"icon": "images/BEVARA_B_COLOR-BLUE.svg"
+				}
 			]
 		}
 	},
@@ -339,6 +339,7 @@
 		"jszip": "^3.10.1",
 		"lodash.groupby": "^4.6.0",
 		"path.join": "^1.0.0",
+		"ssh-config": "^5.0.0",
 		"vsce": "^2.15.0",
 		"vscode-uri": "^3.0.7"
 	}
