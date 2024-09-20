@@ -12,7 +12,7 @@ import {getIconForWorkflowRun} from "./icons";
 // import {PreviousAttemptsNode} from "./previousAttemptsNode";
 // import {WorkflowJobNode} from "./workflowJobNode";
 
-// export type WorkflowRunCommandArgs = Pick<WorkflowRunNode, "gitHubRepoContext" | "run" | "store">;
+export type WorkflowRunCommandArgs = Pick<WorkflowRunNode, "gitHubRepoContext" | "run" | "store">;
 
 export class WorkflowRunNode extends vscode.TreeItem {
   constructor(

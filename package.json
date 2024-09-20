@@ -248,6 +248,12 @@
 					"light": "images/light/refresh.svg",
 					"dark": "images/dark/refresh.svg"
 				}
+			},
+			{
+				"command": "bevara-compiler.workflow.run.rerun",
+				"category": "Bevara compiler",
+				"title": "Rerun compilation",
+				"when": "viewItem =~ /run/ && viewItem =~ /rerunnable/"
 			}
 		],
 		"menus": {
@@ -273,15 +279,41 @@
 					"when": "view == bevara-compiler",
 					"group": "navigation"
 				}
+			],
+			"view/item/context": [
+				{
+					"command": "bevara-compiler.workflow.run.rerun",
+					"when": "viewItem =~ /run/ && viewItem =~ /rerunnable/"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "bevara-compiler.workflow.run.rerun",
+					"when": "false"
+				}
 			]
 		},
 		"views": {
 			"bevara-sdk": [
 				{
-					"id": "bevara-compiler",
+					"id": "bevara-compiler.compiler",
 					"name": "Bevara Compiler",
 					"icon": "images/BEVARA_B_COLOR-BLUE.svg",
 					"contextualTitle": "Bevara Compiler",
+					"when": "showSDK"
+				},
+				{
+					"id": "bevara-compiler.actions",
+					"name": "Bevara Actions",
+					"icon": "images/BEVARA_B_COLOR-BLUE.svg",
+					"contextualTitle": "Bevara Actions",
+					"when": "showSDK"
+				},
+				{
+					"id": "bevara-compiler.settings",
+					"name": "Bevara Settings",
+					"icon": "images/BEVARA_B_COLOR-BLUE.svg",
+					"contextualTitle": "Bevara Settings",
 					"when": "showSDK"
 				}
 			],

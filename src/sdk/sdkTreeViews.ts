@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { RunStore } from "../workflows/store";
 import { CompilationTreeProvider } from "./compilationTree";
 import { getGitHubContext } from "../git/repository";
+import { SettingsTreeProvider } from "./settingsTreeProvider";
+import { ActionsTreeProvider } from "./actionsTreeProvider";
 
 // import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
 // import {executeCacheClearCommand} from "../workflow/languageServer";
@@ -13,15 +15,15 @@ import { getGitHubContext } from "../git/repository";
 
 export async function initSdkTreeViews(context: vscode.ExtensionContext, store: RunStore): Promise<void> {
   const compilationTreeProvider = new CompilationTreeProvider(store);
-	vscode.window.registerTreeDataProvider('bevara-compiler', compilationTreeProvider);
+	vscode.window.registerTreeDataProvider('bevara-compiler.compiler', compilationTreeProvider);
 	vscode.commands.registerCommand('bevara-compiler.refreshEntry', () => compilationTreeProvider.refresh());
 
   
-  // const workflowTreeProvider = new WorkflowsTreeProvider(store);
-  // context.subscriptions.push(vscode.window.registerTreeDataProvider("github-actions.workflows", workflowTreeProvider));
+  const actionsTreeProvider = new ActionsTreeProvider();
+  context.subscriptions.push(vscode.window.registerTreeDataProvider("bevara-compiler.actions", actionsTreeProvider));
 
-  //const settingsTreeProvider = new SettingsTreeProvider();
-  //context.subscriptions.push(vscode.window.registerTreeDataProvider("github-actions.settings", settingsTreeProvider));
+  const settingsTreeProvider = new SettingsTreeProvider();
+  context.subscriptions.push(vscode.window.registerTreeDataProvider("bevara-compiler.settings", settingsTreeProvider));
 
   // const currentBranchTreeProvider = new CurrentBranchTreeProvider(store);
   // context.subscriptions.push(

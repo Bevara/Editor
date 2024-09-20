@@ -9,6 +9,7 @@ import * as path from 'path';
 import { RunStore } from './workflows/store';
 import { initResources } from './workflows/icons';
 import { initSdkTreeViews } from './sdk/SdkTreeViews';
+import { registerRerunCompilation } from './commands/rerunCompilation';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));
@@ -78,6 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const store = new RunStore();
 	initResources(context);
 	initSdkTreeViews(context, store);
+	registerRerunCompilation(context);
 
 	const bevaraAuthenticationProvider = new BevaraAuthenticationProvider(context.secrets);
 
