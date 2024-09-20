@@ -3,7 +3,10 @@ import * as vscode from "vscode";
 import {GitHubRepoContext} from "../git/repository";
 import {RunStore} from "./store";
 import {WorkflowRun} from "./workflowRun";
-// import {getIconForWorkflowRun} from "../icons";
+import { WorkflowJobNode } from "./workflowJobNode";
+import { NoWorkflowJobsNode } from "./noWorkflowJobsNode";
+import { PreviousAttemptsNode } from "./previousAttemptsNode";
+import {getIconForWorkflowRun} from "./icons";
 // import {getEventString, getStatusString} from "./runTooltipHelper";
 // import {NoWorkflowJobsNode} from "./noWorkflowJobsNode";
 // import {PreviousAttemptsNode} from "./previousAttemptsNode";
@@ -24,28 +27,28 @@ export class WorkflowRunNode extends vscode.TreeItem {
   }
 
   updateRun(run: WorkflowRun) {
-  //   this.run = run;
-  //   this.label = WorkflowRunNode._getLabel(run, this.workflowName);
+    this.run = run;
+    this.label = WorkflowRunNode._getLabel(run, this.workflowName);
 
-  //   this.contextValue = this.run.contextValue(this.gitHubRepoContext.permissionLevel);
+    this.contextValue = this.run.contextValue(this.gitHubRepoContext.permissionLevel);
 
-  //   this.iconPath = getIconForWorkflowRun(this.run.run);
+    this.iconPath = getIconForWorkflowRun(this.run.run);
   //   this.tooltip = this.getTooltip();
-  // }
+  }
 
-  // async getJobs(): Promise<(WorkflowJobNode | NoWorkflowJobsNode | PreviousAttemptsNode)[]> {
-  //   const jobs = await this.run.jobs();
+  async getJobs(): Promise<(WorkflowJobNode | NoWorkflowJobsNode | PreviousAttemptsNode)[]> {
+    const jobs = await this.run.jobs();
 
-  //   const children: (WorkflowJobNode | NoWorkflowJobsNode | PreviousAttemptsNode)[] = jobs.map(
-  //     job => new WorkflowJobNode(this.gitHubRepoContext, job)
-  //   );
+    const children: (WorkflowJobNode | NoWorkflowJobsNode | PreviousAttemptsNode)[] = jobs.map(
+      job => new WorkflowJobNode(this.gitHubRepoContext, job)
+    );
 
-  //   if (this.run.hasPreviousAttempts) {
-  //     children.push(new PreviousAttemptsNode(this.gitHubRepoContext, this.run));
-  //   }
+    if (this.run.hasPreviousAttempts) {
+      children.push(new PreviousAttemptsNode(this.gitHubRepoContext, this.run));
+    }
 
-  //   return children;
-  // }
+    return children;
+  }
 
   // getTooltip(): vscode.MarkdownString {
   //   let markdownString = "";
@@ -59,7 +62,7 @@ export class WorkflowRunNode extends vscode.TreeItem {
   //   markdownString += getEventString(this.run);
 
   //   return new vscode.MarkdownString(markdownString);
-  }
+  // }
 
   private static _getLabel(run: WorkflowRun, workflowName?: string): string {
     return `${workflowName ? workflowName + " " : ""}#${run.run.run_number}`;

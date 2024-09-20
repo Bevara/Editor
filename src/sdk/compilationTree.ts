@@ -1,33 +1,38 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as path from 'path';
-import { Credentials } from '../auth/credentials';
 import { getCurrentBranch, getGitHubContext, GitHubRepoContext } from '../git/repository';
 import { WorkflowRunNode } from '../workflows/workflowRunNode';
 import { WorkflowRunTreeDataProvider } from '../workflows/workflowRunTreeDataProvider';
 import {RunStore} from "./../workflows/store";
+import { WorkflowJobNode } from '../workflows/workflowJobNode';
+import { NoWorkflowJobsNode } from '../workflows/noWorkflowJobsNode';
+import { PreviousAttemptsNode } from '../workflows/previousAttemptsNode';
+import { AttemptNode } from '../workflows/attemptNode';
 
 type CurrentBranchTreeNode =
   | CurrentBranchRepoNode
-  | WorkflowRunNode;
+  | WorkflowRunNode
+  | WorkflowJobNode 
+  | NoWorkflowJobsNode
+  | PreviousAttemptsNode
+  ;
 
 export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	implements vscode.TreeDataProvider<CurrentBranchTreeNode> {
 
-	private _onDidChangeTreeData: vscode.EventEmitter<CurrentBranchRepoNode | undefined | void> = new vscode.EventEmitter<CurrentBranchRepoNode | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<CurrentBranchRepoNode | undefined | void> = this._onDidChangeTreeData.event;
-	private _credentials = new Credentials();
+	protected _onDidChangeTreeData = new vscode.EventEmitter<CurrentBranchTreeNode | null>();
+	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
 	constructor(store: RunStore
 	) {
 		super(store);
 	}
 
-	refresh(): void {
-		this._onDidChangeTreeData.fire();
+	async refresh(): Promise<void> {
+		this._onDidChangeTreeData.fire(null);
 	}
 
-	getTreeItem(element: CurrentBranchRepoNode): vscode.TreeItem {
+	getTreeItem(element: CurrentBranchTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		return element;
 	}
 
@@ -50,7 +55,16 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 				return (await this.getRuns(repoContext, currentBranch)) || [];
 
 			}
+		}else if (element instanceof WorkflowRunNode) {
+			return element.getJobs();
+		}else if (element instanceof WorkflowJobNode) {
+			return element.getSteps();
+		}else if (element instanceof PreviousAttemptsNode) {
+			return element.getAttempts();
+		}else if (element instanceof AttemptNode) {
+			return element.getJobs();
 		}
+
 		return Promise.resolve([]);
 	}
 
@@ -72,6 +86,10 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 		}
 
 		return this.runNodes(gitHubRepoContext, runs, true);
+	}
+
+	protected _updateNode(node: WorkflowRunNode): void {
+		this._onDidChangeTreeData.fire(node);
 	}
 }
 
