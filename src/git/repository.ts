@@ -1,17 +1,17 @@
 import * as vscode from "vscode";
-import {Octokit} from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
 
 //import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
 //import {handleSamlError} from "../api/handleSamlError";
 //import {getSession} from "../auth/auth";
 //import {getRemoteName, useEnterprise} from "../configuration/configuration";
-import {getRemoteName} from "../configuration/configuration";
-import {Protocol} from "./protocol";
+import { getRemoteName } from "../configuration/configuration";
+import { Protocol } from "./protocol";
 //import {logDebug, logError} from "../log";
 //import {API, GitExtension, RefType, RepositoryState} from "./vscode.git";
-import {RefType} from "./vscode.git.enums";
-import { GitExtension, API, RepositoryState} from '../git/vscode.git';
-import {RepositoryPermission, getRepositoryPermission} from "./repository-permissions";
+import { RefType } from "./vscode.git.enums";
+import { GitExtension, API, RepositoryState, Repository } from '../git/vscode.git';
+import { RepositoryPermission, getRepositoryPermission } from "./repository-permissions";
 import { Credentials } from "../auth/credentials";
 //import {getGitHubApiUri} from "../configuration/configuration";
 
@@ -159,7 +159,7 @@ export interface GitHubContext {
 let gitHubContext: Promise<GitHubContext | undefined> | undefined;
 
 export async function getGitHubContext(): Promise<GitHubContext | undefined> {
-  
+
   if (gitHubContext) {
     return gitHubContext;
   }
@@ -168,35 +168,35 @@ export async function getGitHubContext(): Promise<GitHubContext | undefined> {
   //   //logError(new Error("Cannot fetch github context"));
   //   return undefined;
   // }
-  
+
   try {
     const git = await getGitExtension();
 
     const allProtocolInfos = await getGitHubUrls();
 
     // Filter out wiki repositories because the GET call will fail and throw an error
-    const protocolInfos = allProtocolInfos?.filter((info:any) => !info.protocol.repositoryName.match(/\.wiki$/));
+    const protocolInfos = allProtocolInfos?.filter((info: any) => !info.protocol.repositoryName.match(/\.wiki$/));
 
     if (!protocolInfos) {
       //logDebug("Could not get protocol infos");
       return undefined;
     }
 
-  //   //logDebug("Found protocol infos", protocolInfos.length.toString());
+    //   //logDebug("Found protocol infos", protocolInfos.length.toString());
 
-  //   const session = await getSession();
+    //   const session = await getSession();
     const credentials = new Credentials();
     const session = await credentials.getGitHubSession();
-  
+
     if (!session) {
       // User is not signed in, getSession will prompt them to sign in
       return undefined;
     }
     const username = session.account.label;
 
-    const repos = 
+    const repos =
       await Promise.all(
-        protocolInfos.map(async (protocolInfo : any): Promise<GitHubRepoContext> => {
+        protocolInfos.map(async (protocolInfo: any): Promise<GitHubRepoContext> => {
           //logDebug("Getting infos for repository", protocolInfo.url);
 
           const repoInfo = await credentials.octokit.repos.get({
@@ -208,7 +208,7 @@ export async function getGitHubContext(): Promise<GitHubContext | undefined> {
 
           return {
             workspaceUri: protocolInfo.workspaceUri,
-            client:credentials.octokit,
+            client: credentials.octokit,
             repositoryState: repo?.state,
             name: protocolInfo.protocol.repositoryName,
             owner: protocolInfo.protocol.owner,
@@ -222,8 +222,8 @@ export async function getGitHubContext(): Promise<GitHubContext | undefined> {
 
     gitHubContext = Promise.resolve({
       repos,
-      reposByUri: new Map(repos.map((r:any) => [r.workspaceUri.toString(), r])),
-      reposByOwnerAndName: new Map(repos.map((r:any) => [`${r.owner}/${r.name}`.toLocaleLowerCase(), r])),
+      reposByUri: new Map(repos.map((r: any) => [r.workspaceUri.toString(), r])),
+      reposByOwnerAndName: new Map(repos.map((r: any) => [`${r.owner}/${r.name}`.toLocaleLowerCase(), r])),
       username
     });
   } catch (e) {
@@ -293,4 +293,56 @@ export function getCurrentBranch(state: RepositoryState | undefined): string | u
   }
 
   return head.name;
+}
+
+export async function registerGitRepositoryChangeListener(callback: (repository: Repository) => void) {
+  const git = await getGitExtension();
+  if (!git) return;
+
+  git.repositories.forEach(repository => {
+    repository.state.onDidChange(() => callback(repository));
+  });
+}
+
+export async function registerGitArtifactChangeListener(repoContext : GitHubRepoContext, current_completed_run: number,currentBranch : string|undefined,  callback: (handle: NodeJS.Timer, runId: number) => void, intervalMs = 5000) {
+    const handle = setInterval(async () => {
+      const result = await repoContext.client.actions.listWorkflowRunsForRepo({
+        owner: repoContext.owner,
+        repo: repoContext.name,
+        branch: currentBranch,
+        per_page: 100
+      });
+
+      const resp = result.data;
+      const runs = resp.workflow_runs;
+
+      const last_completed_run = runs.find(x => x.conclusion == 'success');
+      if (!last_completed_run) {
+        return;
+      } else if (last_completed_run.id != current_completed_run) {
+        callback(handle, last_completed_run.id);
+      }
+    }, intervalMs);
+    return handle;
+}
+
+export async function listArtifacts(repoContext : GitHubRepoContext, runId: number) {
+
+  const response = await repoContext.client.actions.listWorkflowRunArtifacts({
+    owner: repoContext.owner,
+    repo: repoContext.name,
+    run_id: runId
+  });
+  return response.data.artifacts;
+}
+
+export async function getArtifact(repoContext : GitHubRepoContext, artifactId: number) {
+  const response = await repoContext.client.actions.downloadArtifact({
+    owner: repoContext.owner,
+    repo: repoContext.name,
+    artifact_id: artifactId,
+    archive_format: 'zip'
+  });
+
+  return Buffer.from(response.data as ArrayBuffer);
 }

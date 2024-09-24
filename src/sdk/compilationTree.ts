@@ -3,19 +3,19 @@ import * as path from 'path';
 import { getCurrentBranch, getGitHubContext, GitHubRepoContext } from '../git/repository';
 import { WorkflowRunNode } from '../workflows/workflowRunNode';
 import { WorkflowRunTreeDataProvider } from '../workflows/workflowRunTreeDataProvider';
-import {RunStore} from "./../workflows/store";
+import { RunStore } from "./../workflows/store";
 import { WorkflowJobNode } from '../workflows/workflowJobNode';
 import { NoWorkflowJobsNode } from '../workflows/noWorkflowJobsNode';
 import { PreviousAttemptsNode } from '../workflows/previousAttemptsNode';
 import { AttemptNode } from '../workflows/attemptNode';
 
 type CurrentBranchTreeNode =
-  | CurrentBranchRepoNode
-  | WorkflowRunNode
-  | WorkflowJobNode 
-  | NoWorkflowJobsNode
-  | PreviousAttemptsNode
-  ;
+	| CurrentBranchRepoNode
+	| WorkflowRunNode
+	| WorkflowJobNode
+	| NoWorkflowJobsNode
+	| PreviousAttemptsNode
+	;
 
 export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	implements vscode.TreeDataProvider<CurrentBranchTreeNode> {
@@ -53,15 +53,14 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 					return [];
 				}
 				return (await this.getRuns(repoContext, currentBranch)) || [];
-
 			}
-		}else if (element instanceof WorkflowRunNode) {
+		} else if (element instanceof WorkflowRunNode) {
 			return element.getJobs();
-		}else if (element instanceof WorkflowJobNode) {
+		} else if (element instanceof WorkflowJobNode) {
 			return element.getSteps();
-		}else if (element instanceof PreviousAttemptsNode) {
+		} else if (element instanceof PreviousAttemptsNode) {
 			return element.getAttempts();
-		}else if (element instanceof AttemptNode) {
+		} else if (element instanceof AttemptNode) {
 			return element.getJobs();
 		}
 
@@ -70,7 +69,6 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 
 	private async getRuns(gitHubRepoContext: GitHubRepoContext, currentBranchName: string): Promise<WorkflowRunNode[]> {
 		// logDebug("Getting workflow runs for branch");
-
 		const result = await gitHubRepoContext.client.actions.listWorkflowRunsForRepo({
 			owner: gitHubRepoContext.owner,
 			repo: gitHubRepoContext.name,

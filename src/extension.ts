@@ -8,8 +8,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RunStore } from './workflows/store';
 import { initResources } from './workflows/icons';
-import { initSdkTreeViews } from './sdk/SdkTreeViews';
 import { registerRerunCompilation } from './commands/rerunCompilation';
+import { initSdkTreeViews } from './sdk/sdkTreeViews';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));

@@ -276,7 +276,7 @@
 				},
 				{
 					"command": "bevara-compiler.refreshEntry",
-					"when": "view == bevara-compiler",
+					"when": "view == bevara-compiler.compiler",
 					"group": "navigation"
 				}
 			],
@@ -303,6 +303,7 @@
 					"when": "showSDK"
 				},
 				{
+					"type": "webview",
 					"id": "bevara-compiler.actions",
 					"name": "Bevara Actions",
 					"icon": "images/BEVARA_B_COLOR-BLUE.svg",
@@ -315,7 +316,7 @@
 					"icon": "images/BEVARA_B_COLOR-BLUE.svg",
 					"contextualTitle": "Bevara Settings",
 					"when": "showSDK"
-				}
+				}				
 			],
 			"explorer": [
 				{
