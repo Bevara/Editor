@@ -5,7 +5,7 @@ import { Utils } from 'vscode-uri';
 
 import { BevaraDocumentDelegate } from '../bevaraDrawDocumentDelegate';
 import { BevaraDrawEdit } from '../bevaraDrawEdit';
-import { Disposable, disposeAll } from '../dispose';
+import { Disposable} from '../dispose';
 
 /**
  * Define the document (the data model) used for bevara draw files.

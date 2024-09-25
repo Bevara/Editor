@@ -12,7 +12,7 @@ const SCOPES = ['user:email', 'repo'];
 
 export class Credentials {
 	public octokit: Octokit.Octokit = new Octokit.Octokit();
-	private _webviewPanel: vscode.WebviewPanel | null = null;
+	private _webview: vscode.Webview | null = null;
 	private _bevaraAuthenticationProvider: BevaraAuthenticationProvider | null = null;
 	private _githubUserInfo: any = null;
 	private _bevaraUserInfo: any = null;
@@ -21,10 +21,10 @@ export class Credentials {
 
 	async initialize(context: vscode.ExtensionContext,
 		bevaraAuthenticationProvider: BevaraAuthenticationProvider,
-		webviewPanel: vscode.WebviewPanel): Promise<void> {
+		webview: vscode.Webview): Promise<void> {
 
 		this._bevaraAuthenticationProvider = bevaraAuthenticationProvider;
-		this._webviewPanel = webviewPanel;
+		this._webview = webview;
 
 		this.registerListeners(context);
 		await this.setOctokit();
@@ -68,7 +68,7 @@ export class Credentials {
 	}
 
 	private async updateInterface() {
-		this.postMessage(this._webviewPanel, 'updateProfile', {
+		this.postMessage(this._webview, 'updateProfile', {
 			account: this._bevaraUserInfo,
 			github: this._githubUserInfo,
 			hasGit: this._gitExt != undefined ? true : false
@@ -126,9 +126,9 @@ export class Credentials {
 		return this.octokit;
 	}
 
-	private postMessage(panel: vscode.WebviewPanel | null, type: string, body: any): void {
-		if (panel) {
-			panel.webview.postMessage({ type, body });
+	private postMessage(webview: vscode.Webview | null, type: string, body: any): void {
+		if (webview) {
+			webview.postMessage({ type, body });
 		}
 	}
 

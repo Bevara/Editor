@@ -4,6 +4,7 @@ import { CompilationTreeProvider } from "./compilationTree";
 import { getGitHubContext } from "../git/repository";
 import { SettingsTreeProvider } from "./settingsTreeProvider";
 import {ActionsViewProvider} from './actionsWebviewProvider';
+import { BevaraAuthenticationProvider } from "../auth/authProvider";
 // import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
 // import {executeCacheClearCommand} from "../workflow/languageServer";
 // import {getGitHubContext} from "../git/repository";
@@ -12,7 +13,7 @@ import {ActionsViewProvider} from './actionsWebviewProvider';
 // import {SettingsTreeProvider} from "./settings";
 // import {WorkflowsTreeProvider} from "./workflows";
 
-export async function initSdkTreeViews(context: vscode.ExtensionContext, store: RunStore): Promise<void> {
+export async function initSdkTreeViews(context: vscode.ExtensionContext, store: RunStore, bevaraAuthenticationProvider: BevaraAuthenticationProvider): Promise<void> {
   const compilationTreeProvider = new CompilationTreeProvider(store);
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bevara-compiler.compiler', compilationTreeProvider)
@@ -26,7 +27,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
 
 
   context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ActionsViewProvider.viewType, new ActionsViewProvider(context.extensionUri)));
+		vscode.window.registerWebviewViewProvider(ActionsViewProvider.viewType, new ActionsViewProvider(context,bevaraAuthenticationProvider)));
 
   const settingsTreeProvider = new SettingsTreeProvider();
   context.subscriptions.push(vscode.window.registerTreeDataProvider("bevara-compiler.settings", settingsTreeProvider));

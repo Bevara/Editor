@@ -9,7 +9,6 @@ import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
 
-import {getGitHubContext} from "../git/repository";
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
 	private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<UnpreservedDocument>>();
@@ -285,7 +284,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		webviewPanel.webview.onDidReceiveMessage(async e => {
 			if (e.type === 'ready') {
 				// Get all credentials
-				this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel);
+				this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
 
 				//this._filter_list = await this.initFiltersList(webviewPanel); // Force update
 

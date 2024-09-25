@@ -1,16 +1,29 @@
 import * as vscode from 'vscode';
-import { getArtifact, getCurrentBranch, getGitHubContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener } from '../git/repository';
+import { getArtifact, getCurrentBranch, getGitHubContext, GitHubRepoContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener } from '../git/repository';
 import { Repository } from '../git/vscode.git';
+import { getCMakeFromUri, getFilterDesc, getOutputFromCmake } from '../filters/cmake';
+import { Credentials } from '../auth/credentials';
+import { BevaraAuthenticationProvider } from '../auth/authProvider';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	public static readonly viewType = "bevara-compiler.actions";
-
+	private _filter_list: any = {};
 	private _view?: vscode.WebviewView;
+	private readonly _extensionUri: vscode.Uri;
+	private _repoContext: GitHubRepoContext | null = null;
+	private _credentials = new Credentials();
 
 	constructor(
-		private readonly _extensionUri: vscode.Uri,
-	) { }
+		private readonly _context: vscode.ExtensionContext,
+		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider
+	) {
+		this._extensionUri = _context.extensionUri;
+		const filter_list: any = this._context.globalState.get("filterList");
+		if (filter_list) {
+			this._filter_list = filter_list;
+		}
+	}
 
 	async getGithubRepoContext() {
 		const gitHubContext = await getGitHubContext();
@@ -30,12 +43,25 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+	rootPath() {
+		return (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0))
+			? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
+	}
+
+
+
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		context: vscode.WebviewViewResolveContext,
 		_token: vscode.CancellationToken,
 	) {
 		const view = webviewView;
+		let output = "";
+		const rootPath = this.rootPath();
+		if (rootPath) {
+			output = getOutputFromCmake(rootPath);
+		}
+
 
 		webviewView.webview.options = {
 			// Allow scripts in the webview
@@ -57,10 +83,11 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		registerGitRepositoryChangeListener(gitChangeCallback);
+		let last_artifact_id = 0;
 
 		this.getGithubRepoContext().then(repoContext => {
-			let last_artifact_id = 0;
 			if (!repoContext) return;
+			this._repoContext = repoContext;
 
 			const currentBranch = getCurrentBranch(repoContext.repositoryState);
 
@@ -73,27 +100,45 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			}
 
 			registerGitArtifactChangeListener(repoContext, 0, currentBranch, artifactChangeCallback);
+		});
 
-			webviewView.webview.onDidReceiveMessage(async (data) => {
-				switch (data.type) {
-					case 'showGitSCM':
-						{
-							vscode.commands.executeCommand('workbench.view.scm');
+		webviewView.webview.onDidReceiveMessage(async (data) => {
+			switch (data.type) {
+				case 'ready':
+					{
+						this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewView.webview);
+						break;
+					}
+				case 'showGitSCM':
+					{
+						vscode.commands.executeCommand('workbench.view.scm');
+						break;
+					}
+				case 'updateArtifact':
+					{
+						if (last_artifact_id == 0) break;
+						if (!this._repoContext) break;
+						const artifacts = await listArtifacts(this._repoContext, last_artifact_id);
+						if (artifacts.length != 1) {
 							break;
 						}
-					case 'updateArtifact':
-						{
-							if (last_artifact_id == 0) break;
-							const artifacts = await listArtifacts(repoContext, last_artifact_id);
-							if (artifacts.length != 1){
-								break;
-							}
-							const buffer = await getArtifact(repoContext, artifacts[0].id);
+						const buffer = await getArtifact(this._repoContext, artifacts[0].id);
 
-							break;
-						}
-				}
-			});
+						break;
+					}
+				case 'loginToGithub':
+					{
+						const octokit = await this._credentials.loginToGithub();
+						const userInfo = await octokit.users.getAuthenticated();
+						vscode.window.showInformationMessage(`Logged into GitHub as ${userInfo.data.login}`);
+						break;
+					}
+				case 'loginToBevara':
+					{
+						vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: true });
+						break;
+					}
+			}
 		});
 
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -132,6 +177,18 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 				<link href="${styleMainUri}" rel="stylesheet">
 			</head>
 			<body>
+				<div class="authBevaraBox">
+					<div>
+					You are not logged to Bevara:
+					</div>
+					<button class="auth-bevara">Sign in to Bevara</button>
+				</div>
+				<div class="authGithubBox">
+					<div>
+					You are not logged to Github:
+					</div>
+					<button class="auth-github">Sign in to Github</button>
+				</div>
 				<div class="changeBox">
 					<div>
 					There are changes that can be committed on the given filter :
