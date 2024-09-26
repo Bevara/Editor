@@ -5,6 +5,7 @@ import { getGitHubContext } from "../git/repository";
 import { SettingsTreeProvider } from "./settingsTreeProvider";
 import {ActionsViewProvider} from './actionsWebviewProvider';
 import { BevaraAuthenticationProvider } from "../auth/authProvider";
+import { registerDynamicCompilation } from "../commands/compilation";
 // import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
 // import {executeCacheClearCommand} from "../workflow/languageServer";
 // import {getGitHubContext} from "../git/repository";
@@ -31,7 +32,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
 
   const settingsTreeProvider = new SettingsTreeProvider();
   context.subscriptions.push(vscode.window.registerTreeDataProvider("bevara-compiler.settings", settingsTreeProvider));
-
+  registerDynamicCompilation(context, settingsTreeProvider);
 
 
 

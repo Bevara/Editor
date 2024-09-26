@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RunStore } from './workflows/store';
 import { initResources } from './workflows/icons';
-import { registerRerunCompilation } from './commands/rerunCompilation';
+import { registerRerunCompilation, registerDynamicCompilation } from './commands/compilation';
 import { initSdkTreeViews } from './sdk/sdkTreeViews';
 
 export function activate(context: vscode.ExtensionContext) {

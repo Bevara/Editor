@@ -21,7 +21,7 @@ export function getCMakeFromUri(uri: string) {
 	return CMake.parse(data);
 }
 
-function getFilterNameFromCMake(ast: any) {
+export function getFilterNameFromCMake(ast: any) {
 	const filternode = ast.find((astNode: any) => astNode && astNode.type == 'command_invocation' &&
 		astNode.identifier && astNode.identifier.value == 'add_filter');
 
@@ -32,7 +32,7 @@ function getFilterNameFromCMake(ast: any) {
 	return filternode.arguments[0].value;
 }
 
-function getFilterVersionFromCMake(ast: any) {
+export function getFilterVersionFromCMake(ast: any) {
 	const filternode = ast.find((astNode: any) => astNode && astNode.type == 'command_invocation' &&
 		astNode.identifier && astNode.identifier.value == 'add_filter');
 
@@ -52,7 +52,7 @@ export function getOutputFromCmake(uri: string){
 }
 
 
-function filterDescFromFilterName(uri: string, filterName:string){
+export function filterDescFromFilterName(uri: string, filterName:string){
 	const descpath = uri + "/"+filterName + ".json";
 
 	if (!pathExists(descpath)){

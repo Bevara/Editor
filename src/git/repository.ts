@@ -304,8 +304,10 @@ export async function registerGitRepositoryChangeListener(callback: (repository:
   });
 }
 
-export async function registerGitArtifactChangeListener(repoContext : GitHubRepoContext, current_completed_run: number,currentBranch : string|undefined,  callback: (handle: NodeJS.Timer, runId: number) => void, intervalMs = 5000) {
-    const handle = setInterval(async () => {
+export async function registerGitArtifactChangeListener(repoContext : GitHubRepoContext, current_completed_run: number | null,currentBranch : string|undefined,  callback: (handle: NodeJS.Timer, runId: number) => void, intervalMs = 5000) {
+    let handle :any = null;
+
+    async function artifactChecker(){
       const result = await repoContext.client.actions.listWorkflowRunsForRepo({
         owner: repoContext.owner,
         repo: repoContext.name,
@@ -319,10 +321,20 @@ export async function registerGitArtifactChangeListener(repoContext : GitHubRepo
       const last_completed_run = runs.find(x => x.conclusion == 'success');
       if (!last_completed_run) {
         return;
-      } else if (last_completed_run.id != current_completed_run) {
+      }
+      
+      if (last_completed_run.id == current_completed_run) {
+        return ;
+      }
+      
+      const artifacts = await listArtifacts(repoContext, last_completed_run.id);
+
+      if (artifacts.length > 0 ){
         callback(handle, last_completed_run.id);
       }
-    }, intervalMs);
+    }
+    await artifactChecker();
+    handle = setInterval(async () => artifactChecker(), intervalMs);
     return handle;
 }
 

@@ -257,6 +257,7 @@ export class Credentials {
 			jsonData.owner = owner;
 			jsonData.repo = repo;
 			jsonData.imported = imported;
+			jsonData.isDev = false;
 			filters[binary.name] = jsonData;
 		}
 		return filters;

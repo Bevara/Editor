@@ -1,116 +1,67 @@
 import * as vscode from "vscode";
 
-// import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
-// import {SettingsRepoNode, getSettingNodes} from "./settings/settingsRepoNode";
-// import {EnvironmentNode} from "./settings/environmentNode";
-// import {EnvironmentsNode} from "./settings/environmentsNode";
-// import {RepoSecretsNode} from "./settings/repoSecretsNode";
-// import {SecretsNode} from "./settings/secretsNode";
-// import {SettingsExplorerNode} from "./settings/types";
-// import {getGitHubContext} from "../git/repository";
-// import {RepoVariablesNode} from "./settings/repoVariablesNode";
-// import {VariablesNode} from "./settings/variablesNode";
-// import {EnvironmentSecretsNode} from "./settings/environmentSecretsNode";
-// import {EnvironmentVariablesNode} from "./settings/environmentVariablesNode";
-// import {OrgVariablesNode} from "./settings/orgVariablesNode";
-// import {OrgSecretsNode} from "./settings/orgSecretsNode";
-// import {GitHubAPIUnreachableNode} from "./shared/gitHubApiUnreachableNode";
+export type SettingsExplorerNode = BooleanTreeItem;
 
-export type SettingsExplorerNode = vscode.TreeItem;
-  // | SecretsNode
-  // | SecretNode
-  // | EnvironmentsNode
-  // | EnvironmentNode
-  // | EnvironmentSecretsNode
-  // | EnvironmentVariablesNode
-  // | OrgSecretsNode
-  // | OrgVariablesNode
-  // | RepoSecretsNode
-  // | RepoVariablesNode
-  // | VariableNode
-  // | VariablesNode
-  // | EmptyNode
-  // | GitHubAPIUnreachableNode;
+export class BooleanTreeItem extends vscode.TreeItem {
+  constructor(
+      public readonly label: string,
+      public boolValue: boolean | undefined,
+      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+      public readonly category?: boolean
+  ) {
+      super(label, collapsibleState);
+      this.description = (boolValue !== undefined) ? (boolValue ? 'True' : 'False') : '';
+      this.contextValue = category ? 'category' : 'booleanItem'; // Assign context values for category and boolean item
+  }
+
+  command = this.boolValue !== undefined ? {
+      command: 'bevara-compile.use-dynamic-compilation',
+      title: 'Use dynamic compiler',
+      arguments: [this]
+  } : undefined;
+}
+
 
 export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExplorerNode> {
   private _onDidChangeTreeData = new vscode.EventEmitter<SettingsExplorerNode | null>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  async refresh(): Promise<void> {
-    // // Don't delete all the nodes if we can't reach GitHub API
-    // if (await canReachGitHubAPI()) {
-    //   this._onDidChangeTreeData.fire(null);
-    // } else {
-    //   await vscode.window.showWarningMessage("Unable to refresh, could not reach GitHub API");
-    // }
-  }
+  private settings: { [key: string]: BooleanTreeItem[] } = {
+    'Compiler': [
+        new BooleanTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None)
+    ]
+};
+
+  // Create the list of parent category items
+    private rootItems: BooleanTreeItem[] = Object.keys(this.settings).map(category => 
+      new BooleanTreeItem(category, undefined, vscode.TreeItemCollapsibleState.Collapsed, true)
+  );
 
   getTreeItem(element: SettingsExplorerNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
 
-  async getChildren(element?: SettingsExplorerNode | undefined): Promise<SettingsExplorerNode[]> {
-    // const gitHubContext = await getGitHubContext();
-    // if (!gitHubContext) {
-    //   return [new GitHubAPIUnreachableNode()];
-    // }
+  getChildren(element?: SettingsExplorerNode ): SettingsExplorerNode[] {
+    // Return the list of items when requested
+    if (!element) {
+      return this.rootItems;
+    }
 
-    // if (!element) {
-    //   if (gitHubContext.repos.length > 0) {
-    //     if (gitHubContext.repos.length == 1) {
-    //       return getSettingNodes(gitHubContext.repos[0]);
-    //     }
-
-    //     return gitHubContext.repos.map(r => new SettingsRepoNode(r));
-    //   }
-    // }
-
-    // if (element instanceof SettingsRepoNode) {
-    //   return element.getSettings();
-    // }
-
-    // //
-    // // Secrets
-    // //
-    // if (element instanceof SecretsNode) {
-    //   return element.nodes;
-    // }
-
-    // if (element instanceof RepoSecretsNode || element instanceof OrgSecretsNode) {
-    //   return element.getSecrets();
-    // }
-
-    // //
-    // // Variables
-    // //
-    // if (element instanceof VariablesNode) {
-    //   return element.nodes;
-    // }
-
-    // if (element instanceof RepoVariablesNode || element instanceof OrgVariablesNode) {
-    //   return element.getVariables();
-    // }
-
-    // //
-    // // Environments
-    // //
-
-    // if (element instanceof EnvironmentsNode) {
-    //   return element.getEnvironments();
-    // }
-
-    // if (element instanceof EnvironmentNode) {
-    //   return element.getNodes();
-    // }
-
-    // if (element instanceof EnvironmentSecretsNode) {
-    //   return element.getSecrets();
-    // }
-
-    // if (element instanceof EnvironmentVariablesNode) {
-    //   return element.getVariables();
-    // }
+    if (element.category) {
+      return this.settings[element.label] || [];
+    }
 
     return [];
+  }
+
+  // Method to toggle boolean value and trigger tree update
+  toggleBoolean(item: BooleanTreeItem): void {
+    item.boolValue = !item.boolValue;
+    item.description = item.boolValue ? 'True' : 'False';
+    this.refresh();
+  }
+
+  refresh(): void {
+    this._onDidChangeTreeData.fire(null);
   }
 }

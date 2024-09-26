@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
 import { getArtifact, getCurrentBranch, getGitHubContext, GitHubRepoContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener } from '../git/repository';
 import { Repository } from '../git/vscode.git';
-import { getCMakeFromUri, getFilterDesc, getOutputFromCmake } from '../filters/cmake';
 import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
+import { addToLibs, getLastArtifactId } from '../libraries/filter';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	public static readonly viewType = "bevara-compiler.actions";
-	private _filter_list: any = {};
 	private _view?: vscode.WebviewView;
 	private readonly _extensionUri: vscode.Uri;
 	private _repoContext: GitHubRepoContext | null = null;
@@ -19,10 +18,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider
 	) {
 		this._extensionUri = _context.extensionUri;
-		const filter_list: any = this._context.globalState.get("filterList");
-		if (filter_list) {
-			this._filter_list = filter_list;
-		}
+		
 	}
 
 	async getGithubRepoContext() {
@@ -43,12 +39,12 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+
+
 	rootPath() {
 		return (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0))
 			? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
 	}
-
-
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
@@ -56,12 +52,6 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		_token: vscode.CancellationToken,
 	) {
 		const view = webviewView;
-		let output = "";
-		const rootPath = this.rootPath();
-		if (rootPath) {
-			output = getOutputFromCmake(rootPath);
-		}
-
 
 		webviewView.webview.options = {
 			// Allow scripts in the webview
@@ -83,23 +73,26 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		registerGitRepositoryChangeListener(gitChangeCallback);
-		let last_artifact_id = 0;
+		let last_artifact_id : number | null= null;
 
 		this.getGithubRepoContext().then(repoContext => {
 			if (!repoContext) return;
 			this._repoContext = repoContext;
+			last_artifact_id = getLastArtifactId(this._context, repoContext);
 
 			const currentBranch = getCurrentBranch(repoContext.repositoryState);
 
 			function artifactChangeCallback(handle: NodeJS.Timer, runId: number) {
-				clearInterval(handle);
 				if (!repoContext) return;
 				last_artifact_id = runId;
 				view.webview.postMessage({ type: 'showNewArtifacts' });
-				registerGitArtifactChangeListener(repoContext, runId, currentBranch, artifactChangeCallback);
+				if (handle){
+					clearInterval(handle);
+					registerGitArtifactChangeListener(repoContext, runId, currentBranch, artifactChangeCallback);
+				}
 			}
 
-			registerGitArtifactChangeListener(repoContext, 0, currentBranch, artifactChangeCallback);
+			registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
 		});
 
 		webviewView.webview.onDidReceiveMessage(async (data) => {
@@ -116,14 +109,9 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					}
 				case 'updateArtifact':
 					{
-						if (last_artifact_id == 0) break;
+						if (last_artifact_id == null) break;
 						if (!this._repoContext) break;
-						const artifacts = await listArtifacts(this._repoContext, last_artifact_id);
-						if (artifacts.length != 1) {
-							break;
-						}
-						const buffer = await getArtifact(this._repoContext, artifacts[0].id);
-
+						addToLibs(this._context, this._repoContext, last_artifact_id);
 						break;
 					}
 				case 'loginToGithub':
