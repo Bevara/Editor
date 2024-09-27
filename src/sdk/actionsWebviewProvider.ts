@@ -3,7 +3,7 @@ import { getArtifact, getCurrentBranch, getGitHubContext, GitHubRepoContext, lis
 import { Repository } from '../git/vscode.git';
 import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
-import { addToLibs, getLastArtifactId } from '../libraries/filter';
+import { addToLibs, getLastArtifactId } from '../filters/libraries';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 

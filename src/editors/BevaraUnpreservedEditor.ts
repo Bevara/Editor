@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
+import { exportHTMLTemplate, storeRelease } from '../filters/libraries';
 
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -240,19 +241,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				const filter = (this._filter_list as any)[wasmFilter];
 				const file = vscode.Uri.joinPath(this._context.globalStorageUri, wasmFilter).fsPath;
 				if (!fs.existsSync(file)) {
-					const response = await this._credentials.octokit.repos.getReleaseAsset({
-						owner: filter.owner,
-						repo: filter.repo,
-						asset_id: filter.binaries,
-						headers: {
-							accept: "application/octet-stream", // GitHub's API requires this header to download binary data
-						},
-					}
-					);
-					if (vscode.workspace.workspaceFolders) {
-						const wasmData = Buffer.from(response.data as any);
-						fs.writeFileSync(file, wasmData);
-					}
+					await storeRelease(this._credentials, filter.owner, filter.repo, filter.binaries, file);
 				}
 				wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
 			}
@@ -420,8 +409,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 
 				// }else {
-					const repository = await this._credentials.forkExistingFilter(e.name, e.owner, e.repo);
-					await this._credentials.cloneRepository(repository);
+				const repository = await this._credentials.forkExistingFilter(e.name, e.owner, e.repo);
+				await this._credentials.cloneRepository(repository);
 				//}
 			} else if (e.type === 'openExtension') {
 				vscode.commands.executeCommand('extension.open', e.name);
@@ -430,14 +419,40 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 				this.postMessage(webviewPanel, 'repoExist', {
 					repoExist: repoExist,
-					isTemplate : e.isTemplate
+					isTemplate: e.isTemplate
 				});
-			}else if (e.type === 'checkIfForkExists') {
+			} else if (e.type === 'checkIfForkExists') {
 				const forkExist = await this._credentials.checkIfForkExists(e.owner, e.repo, e.username);
 
 				this.postMessage(webviewPanel, 'forkExist', {
 					forkExist: forkExist
 				});
+			} else if (e.type === 'download_zip') {
+				await exportHTMLTemplate(this._context, this._credentials, e, "/Users/jeromegorin/project/test_template");
+
+				// const folderUri = await vscode.window.showOpenDialog({
+				// 	canSelectFolders: true,
+				// 	canSelectMany: false,
+				// 	openLabel: 'Select Folder to Save Files'
+				// });
+
+				// if (!folderUri || folderUri.length === 0) {
+				// 	vscode.window.showErrorMessage('No folder selected.');
+				// 	return;
+				// }
+
+				// await exportHTMLTemplate(this._context, this._credentials, e, folderUri[0].fsPath);
+
+				// const openFolderResponse = await vscode.window.showInformationMessage(
+				// 	'Do you want to open the folder?',
+				// 	'Open Folder'
+				// );
+
+				// if (openFolderResponse === 'Open Folder') {
+				// 	// Open the folder in the system's default file explorer
+				// 	vscode.commands.executeCommand('vscode.openFolder', folderUri[0]);
+				// }
+				
 			}
 		});
 	}
