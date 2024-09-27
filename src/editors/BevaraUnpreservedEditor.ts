@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
-import { exportHTMLTemplate, storeRelease } from '../filters/libraries';
+import { exportHTMLTemplate, exportLibs, storeRelease } from '../filters/libraries';
 
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -428,30 +428,44 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					forkExist: forkExist
 				});
 			} else if (e.type === 'download_zip') {
-				await exportHTMLTemplate(this._context, this._credentials, e, "/Users/jeromegorin/project/test_template");
+				
+				const saveUri = await vscode.window.showSaveDialog({
+					filters: { 'ZIP Files': ['zip'] }, // Only allow .zip files to be saved
+					saveLabel: 'Save ZIP File'
+				});
 
-				// const folderUri = await vscode.window.showOpenDialog({
-				// 	canSelectFolders: true,
-				// 	canSelectMany: false,
-				// 	openLabel: 'Select Folder to Save Files'
-				// });
+				if (!saveUri) {
+					// User cancelled the dialog
+					return;
+				}
+				
+				await exportLibs(this._context, this._credentials, e, saveUri.fsPath);
 
-				// if (!folderUri || folderUri.length === 0) {
-				// 	vscode.window.showErrorMessage('No folder selected.');
-				// 	return;
-				// }
+			}else if (e.type === 'export_html') {
+				
 
-				// await exportHTMLTemplate(this._context, this._credentials, e, folderUri[0].fsPath);
+				const folderUri = await vscode.window.showOpenDialog({
+					canSelectFolders: true,
+					canSelectMany: false,
+					openLabel: 'Select Folder to Save Files'
+				});
 
-				// const openFolderResponse = await vscode.window.showInformationMessage(
-				// 	'Do you want to open the folder?',
-				// 	'Open Folder'
-				// );
+				if (!folderUri || folderUri.length === 0) {
+					vscode.window.showErrorMessage('No folder selected.');
+					return;
+				}
 
-				// if (openFolderResponse === 'Open Folder') {
-				// 	// Open the folder in the system's default file explorer
-				// 	vscode.commands.executeCommand('vscode.openFolder', folderUri[0]);
-				// }
+				await exportHTMLTemplate(this._context, this._credentials, e, folderUri[0].fsPath);
+				
+				const openFolderResponse = await vscode.window.showInformationMessage(
+					'Do you want to open the folder?',
+					'Open Folder'
+				);
+
+				if (openFolderResponse === 'Open Folder') {
+					// Open the folder in the system's default file explorer
+					vscode.commands.executeCommand('vscode.openFolder', folderUri[0]);
+				}
 				
 			}
 		});
