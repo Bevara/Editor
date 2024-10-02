@@ -10,6 +10,7 @@ import { RunStore } from './workflows/store';
 import { initResources } from './workflows/icons';
 import { registerRerunCompilation, registerDynamicCompilation } from './commands/compilation';
 import { initSdkTreeViews } from './sdk/sdkTreeViews';
+import {WelcomePanel } from './sdk/welcomeWebviewProvider';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));
@@ -19,29 +20,10 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider('bevExplorer', bevExplorerProvider);
 	vscode.workspace.registerTextDocumentContentProvider('accessor', bevExplorerProvider);
 
-	// Bevara compiler
-	//const bevCompilerProvider = new BevTreeDataProvider();
-	//vscode.window.registerTreeDataProvider('bevCompiler', bevExplorerProvider);
-	function getWebviewContent() {
-		return `
-			<html>
-			<body>
-				<h1>Welcome to Bevara compiler</h1>
-				<p>This panel is shown because ".bevara" is present in the workspace.</p>
-			</body>
-			</html>`;
-	}
+
 
 	const disposable = vscode.commands.registerCommand('extension.showPanel', () => {
-		const panel = vscode.window.createWebviewPanel(
-			'myPanel', // Identifies the type of the webview. Used internally
-			'Bevara compiler', // Title of the panel displayed to the user
-			vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-			{}
-		);
-
-		// Set HTML content for the webview
-		panel.webview.html = getWebviewContent();
+		WelcomePanel.createOrShow(context);
 	});
 
 	context.subscriptions.push(disposable);
