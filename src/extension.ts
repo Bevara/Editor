@@ -11,6 +11,7 @@ import { initResources } from './workflows/icons';
 import { registerRerunCompilation, registerDynamicCompilation } from './commands/compilation';
 import { initSdkTreeViews } from './sdk/sdkTreeViews';
 import {WelcomePanel } from './sdk/welcomeWebviewProvider';
+import { isEulaAccepted } from './sdk/options';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));
@@ -22,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 
-	const disposable = vscode.commands.registerCommand('extension.showPanel', () => {
+	const disposable = vscode.commands.registerCommand('bevara-compiler.showWelcomePanel', () => {
 		WelcomePanel.createOrShow(context);
 	});
 
@@ -46,8 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			if (folderExists) {
-				vscode.commands.executeCommand('extension.showPanel');
-				vscode.commands.executeCommand('setContext', 'showSDK', true);
+				vscode.commands.executeCommand('bevara-compiler.showWelcomePanel');
+				if (isEulaAccepted(context)){
+					vscode.commands.executeCommand('setContext', 'showSDK', true);
+				}
 			}else{
 				vscode.commands.executeCommand('setContext', 'showSDK', false);
 			}

@@ -72,34 +72,34 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			}
 		}
 
-		registerGitRepositoryChangeListener(gitChangeCallback);
+		
 		let last_artifact_id : number | null= null;
 
-		this.getGithubRepoContext().then(repoContext => {
+		function artifactChangeCallback(repoContext :GitHubRepoContext, handle: NodeJS.Timer, currentBranch: string | undefined, runId: number) {
 			if (!repoContext) return;
-			this._repoContext = repoContext;
-			last_artifact_id = getLastArtifactId(this._context, repoContext);
-
-			const currentBranch = getCurrentBranch(repoContext.repositoryState);
-
-			function artifactChangeCallback(handle: NodeJS.Timer, runId: number) {
-				if (!repoContext) return;
-				last_artifact_id = runId;
-				view.webview.postMessage({ type: 'showNewArtifacts' });
-				if (handle){
-					clearInterval(handle);
-					registerGitArtifactChangeListener(repoContext, runId, currentBranch, artifactChangeCallback);
-				}
+			last_artifact_id = runId;
+			view.webview.postMessage({ type: 'showNewArtifacts' });
+			if (handle){
+				clearInterval(handle);
+				registerGitArtifactChangeListener(repoContext, runId, currentBranch, artifactChangeCallback);
 			}
-
-			registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
-		});
+		}
 
 		webviewView.webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
 				case 'ready':
 					{
 						this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewView.webview);
+						registerGitRepositoryChangeListener(gitChangeCallback);
+						const repoContext = await this.getGithubRepoContext();
+						if (!repoContext) {
+							break;
+						}
+						this._repoContext = repoContext;
+						last_artifact_id = getLastArtifactId(this._context, repoContext);
+
+						const currentBranch = getCurrentBranch(repoContext.repositoryState);
+						registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
 						break;
 					}
 				case 'showGitSCM':
