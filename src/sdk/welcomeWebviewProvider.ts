@@ -366,7 +366,7 @@ export class WelcomePanel {
 			</div>
 		</div>
 		<div class="fusion-layout-column fusion_builder_column fusion-builder-column-10 fusion_builder_column_1_2 1_2 fusion-flex-column"
-			style="--awb-padding-left:50px;--awb-bg-color:var(--awb-color2);--awb-bg-color-hover:var(--awb-color2);--awb-bg-size:cover;--awb-box-shadow:-100px 20px 0px 40px var(--awb-color2);;--awb-width-large:50%;--awb-margin-top-large:0px;--awb-spacing-right-large:3.84%;--awb-margin-bottom-large:0px;--awb-spacing-left-large:3.84%;--awb-width-medium:100%;--awb-order-medium:0;--awb-spacing-right-medium:1.92%;--awb-spacing-left-medium:1.92%;--awb-width-small:100%;--awb-order-small:0;--awb-spacing-right-small:1.92%;--awb-spacing-left-small:1.92%;">
+			style="">
 				<img src="${newLibGifPath}"  width="300"/>
 			
 		</div>
