@@ -19,3 +19,25 @@ export function setEulaAccepted(context : vscode.ExtensionContext, value: boolea
 	bevara_sdk.eula_accepted = value;
 	context.globalState.update("bevara_sdk", bevara_sdk);
 }
+
+export function isInternalCompiler(context : vscode.ExtensionContext) {
+	const internal_compiler = getBevaraContext(context).internal_compiler;
+	return internal_compiler == null ? false : internal_compiler;
+}
+
+export function setInternalCompiler(context : vscode.ExtensionContext, value: boolean) {
+	const bevara_sdk = getBevaraContext(context);
+	bevara_sdk.internal_compiler = value;
+	context.globalState.update("bevara_sdk", bevara_sdk);
+}
+
+export function showPopUp(context : vscode.ExtensionContext) {
+	const showPopUp = getBevaraContext(context).showPopUp;
+	return showPopUp == null ? true : showPopUp;
+}
+
+export function setshowPopUp(context : vscode.ExtensionContext, value: boolean) {
+	const bevara_sdk = getBevaraContext(context);
+	bevara_sdk.showPopUp = value;
+	context.globalState.update("bevara_sdk", bevara_sdk);
+}

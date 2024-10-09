@@ -30,18 +30,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		private readonly _context: vscode.ExtensionContext,
 		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider,
 	) {
-		const filter_list: any = this._context.globalState.get("filterList");
-
-		/*try {
-			const json = JSON.stringify(filter_list);
-			fs.writeFileSync(this._context.globalStoragePath + "/filterList.json", json, 'utf8');
-		} catch (error) {
-			console.error("Error fetching or parsing the JSON file:", error);
-		}*/
-
-		if (filter_list) {
-			this._filter_list = filter_list;
-		}
+		
 
 	}
 
@@ -275,6 +264,12 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				// Get all credentials
 				this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
 
+				const filter_list: any = this._context.globalState.get("filterList");
+
+				if (filter_list) {
+					this._filter_list = filter_list;
+				}
+				
 				//this._filter_list = await this.initFiltersList(webviewPanel); // Force update
 
 				// Check if filterlist has to be initialized or updates
@@ -339,7 +334,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			} else if (e.type === 'inject') {
 				console.log(e.html);
 			} else if (e.type === 'login') {
-				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: true });
+				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { forceNewSession: true });
 			}
 			else if (e.type === 'switchUser') {
 				vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { forceNewSession: true });

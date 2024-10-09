@@ -305,7 +305,16 @@ export async function registerGitRepositoryChangeListener(callback: (repository:
   });
 }
 
-export async function registerGitArtifactChangeListener(repoContext : GitHubRepoContext, current_completed_run: number | null,currentBranch : string|undefined,  callback: (repoContext :GitHubRepoContext, handle: NodeJS.Timer, currentBranch: string | undefined, runId: number) => void, intervalMs = 5000) {
+export async function unregisterGitRepositoryChangeListener() {
+  const git = await getGitExtension();
+  if (!git) return;
+
+  git.repositories.forEach(repository => {
+    repository.state.onDidChange(() => null);
+  });
+}
+
+export async function registerGitArtifactChangeListener(repoContext : GitHubRepoContext, current_completed_run: number | null,currentBranch : string|undefined,  callback: (runId: number) => void, intervalMs = 5000) {
     let handle :any = null;
 
     async function artifactChecker(){
@@ -331,7 +340,7 @@ export async function registerGitArtifactChangeListener(repoContext : GitHubRepo
       const artifacts = await listArtifacts(repoContext, last_completed_run.id);
 
       if (artifacts.length > 0 ){
-        callback(repoContext, handle, currentBranch, last_completed_run.id);
+        callback(last_completed_run.id);
       }
     }
     await artifactChecker();

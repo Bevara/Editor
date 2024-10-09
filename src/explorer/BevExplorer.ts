@@ -2,7 +2,6 @@ import { commands, CancellationToken, Event, EventEmitter, ProviderResult, TextD
 import { IBevNode, treeFromPaths } from "./BevNode";
 
 import * as AdmZip from 'adm-zip';
-import * as path from 'path';
 import axios, {isCancel, AxiosError} from 'axios';
 
 const joinPath = require('path.join');

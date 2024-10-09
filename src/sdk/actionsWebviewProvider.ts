@@ -1,24 +1,27 @@
 import * as vscode from 'vscode';
-import { getArtifact, getCurrentBranch, getGitHubContext, GitHubRepoContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener } from '../git/repository';
+import { getCurrentBranch, getGitHubContext, GitHubRepoContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener, unregisterGitRepositoryChangeListener } from '../git/repository';
 import { Repository } from '../git/vscode.git';
 import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { addToLibs, getLastArtifactId } from '../filters/libraries';
+import { isInternalCompiler } from './options';
+import { compileProject } from '../commands/compilation';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	public static readonly viewType = "bevara-compiler.actions";
 	private _view?: vscode.WebviewView;
-	private readonly _extensionUri: vscode.Uri;
+	private readonly _context: vscode.ExtensionContext;
 	private _repoContext: GitHubRepoContext | null = null;
 	private _credentials = new Credentials();
+	private _registerGitRepositoryChangeListenerHandle: NodeJS.Timer | null = null;
 
 	constructor(
-		private readonly _context: vscode.ExtensionContext,
+		private readonly context: vscode.ExtensionContext,
 		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider
 	) {
-		this._extensionUri = _context.extensionUri;
-		
+		this._context = context;
+
 	}
 
 	async getGithubRepoContext() {
@@ -46,21 +49,8 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
 	}
 
-	public resolveWebviewView(
-		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken,
-	) {
-		const view = webviewView;
-
-		webviewView.webview.options = {
-			// Allow scripts in the webview
-			enableScripts: true,
-
-			localResourceRoots: [
-				this._extensionUri
-			]
-		};
+	private async registerGithub(view: vscode.WebviewView, repoContext: GitHubRepoContext) {
+		let last_artifact_id: number | null = null;
 
 		function gitChangeCallback(repository: Repository) {
 			const changes = repository.state.workingTreeChanges;
@@ -72,34 +62,74 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			}
 		}
 
-		
-		let last_artifact_id : number | null= null;
 
-		function artifactChangeCallback(repoContext :GitHubRepoContext, handle: NodeJS.Timer, currentBranch: string | undefined, runId: number) {
-			if (!repoContext) return;
-			last_artifact_id = runId;
-			view.webview.postMessage({ type: 'showNewArtifacts' });
-			if (handle){
-				clearInterval(handle);
-				registerGitArtifactChangeListener(repoContext, runId, currentBranch, artifactChangeCallback);
-			}
+
+
+		function artifactChangeCallback(runId: number) {
+			view.webview.postMessage({ type: 'showNewArtifacts', body: runId });
 		}
+
+		registerGitRepositoryChangeListener(gitChangeCallback);
+
+
+		last_artifact_id = getLastArtifactId(this._context, repoContext);
+
+		const currentBranch = getCurrentBranch(repoContext.repositoryState);
+		this._registerGitRepositoryChangeListenerHandle = await registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
+
+
+		view.webview.postMessage({ type: 'hideCompilationInternal' });
+	}
+
+
+	private registerInternal(view: vscode.WebviewView) {
+		view.webview.postMessage({ type: 'showCompilationInternal' });
+		view.webview.postMessage({ type: 'hideChangeBox' });
+		view.webview.postMessage({ type: 'hideNewArtifacts' });
+		unregisterGitRepositoryChangeListener();
+
+		if (this._registerGitRepositoryChangeListenerHandle) {
+			clearInterval(this._registerGitRepositoryChangeListenerHandle);
+			this._registerGitRepositoryChangeListenerHandle = null;
+		}
+
+
+	}
+
+
+	public resolveWebviewView(
+		webviewView: vscode.WebviewView,
+		context: vscode.WebviewViewResolveContext,
+		_token: vscode.CancellationToken,
+	) {
+		this._view = webviewView;
+
+
+		webviewView.webview.options = {
+			// Allow scripts in the webview
+			enableScripts: true,
+
+			localResourceRoots: [
+				this._context.extensionUri
+			]
+		};
 
 		webviewView.webview.onDidReceiveMessage(async (data) => {
 			switch (data.type) {
 				case 'ready':
 					{
 						this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewView.webview);
-						registerGitRepositoryChangeListener(gitChangeCallback);
-						const repoContext = await this.getGithubRepoContext();
-						if (!repoContext) {
-							break;
+						
+						if (isInternalCompiler(this._context)){
+							this.registerInternal(webviewView);
+						}else{
+							this.getGithubRepoContext().then((repoContext) => {
+								if (repoContext) {
+									this._repoContext = repoContext;
+									this.registerGithub(webviewView, repoContext);
+								}
+							});
 						}
-						this._repoContext = repoContext;
-						last_artifact_id = getLastArtifactId(this._context, repoContext);
-
-						const currentBranch = getCurrentBranch(repoContext.repositoryState);
-						registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
 						break;
 					}
 				case 'showGitSCM':
@@ -109,9 +139,16 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					}
 				case 'updateArtifact':
 					{
-						if (last_artifact_id == null) break;
 						if (!this._repoContext) break;
-						addToLibs(this._context, this._repoContext, last_artifact_id);
+						
+						unregisterGitRepositoryChangeListener();
+						if (this._registerGitRepositoryChangeListenerHandle) {
+							clearInterval(this._registerGitRepositoryChangeListenerHandle);
+							this._registerGitRepositoryChangeListenerHandle = null;
+						}
+						await addToLibs(this._context, this._repoContext, data.body);
+						webviewView.webview.postMessage({ type: 'hideNewArtifacts' });
+						this.registerGithub(webviewView, this._repoContext);
 						break;
 					}
 				case 'loginToGithub':
@@ -126,6 +163,14 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 						vscode.authentication.getSession(BevaraAuthenticationProvider.id, [], { createIfNone: true });
 						break;
 					}
+				case 'launchInternalCompilation':
+					{
+						const path = this.rootPath();
+						if (path){
+							compileProject(path);
+						}
+						break;
+					}
 			}
 		});
 
@@ -136,12 +181,12 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
 		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'actions', 'main.js'));
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'main.js'));
 
 		// Do the same for the stylesheet.
-		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'actions', 'reset.css'));
-		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'actions', 'vscode.css'));
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'actions', 'main.css'));
+		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'reset.css'));
+		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'vscode.css'));
+		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'main.css'));
 
 		// Use a nonce to only allow a specific script to be run.
 		const nonce = getNonce();
@@ -189,10 +234,27 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					</div>
 					<button class="updateArtifact">Add latest filter version to Bevara library</button>
 				</div>
+				<div class="internalCompileBox">
+					<div>
+					You are using the optimized compiler :
+					</div>
+					<button class="launch-compilation">Start compilation</button>
+				</div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
 	}
+
+	toggleInternalCompiler(value: boolean): void {
+		if (this._view == undefined || this._repoContext == null) return;
+
+		if (value == true) {
+			this.registerInternal(this._view);
+		} else {
+			this.registerGithub(this._view, this._repoContext);
+		}
+	}
+
 }
 
 function getNonce() {

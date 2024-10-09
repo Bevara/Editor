@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { isEulaAccepted, setEulaAccepted } from './options';
+import { isEulaAccepted, setEulaAccepted, setshowPopUp, showPopUp } from './options';
 import { getCurrentBranch, getGitHubContext } from '../git/repository';
 
 function getNonce() {
@@ -54,7 +54,7 @@ export class WelcomePanel {
 			return repoContext;
 		}
 	}
-	
+
 	public static createOrShow(context: vscode.ExtensionContext) {
 		const column = vscode.window.activeTextEditor
 			? vscode.window.activeTextEditor.viewColumn
@@ -63,6 +63,10 @@ export class WelcomePanel {
 		// If we already have a panel, show it.
 		if (WelcomePanel.currentPanel) {
 			WelcomePanel.currentPanel._panel.reveal(column);
+			return;
+		}
+
+		if (showPopUp(context) == false) {
 			return;
 		}
 
@@ -147,6 +151,16 @@ export class WelcomePanel {
 			if (x) {
 				x.dispose();
 			}
+		}
+
+		if (isEulaAccepted(this._context)) {
+			vscode.window
+				.showInformationMessage("Do you want to show this panel next time ?", "Yes", "No")
+				.then(answer => {
+					if (answer === "No") {
+						setshowPopUp(this._context, false);
+					}
+				});
 		}
 	}
 
@@ -389,7 +403,14 @@ export class WelcomePanel {
 </div>
 				
 				
-			
+			<div class="fusion-layout-column" style="--awb-padding-top:20px;--awb-padding-right:40px;--awb-padding-bottom:20px;--awb-padding-left:40px;--awb-bg-size:cover;--awb-margin-top-large:20px;--awb-spacing-right-large:3.84%;--awb-margin-bottom-large:20px;--awb-spacing-left-large:3.84%;--awb-width-medium:100%;--awb-order-medium:0;--awb-spacing-right-medium:1.92%;--awb-spacing-left-medium:1.92%;--awb-width-small:100%;--awb-order-small:0;--awb-spacing-right-small:1.92%;--awb-spacing-left-small:1.92%;">
+				<div class="fusion-column-wrapper fusion-column-has-shadow fusion-flex-justify-content-flex-start fusion-content-layout-column">
+					<div class="fusion-text fusion-text-13">
+						<h6>The Bevara series of IDEs use  a proprietary algorithm to analyze an input data file to determine an optimal Accessor for the file. Please, check out the <a href="https://bevara.com/documentation/"> documentation </a> to discover more about filter the filter functionning .</h6>
+					</div>
+				</div>
+			</div>
+
 				</body>
 				</html>`;
 	}

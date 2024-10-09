@@ -5,6 +5,8 @@
 (function () {
     const vscode = acquireVsCodeApi();
 
+    let artifact_id = null;
+
     const changeBox = document.querySelector('.changeBox');
     const commitAndPushButton = document.querySelector('.commit-and-push');
 
@@ -17,12 +19,16 @@
     const authGithubBox = document.querySelector('.authGithubBox');
     const authGithubButton = document.querySelector('.auth-github');
 
+
+    const internalCompileBox = document.querySelector('.internalCompileBox');
+    const launchCompilationButton = document.querySelector('.launch-compilation');
+
     commitAndPushButton?.addEventListener('click', () => {
         vscode.postMessage({ type: 'showGitSCM' });
     });
 
     updateArtifactButton?.addEventListener('click', () => {
-        vscode.postMessage({ type: 'updateArtifact' });
+        vscode.postMessage({ type: 'updateArtifact', body : artifact_id });
     });
 
     authBevaraButton?.addEventListener('click', () => {
@@ -33,6 +39,10 @@
         vscode.postMessage({ type: 'loginToGithub' });
     });
 
+    launchCompilationButton?.addEventListener('click', () => {
+        vscode.postMessage({ type: 'launchInternalCompilation' });
+    });
+
 
 
     //Initial state of boxes
@@ -40,6 +50,7 @@
     newArtifactsBox.style.display = "none";
     authBevaraBox.style.display = "none";
     authGithubBox.style.display = "none";
+    internalCompileBox.style.display = "none";
 
     // Handle messages sent from the extension to the webview
     window.addEventListener('message', e => {
@@ -64,19 +75,30 @@
             case 'showNewArtifacts':
                 {
                     newArtifactsBox.style.display = "block";
+                    artifact_id= body;
+                    break;
+                }
+            case 'hideCompilationInternal':
+                {
+                    internalCompileBox.style.display = "none";
+                    break;
+                }
+            case 'showCompilationInternal':
+                {
+                    internalCompileBox.style.display = "block";
                     break;
                 }
             case 'updateProfile':
                 {
-                    if (body.account){
+                    if (body.account) {
                         authBevaraBox.style.display = "none";
-                    }else{
+                    } else {
                         authBevaraBox.style.display = "block";
                     }
 
-                    if (body.github){
+                    if (body.github) {
                         authGithubBox.style.display = "none";
-                    }else{
+                    } else {
                         authGithubBox.style.display = "block";
                     }
                     break;

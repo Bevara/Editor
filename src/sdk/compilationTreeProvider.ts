@@ -3,7 +3,7 @@ import * as path from 'path';
 import { getCurrentBranch, getGitHubContext, GitHubRepoContext } from '../git/repository';
 import { WorkflowRunNode } from '../workflows/workflowRunNode';
 import { WorkflowRunTreeDataProvider } from '../workflows/workflowRunTreeDataProvider';
-import { RunStore } from "./../workflows/store";
+import { RunStore } from "../workflows/store";
 import { WorkflowJobNode } from '../workflows/workflowJobNode';
 import { NoWorkflowJobsNode } from '../workflows/noWorkflowJobsNode';
 import { PreviousAttemptsNode } from '../workflows/previousAttemptsNode';
@@ -88,6 +88,10 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 
 	protected _updateNode(node: WorkflowRunNode): void {
 		this._onDidChangeTreeData.fire(node);
+	}
+
+	toggleInternalCompiler(value: boolean): void {
+		this.refresh();
 	}
 }
 

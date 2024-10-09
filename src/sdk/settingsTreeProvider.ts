@@ -15,7 +15,7 @@ export class BooleanTreeItem extends vscode.TreeItem {
   }
 
   command = this.boolValue !== undefined ? {
-      command: 'bevara-compile.use-dynamic-compilation',
+      command: 'bevara-compiler.use-dynamic-compilation',
       title: 'Use dynamic compiler',
       arguments: [this]
   } : undefined;
@@ -26,7 +26,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExp
   private _onDidChangeTreeData = new vscode.EventEmitter<SettingsExplorerNode | null>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  private settings: { [key: string]: BooleanTreeItem[] } = {
+  public settings: { [key: string]: BooleanTreeItem[] } = {
     'Compiler': [
         new BooleanTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None)
     ]
