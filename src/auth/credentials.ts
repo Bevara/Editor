@@ -143,7 +143,7 @@ export class Credentials {
 				canSelectFolders: true,
 				canSelectFiles: false,
 				canSelectMany: false,
-				openLabel: 'Select a folder to store locally the filter sources',
+				openLabel: 'Select a folder to store the filter source locally',
 			});
 
 			if (!destinationUri || destinationUri.length === 0) {

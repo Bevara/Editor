@@ -37,3 +37,12 @@ export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) 
 export const isDev = false;
 
 export const accessor_version = 1;
+
+export const config = {
+	casdoorUrl: "https://bevara-auth.ddns.net",
+	serverUrl: "https://bevara.ddns.net/",
+	clientId: "1a1be4e3933c8d2ee041",
+	organizationName: "bevara_access",
+	appName: "app-casnode",
+	redirectPath: "vscode://Bevara.bevara-access/did-authenticate", // in accordance with casdoor configuration
+};

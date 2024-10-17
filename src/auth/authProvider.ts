@@ -13,15 +13,9 @@ import {
 	Uri
 } from 'vscode';
 import * as https from 'https';
+import { config } from '../util';
 
-const config = {
-	casdoorUrl: "https://bevara-auth.ddns.net",
-	serverUrl: "https://bevara.ddns.net/api",
-	clientId: "1a1be4e3933c8d2ee041",
-	organizationName: "bevara_access",
-	appName: "app-casnode",
-	redirectPath: "vscode://Bevara.bevara-access/did-authenticate", // in accordance with casdoor configuration
-};
+
 
 export class BevaraSession implements AuthenticationSession {
 	// We don't know the user's account name, so we'll just use a constant

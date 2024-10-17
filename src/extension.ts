@@ -69,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.authentication.registerAuthenticationProvider(
 		BevaraAuthenticationProvider.id,
-		'Bevara Authentification',
+		'Bevara Authentication',
 		bevaraAuthenticationProvider,
 	));
 

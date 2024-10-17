@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
-
 import * as AdmZip from 'adm-zip';
+import * as https from 'https';
+import * as http from 'http';
+import * as FormData from 'form-data';
+import * as fs from 'fs';
+
+import { config } from '../util';
 
 import { WorkflowRunCommandArgs } from "../workflows/workflowRunNode";
 import { BooleanTreeItem, SettingsTreeProvider } from "../sdk/settingsTreeProvider";
@@ -28,16 +33,16 @@ export function registerRerunCompilation(context: vscode.ExtensionContext) {
   }));
 }
 
-export function registerDynamicCompilation(context: vscode.ExtensionContext, 
+export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
-  actionsViewProvider : ActionsViewProvider,
-  compilationTreeProvider : CompilationTreeProvider
+  actionsViewProvider: ActionsViewProvider,
+  compilationTreeProvider: CompilationTreeProvider
 ) {
   const isInternal = isInternalCompiler(context);
   settingsTreeProvider.settings['Compiler'] = [
-    new BooleanTreeItem('Use dynamic compilation',isInternal , vscode.TreeItemCollapsibleState.None)
+    new BooleanTreeItem('Use dynamic compilation', isInternal, vscode.TreeItemCollapsibleState.None)
   ];
-  
+
   actionsViewProvider.toggleInternalCompiler(isInternal);
   compilationTreeProvider.toggleInternalCompiler(isInternal);
 
@@ -51,9 +56,48 @@ export function registerDynamicCompilation(context: vscode.ExtensionContext,
 }
 
 export function compileProject(
-  path : string
+  path: string
 ) {
   const zip = new AdmZip();
   zip.addLocalFolder(path);
-  console.log(path);
+  const zipBuffer = zip.toBuffer();
+
+
+  const form = new FormData();
+  form.append('file', zipBuffer, {
+    filename: 'compressed-folder.zip',
+    contentType: 'application/zip',
+  });
+
+  // Get the headers required for the multipart form data
+  const formHeaders = form.getHeaders();
+
+  const options = {
+    //hostname: config.serverUrl, // e.g. 'example.com'
+    hostname: "192.168.1.120", // e.g. 'example.com'
+    path: "/file",    // e.g. '/upload'
+    port : 8000,
+    method: 'POST',
+    headers: formHeaders,
+  };
+
+  //const req = https.request(options, (res) => {
+  const req = http.request(options, (res) => {
+    let data = '';
+
+    res.on('data', (chunk) => {
+      data += chunk;
+    });
+
+    res.on('end', () => {
+      fs.writeFileSync(path+"/.bevara/test.wasm", data, 'utf8');
+      console.log('Response from server:', data);
+    });
+  });
+  
+  req.on('error', (e) => {
+    console.error(`Problem with request: ${e.message}`);
+  });
+
+  form.pipe(req);
 }
