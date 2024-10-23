@@ -4,6 +4,7 @@ import * as https from 'https';
 import * as http from 'http';
 import * as FormData from 'form-data';
 import * as fs from 'fs';
+import * as path from 'path';
 
 import { config } from '../util';
 
@@ -70,10 +71,34 @@ function createTerminal() {
 
 
 export function compileProject(
-  path: string
+  folder: string
 ) {
+
+  function addFolderToZip(zip: AdmZip, folderPath:string, baseFolder = "") {
+    const items = fs.readdirSync(folderPath);
+  
+    items.forEach(item => {
+      const fullPath = path.join(folderPath, item);
+  
+      // Skip hidden folders/files (starting with a dot)
+      if (item.startsWith('.')) {
+        return;
+      }
+  
+      const stats = fs.statSync(fullPath);
+  
+      if (stats.isDirectory()) {
+        // Recursively add subfolders
+        addFolderToZip(zip, fullPath, path.join(baseFolder, item));
+      } else {
+        // Add file to zip
+        zip.addLocalFile(fullPath, baseFolder);
+      }
+    });
+  }
+
   const zip = new AdmZip();
-  zip.addLocalFolder(path);
+  addFolderToZip(zip, folder);
   const zipBuffer = zip.toBuffer();
 
 
@@ -110,6 +135,17 @@ export function compileProject(
       fs.writeFile(path, buffer, (err) => {
           if (err) {
               console.error('Error saving the binary file:', err);
+          } else {
+              console.log('Binary file successfully saved.');
+          }
+      });
+    }
+
+    function save_terminal(path:string, data:string){
+      // Sauvegarder le fichier binaire
+      fs.writeFile(path, data, (err) => {
+          if (err) {
+              console.error('Error saving the terminal file:', err);
           } else {
               console.log('Binary file successfully saved.');
           }
@@ -159,8 +195,9 @@ export function compileProject(
 
     res.on('end', () => {
       for (const [key, value] of Object.entries(wasms)) {
-        save_wasm(path + '/.bevara/' + key, value as string);
+        save_wasm(folder + '/.bevara/' + key, value as string);
       }
+      save_terminal(folder + '/.bevara/terminal_data.txt', terminal_data);
       //fs.writeFileSync(path+"/.bevara/test.wasm", data, 'utf8');
       console.log('Response from server:', wasms);
     });
