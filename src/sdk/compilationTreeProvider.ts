@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { getCurrentBranch, getGitHubContext, GitHubRepoContext } from '../git/repository';
 import { WorkflowRunNode } from '../workflows/actions/workflowRunNode';
 import { WorkflowRunTreeDataProvider } from '../workflows/actions/workflowRunTreeDataProvider';
@@ -10,6 +11,7 @@ import { PreviousAttemptsNode } from '../workflows/actions/previousAttemptsNode'
 import { AttemptNode } from '../workflows/actions/attemptNode';
 import { isInternalCompiler } from './options';
 import { rootPath } from '../commands/compilation';
+import { InternalRunNode } from '../workflows/internal/internalRunNode';
 
 type CurrentBranchTreeNode =
 	| CurrentBranchRepoNode
@@ -57,7 +59,7 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 					//log(`Could not find current branch for ${repoContext.name}`);
 					return [];
 				}
-				return (await this.getGithubRuns(repoContext, currentBranch)) || [];
+				return (await this.getActionsRuns(repoContext, currentBranch)) || [];
 			}
 		} else if (element instanceof WorkflowRunNode) {
 			return element.getJobs();
@@ -74,17 +76,11 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 
 	async getInternalChildren(element?: CurrentBranchTreeNode): Promise<CurrentBranchTreeNode[]> {
 		if (!element) {
-			const path = rootPath();
-			if (path){
-				//return (await this.getInternalRuns(path)) || [];
+			const folder = rootPath();
+			if (folder && fs.existsSync(folder+"/.bevara/build")){
+				return (await this.getInternalRuns(folder+"/.bevara/build")) || [];
 			}
-		} else if (element instanceof WorkflowRunNode) {
-			return element.getJobs();
-		} else if (element instanceof WorkflowJobNode) {
-			return element.getSteps();
-		} else if (element instanceof PreviousAttemptsNode) {
-			return element.getAttempts();
-		} else if (element instanceof AttemptNode) {
+		} else if (element instanceof InternalRunNode) {
 			return element.getJobs();
 		}
 
@@ -99,11 +95,26 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 		}
 	}
 
-	/*private async getInternalRuns(): Promise<InternalRunNode[]> {
+	private async getInternalRuns(folderPath:string): Promise<InternalRunNode[]> {
+		const items = fs.readdirSync(folderPath);
+		const runs = [];
+		
+		for (const item of items) {
+			const fullPath = path.join(folderPath, item);
+			if (item.startsWith('.')) {
+				continue;
+			}
+		
+			const stats = fs.statSync(fullPath);
+		
+			if (stats.isDirectory()) {
+				runs.push(new InternalRunNode(fullPath, item));
+			}
+		}
+		return runs;
+	}
 
-	}*/
-
-	private async getGithubRuns(gitHubRepoContext: GitHubRepoContext, currentBranchName: string): Promise<WorkflowRunNode[]> {
+	private async getActionsRuns(gitHubRepoContext: GitHubRepoContext, currentBranchName: string): Promise<WorkflowRunNode[]> {
 		// logDebug("Getting workflow runs for branch");
 		const result = await gitHubRepoContext.client.actions.listWorkflowRunsForRepo({
 			owner: gitHubRepoContext.owner,
