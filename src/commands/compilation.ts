@@ -55,6 +55,20 @@ export function registerDynamicCompilation(context: vscode.ExtensionContext,
   }));
 }
 
+function createTerminal() {
+  const writeEmitter = new vscode.EventEmitter<string>();
+    const pty = {
+      onDidWrite: writeEmitter.event,
+      open: () => { /* noop*/ },
+      close: () => { /* noop*/ },
+      handleInput: (data: string) => { /* noop*/ }
+    };
+    const terminal = vscode.window.createTerminal({ name: `Bevara comiler`, pty });
+    terminal.show();
+    return writeEmitter;
+}
+
+
 export function compileProject(
   path: string
 ) {
@@ -74,27 +88,62 @@ export function compileProject(
 
   const options = {
     //hostname: config.serverUrl, // e.g. 'example.com'
-    hostname: "192.168.1.120", // e.g. 'example.com'
+    //hostname: "192.168.1.120", // e.g. 'example.com'
+    hostname: "localhost", // e.g. 'example.com'
     path: "/file",    // e.g. '/upload'
-    port : 8000,
+    port: 8000,
     method: 'POST',
     headers: formHeaders,
   };
 
+  const writeEmitter = createTerminal();
+
   //const req = https.request(options, (res) => {
   const req = http.request(options, (res) => {
-    let data = '';
+    let terminal_data = '';
+    let wasm_data = '';
+    let wasm_file = '';
+    res.setEncoding('utf8');
+
+    function save_wasm(path:string, data:string){
+      const buffer = Buffer.from(data, 'base64');
+
+      // Sauvegarder le fichier binaire
+      fs.writeFile(path, buffer, (err) => {
+          if (err) {
+              console.error('Error saving the binary file:', err);
+          } else {
+              console.log('Binary file successfully saved.');
+          }
+      });
+    }
 
     res.on('data', (chunk) => {
-      data += chunk;
+      if (chunk.startsWith('data: ')) {
+        writeEmitter.fire(chunk.replace("data: ", ""));
+        terminal_data += chunk.replace("data: ", "");
+      } else if (chunk.startsWith('wasm-file: ')) {
+        if (wasm_file != ''){
+          save_wasm(path + "/.bevara/" + wasm_file, wasm_data);
+        }
+
+        wasm_file = chunk.replace("wasm-file: ", "");
+      }else if (chunk.startsWith('wasm-data: ')) {
+        wasm_data += chunk.replace("wasm-data: ", "");
+      }
+
     });
 
     res.on('end', () => {
-      fs.writeFileSync(path+"/.bevara/test.wasm", data, 'utf8');
-      console.log('Response from server:', data);
+      if (wasm_file != ''){
+        save_wasm(path + "/.bevara/" + wasm_file, wasm_data);
+      }
+      
+      //fs.writeFileSync(path+"/.bevara/test.wasm", data, 'utf8');
+      console.log('Response from server:', terminal_data);
     });
   });
-  
+
   req.on('error', (e) => {
     console.error(`Problem with request: ${e.message}`);
   });
