@@ -87,11 +87,12 @@ export function compileProject(
   const formHeaders = form.getHeaders();
 
   const options = {
+    hostname: "bevara.ddns.net",
     //hostname: config.serverUrl, // e.g. 'example.com'
     //hostname: "192.168.1.120", // e.g. 'example.com'
-    hostname: "localhost", // e.g. 'example.com'
-    path: "/file",    // e.g. '/upload'
-    port: 8000,
+    //hostname: "localhost", // e.g. 'example.com'
+    path: "/api/file",    // e.g. '/upload'
+    //port: 8000,
     method: 'POST',
     headers: formHeaders,
   };
@@ -99,10 +100,7 @@ export function compileProject(
   const writeEmitter = createTerminal();
 
   //const req = https.request(options, (res) => {
-  const req = http.request(options, (res) => {
-    let terminal_data = '';
-    let wasm_data = '';
-    let wasm_file = '';
+  const req = https.request(options, (res) => {
     res.setEncoding('utf8');
 
     function save_wasm(path:string, data:string){
@@ -118,29 +116,53 @@ export function compileProject(
       });
     }
 
+    function parseSSEData(sseData:string) {
+      // Split the SSE data by newline and filter out empty lines
+      const lines = sseData.split('\n').filter(line => line.trim() !== '');
+  
+      // Process each line that starts with 'data:'
+      const messages = lines
+          .filter(line => line.startsWith('data:'))
+          .map(line => line.replace(/^data:\s*/, '')); // Remove 'data: ' prefix
+  
+      return messages;
+    }
+
+    const wasms :any = {};
+    let terminal_data = '';
+
     res.on('data', (chunk) => {
-      if (chunk.startsWith('data: ')) {
-        writeEmitter.fire(chunk.replace("data: ", ""));
-        terminal_data += chunk.replace("data: ", "");
-      } else if (chunk.startsWith('wasm-file: ')) {
-        if (wasm_file != ''){
-          save_wasm(path + "/.bevara/" + wasm_file, wasm_data);
+      const messages = parseSSEData(chunk);
+      let wasm_file ='';
+      let wasm_data ='';
+      let is_wasm_data_buffer =false;
+      messages.forEach((message)=>{
+        if (message.startsWith('terminal: ')) {
+          writeEmitter.fire(message.replace("terminal: ", "")+"\r\n");
+          terminal_data += message.replace("terminal: ", "")+"\n";
+          is_wasm_data_buffer = false;
+        }else if (message.startsWith('wasm-file: ')) {
+          wasm_file = message.replace("wasm-file: ", "");
+          wasms[wasm_file] = '';
+          is_wasm_data_buffer = false;
+        }else if (message.startsWith('wasm-data: ')) {
+          wasm_data = message.replace("wasm-data: ", "");
+          wasms[wasm_file] = wasm_data;
+          is_wasm_data_buffer = true;
+        } else if (is_wasm_data_buffer) {
+          wasms[wasm_file] += message;
+        }else{
+          vscode.window.showErrorMessage(message);
         }
-
-        wasm_file = chunk.replace("wasm-file: ", "");
-      }else if (chunk.startsWith('wasm-data: ')) {
-        wasm_data += chunk.replace("wasm-data: ", "");
-      }
-
+      });
     });
 
     res.on('end', () => {
-      if (wasm_file != ''){
-        save_wasm(path + "/.bevara/" + wasm_file, wasm_data);
+      for (const [key, value] of Object.entries(wasms)) {
+        save_wasm(path + '/.bevara/' + key, value as string);
       }
-      
       //fs.writeFileSync(path+"/.bevara/test.wasm", data, 'utf8');
-      console.log('Response from server:', terminal_data);
+      console.log('Response from server:', wasms);
     });
   });
 

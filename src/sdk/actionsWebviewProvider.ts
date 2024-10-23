@@ -120,16 +120,19 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					{
 						this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewView.webview);
 						
-						if (isInternalCompiler(this._context)){
-							this.registerInternal(webviewView);
-						}else{
-							this.getGithubRepoContext().then((repoContext) => {
-								if (repoContext) {
-									this._repoContext = repoContext;
+						this.getGithubRepoContext().then((repoContext) => {
+							if (repoContext) {
+								this._repoContext = repoContext;
+								if (!isInternalCompiler(this._context)){
 									this.registerGithub(webviewView, repoContext);
 								}
-							});
+							}
+						});
+						
+						if (isInternalCompiler(this._context)){
+							this.registerInternal(webviewView);
 						}
+							
 						break;
 					}
 				case 'showGitSCM':
@@ -246,11 +249,11 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	toggleInternalCompiler(value: boolean): void {
-		if (this._view == undefined || this._repoContext == null) return;
+		if (this._view == undefined) return;
 
 		if (value == true) {
 			this.registerInternal(this._view);
-		} else {
+		} else if (this._repoContext){
 			this.registerGithub(this._view, this._repoContext);
 		}
 	}
