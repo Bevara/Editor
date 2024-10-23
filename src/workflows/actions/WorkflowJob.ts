@@ -1,4 +1,4 @@
-import {GitHubRepoContext} from "../git/repository";
+import {GitHubRepoContext} from "../../git/repository";
 import * as model from "./model";
 
 export class WorkflowJob {

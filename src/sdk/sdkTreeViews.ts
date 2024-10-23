@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { RunStore } from "../workflows/store";
+import { RunStore } from "../workflows/actions/store";
 import { CompilationTreeProvider } from "./compilationTreeProvider";
 import { getGitHubContext } from "../git/repository";
 import { SettingsTreeProvider } from "./settingsTreeProvider";
@@ -15,7 +15,7 @@ import { registerDynamicCompilation } from "../commands/compilation";
 // import {WorkflowsTreeProvider} from "./workflows";
 
 export async function initSdkTreeViews(context: vscode.ExtensionContext, store: RunStore, bevaraAuthenticationProvider: BevaraAuthenticationProvider): Promise<void> {
-  const compilationTreeProvider = new CompilationTreeProvider(store);
+  const compilationTreeProvider = new CompilationTreeProvider(context, store);
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bevara-compiler.compiler', compilationTreeProvider)
   );

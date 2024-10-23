@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { GitHubRepoContext } from "../git/repository";
-import { RepositoryPermission, hasWritePermission } from "../git/repository-permissions";
+import { GitHubRepoContext } from "../../git/repository";
+import { RepositoryPermission, hasWritePermission } from "../../git/repository-permissions";
 // import {log, logDebug} from "../log";
 import * as model from "./model";
 import { WorkflowJob } from "./WorkflowJob";

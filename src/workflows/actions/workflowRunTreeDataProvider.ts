@@ -1,4 +1,4 @@
-import {GitHubRepoContext} from "../git/repository";
+import {GitHubRepoContext} from "../../git/repository";
 import {WorkflowRun} from "./model";
 import {RunStore} from "./store";
 import {WorkflowRunNode} from "./workflowRunNode";

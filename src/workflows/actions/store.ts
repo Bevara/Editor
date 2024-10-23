@@ -1,6 +1,6 @@
 import {setInterval} from "timers";
 import {EventEmitter} from "vscode";
-import {GitHubRepoContext} from "../git/repository";
+import {GitHubRepoContext} from "../../git/repository";
 //import {logDebug} from "../log";
 import * as model from "./model";
 import {WorkflowRun} from "./workflowRun";

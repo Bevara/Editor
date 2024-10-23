@@ -5,7 +5,7 @@ import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { addToLibs, getLastArtifactId } from '../filters/libraries';
 import { isInternalCompiler } from './options';
-import { compileProject } from '../commands/compilation';
+import { compileProject, rootPath } from '../commands/compilation';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
@@ -40,13 +40,6 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			}
 			return repoContext;
 		}
-	}
-
-
-
-	rootPath() {
-		return (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0))
-			? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
 	}
 
 	private async registerGithub(view: vscode.WebviewView, repoContext: GitHubRepoContext) {
@@ -168,7 +161,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					}
 				case 'launchInternalCompilation':
 					{
-						const path = this.rootPath();
+						const path = rootPath();
 						if (path){
 							compileProject(path);
 						}

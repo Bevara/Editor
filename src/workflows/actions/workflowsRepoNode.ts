@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import {GitHubRepoContext} from "../git/repository";
+import {GitHubRepoContext} from "../../git/repository";
 import { Workflow } from "./model";
 import { getWorkflowUri } from "./workflow";
 //import {logDebug} from "../../log";

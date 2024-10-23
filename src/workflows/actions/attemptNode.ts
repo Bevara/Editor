@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import {GitHubRepoContext} from "../git/repository";
+import {GitHubRepoContext} from "../../git/repository";
 import {WorkflowRunAttempt} from "./workflowRun";
 import {getIconForWorkflowRun} from "./icons";
 // import {getEventString, getStatusString} from "./runTooltipHelper";

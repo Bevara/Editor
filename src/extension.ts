@@ -6,8 +6,8 @@ import { BevaraAuthenticationProvider } from './auth/authProvider';
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { RunStore } from './workflows/store';
-import { initResources } from './workflows/icons';
+import { RunStore } from './workflows/actions/store';
+import { initResources } from './workflows/actions/icons';
 import { registerRerunCompilation, registerDynamicCompilation } from './commands/compilation';
 import { initSdkTreeViews } from './sdk/sdkTreeViews';
 import {WelcomePanel } from './sdk/welcomeWebviewProvider';

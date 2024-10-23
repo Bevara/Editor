@@ -8,7 +8,7 @@ import * as path from 'path';
 
 import { config } from '../util';
 
-import { WorkflowRunCommandArgs } from "../workflows/workflowRunNode";
+import { WorkflowRunCommandArgs } from "../workflows/actions/workflowRunNode";
 import { BooleanTreeItem, SettingsTreeProvider } from "../sdk/settingsTreeProvider";
 import { isInternalCompiler, setInternalCompiler } from "../sdk/options";
 import { ActionsViewProvider } from "../sdk/actionsWebviewProvider";
@@ -208,4 +208,9 @@ export function compileProject(
   });
 
   form.pipe(req);
+}
+
+export function rootPath() {
+  return (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0))
+    ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
 }

@@ -8,7 +8,7 @@ import * as vscode from "vscode";
 // } from "@actions/workflow-parser";
 // import {ErrorPolicy} from "@actions/workflow-parser/model/convert";
 // import {basename} from "path";
-import {GitHubRepoContext} from "../git/repository";
+import {GitHubRepoContext} from "../../git/repository";
 
 // export async function getContextStringForWorkflow(workflowUri: vscode.Uri): Promise<string> {
 //   try {
