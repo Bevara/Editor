@@ -12,6 +12,8 @@ import { AttemptNode } from '../workflows/actions/attemptNode';
 import { isInternalCompiler } from './options';
 import { rootPath } from '../commands/compilation';
 import { InternalRunNode } from '../workflows/internal/internalRunNode';
+import { InternalRun } from '../workflows/internal/internalRun';
+import { InternalJobNode } from '../workflows/internal/internalJobNode';
 
 type CurrentBranchTreeNode =
 	| CurrentBranchRepoNode
@@ -77,11 +79,13 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	async getInternalChildren(element?: CurrentBranchTreeNode): Promise<CurrentBranchTreeNode[]> {
 		if (!element) {
 			const folder = rootPath();
-			if (folder && fs.existsSync(folder+"/.bevara/build")){
-				return (await this.getInternalRuns(folder+"/.bevara/build")) || [];
+			if (folder && fs.existsSync(folder+"/.bevara/")){
+				return (await this.getInternalRuns(folder+"/.bevara/")) || [];
 			}
 		} else if (element instanceof InternalRunNode) {
 			return element.getJobs();
+		}else if (element instanceof InternalJobNode) {
+			return element.getSteps();
 		}
 
 		return Promise.resolve([]);
@@ -106,9 +110,9 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 			}
 		
 			const stats = fs.statSync(fullPath);
-		
+			const run = new InternalRun(fullPath);
 			if (stats.isDirectory()) {
-				runs.push(new InternalRunNode(fullPath, item));
+				runs.push(new InternalRunNode(fullPath, item, run));
 			}
 		}
 		return runs;
