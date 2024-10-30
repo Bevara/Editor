@@ -186,6 +186,7 @@ export function compileProject(
           current_path = path.join(buildPath, step.toString());
           fs.mkdirSync(current_path);
           fs.writeFile(path.join(current_path, "NAME"), name, (err) => {
+            vscode.commands.executeCommand('bevara-compiler.refreshEntry');
             if (err) {
               vscode.window.showErrorMessage(message);
             }
@@ -205,12 +206,14 @@ export function compileProject(
           build_returncode |= Number(returncode);
           if (current_path) {
             fs.writeFile(path.join(current_path, "RETURNCODE"), returncode, (err) => {
+              vscode.commands.executeCommand('bevara-compiler.refreshEntry');
               if (err) {
                 vscode.window.showErrorMessage(message);
               }
             });
           }else{
             fs.writeFile(path.join(buildPath, "RETURNCODE"), returncode, (err) => {
+              vscode.commands.executeCommand('bevara-compiler.refreshEntry');
               if (err) {
                 vscode.window.showErrorMessage(message);
               }

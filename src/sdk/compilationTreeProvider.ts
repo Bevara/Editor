@@ -102,7 +102,7 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	private async getInternalRuns(folderPath:string): Promise<InternalRunNode[]> {
 		const items = fs.readdirSync(folderPath);
 		const runs = [];
-		
+		items.sort();
 		for (const item of items) {
 			const fullPath = path.join(folderPath, item);
 			if (item.startsWith('.')) {
@@ -115,6 +115,11 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 				runs.push(new InternalRunNode(fullPath, item, run));
 			}
 		}
+		
+		runs.sort((a,b) =>{
+			return Number(a.internalName) > Number(b.internalName) ? 1 : Number(a.internalName) < Number(b.internalName) ? -1 : 0;
+		});
+		
 		return runs;
 	}
 
