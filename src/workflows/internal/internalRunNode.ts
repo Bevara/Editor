@@ -16,6 +16,7 @@ export class InternalRunNode extends vscode.TreeItem {
   updateRun(run: InternalRun) {
     this.run = run;
     this.label = InternalRunNode._getLabel(run, this.internalName);
+    this.contextValue = this.run.contextValue();
     this.iconPath = getIconForWorkflowRun(this.run.run);
   }
 

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { InternalJob } from "./internalJob";
+import { StatusAndConclusion } from '../actions/icons';
 
 export class InternalRun {
 	public status: string | null = null;
@@ -8,11 +9,22 @@ export class InternalRun {
 	private _jobs: Promise<InternalJob[]> | undefined;
 	private _path: string;
 
-	protected _run: InternalRun;
+	protected _run: StatusAndConclusion ={"status":null, conclusion : null};
 
-	constructor(path: string) {
-		this._run = this;
-		this._path = path;
+	constructor(fullpath: string) {
+		this._path = fullpath;
+		const statusPath = path.join(fullpath, "build", "STATUS");
+		const returnCodePath = path.join(fullpath, "build",  "RETURNCODE");
+		
+		if (fs.existsSync(statusPath)){
+			const status = fs.readFileSync(statusPath, 'utf8');
+			this._run.status = status;
+		}
+
+		if (fs.existsSync(returnCodePath)){
+			const returnCode = fs.readFileSync(returnCodePath, 'utf8');
+			this._run.conclusion = Number(returnCode) == 0 ? "success" : "failure";
+		}
 	}
 
 	async fetchJobs(): Promise<InternalJob[]> {
@@ -35,7 +47,7 @@ export class InternalRun {
 	}
 
 
-	get run(): InternalRun {
+	get run(): StatusAndConclusion {
 		return this._run;
 	}
 
@@ -45,6 +57,13 @@ export class InternalRun {
 		}
 
 		return this._jobs;
+	}
+
+	contextValue(): string {
+		const contextValues = ["run"];
+		const completed = this._run.status === "completed";
+
+		return contextValues.join(" ");
 	}
 }
 

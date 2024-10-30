@@ -13,10 +13,17 @@ export class InternalJob {
     this.name = name;
     this._fullPath = fullPath;
     const statusPath = path.join(this._fullPath, "STATUS");
+    const conclusionPath = path.join(this._fullPath, "RETURNCODE");
     
     if (fs.existsSync(statusPath)) {
-      const returnCode = fs.readFileSync(statusPath, 'utf8');
-      this.job.status = returnCode == '0'? "completed" : "in_progress";
+      const status = fs.readFileSync(statusPath, 'utf8');
+      this.job.status = status;
+
+      if (status == "completed" && fs.existsSync(statusPath)){
+        const returnCode = fs.readFileSync(conclusionPath, 'utf8');
+        this.job.conclusion = Number(returnCode) == 0 ? "success" : "failure";
+      }
+
     }
     
     const items = fs.readdirSync(this._fullPath);

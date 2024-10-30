@@ -5,7 +5,7 @@ import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { addToLibs, getLastArtifactId } from '../filters/libraries';
 import { isInternalCompiler } from './options';
-import { compileProject, rootPath } from '../commands/compilation';
+import { compileProject, getCompilationOutputPath, rootPath } from '../commands/compilation';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
@@ -163,7 +163,8 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					{
 						const path = rootPath();
 						if (path){
-							compileProject(path);
+							const output = getCompilationOutputPath(path);
+							compileProject(path, output);
 						}
 						break;
 					}
