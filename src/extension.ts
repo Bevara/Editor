@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { BevaraPreservedEditorProvider } from './editors/BevaraPreservedEditor';
 import { BevaraUnpreservedEditorProvider } from './editors/BevaraUnpreservedEditor';
 import { BevTreeDataProvider } from './explorer/BevExplorer';
 import { BevaraAuthenticationProvider } from './auth/authProvider';
-
-import * as fs from 'fs';
-import * as path from 'path';
 import { RunStore } from './workflows/actions/store';
 import { initResources } from './workflows/actions/icons';
-import { registerRerunCompilation, registerDynamicCompilation } from './commands/compilation';
 import { initSdkTreeViews } from './sdk/sdkTreeViews';
 import {WelcomePanel } from './sdk/welcomeWebviewProvider';
 import { isEulaAccepted } from './sdk/options';
@@ -16,6 +15,7 @@ import { registerOpenWorkflowStepLogs } from './commands/openWorkflowStepLogs';
 import { registerOpenWorkflowJobLogs } from './commands/openWorkflowJobLogs';
 import { LogScheme } from './logs/constants';
 import { WorkflowStepLogProvider } from './logs/fileProvider';
+import { registerRerunCompilation } from './commands/rerunWorkflowRun';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));

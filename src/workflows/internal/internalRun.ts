@@ -60,7 +60,7 @@ export class InternalRun {
 	}
 
 	contextValue(): string {
-		const contextValues = ["run"];
+		const contextValues = ["r_internal"];
 		const completed = this._run.status === "completed";
 		contextValues.push(completed ? "rerunnable" : "cancelable");
 

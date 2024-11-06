@@ -253,13 +253,19 @@
 				"command": "bevara-compiler.workflow.run.rerun",
 				"category": "Bevara compiler",
 				"title": "Rerun compilation",
-				"when": "viewItem =~ /run/ && viewItem =~ /rerunnable/"
+				"when": "viewItem =~ /r_actions/ && viewItem =~ /rerunnable/"
+			},
+			{
+				"command": "bevara-compiler.internal.run.rerun",
+				"category": "Bevara compiler",
+				"title": "Rerun compilation",
+				"when": "viewItem =~ /r_internal/ && viewItem =~ /rerunnable/"
 			},
 			{
 				"command": "bevara-compiler.workflow.logs",
 				"category": "GitHub Actions",
 				"title": "View job logs",
-				"when": "viewItem =~ /job/",
+				"when": "viewItem =~ /j_actions/",
 				"icon": {
 					"dark": "images/dark/logs.svg",
 					"light": "images/light/logs.svg"
@@ -269,7 +275,7 @@
 				"command": "bevara-compiler.step.logs",
 				"category": "GitHub Actions",
 				"title": "View step logs",
-				"when": "viewItem =~ /step/",
+				"when": "viewItem =~ /s_actions/",
 				"icon": "$(globe)"
 			}
 		],
@@ -303,6 +309,10 @@
 					"when": "viewItem =~ /r_actions/ && viewItem =~ /rerunnable/"
 				},
 				{
+					"command": "bevara-compiler.internal.run.rerun",
+					"when": "viewItem =~ /r_internal/ && viewItem =~ /rerunnable/"
+				},
+				{
 					"command": "bevara-compiler.workflow.logs",
 					"group": "inline",
 					"when": "viewItem =~ /j_actions/ && viewItem =~ /completed/"
@@ -316,6 +326,10 @@
 			"commandPalette": [
 				{
 					"command": "bevara-compiler.workflow.run.rerun",
+					"when": "false"
+				},
+				{
+					"command": "bevara-compiler.internal.run.rerun",
 					"when": "false"
 				},
 				{

@@ -6,33 +6,10 @@ import * as FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { config } from '../util';
-
-import { WorkflowRunCommandArgs } from "../workflows/actions/workflowRunNode";
 import { BooleanTreeItem, SettingsTreeProvider } from "../sdk/settingsTreeProvider";
 import { isInternalCompiler, setInternalCompiler } from "../sdk/options";
 import { ActionsViewProvider } from "../sdk/actionsWebviewProvider";
 import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
-
-export function registerRerunCompilation(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.workflow.run.rerun", async (args: WorkflowRunCommandArgs) => {
-    const gitHubRepoContext = args.gitHubRepoContext;
-    const run = args.run;
-
-    try {
-      await gitHubRepoContext.client.actions.reRunWorkflow({
-        owner: gitHubRepoContext.owner,
-        repo: gitHubRepoContext.name,
-        run_id: run.run.id
-      });
-    } catch (e) {
-      await vscode.window.showErrorMessage(`Could not rerun compilation: '${(e as Error).message}'`);
-    }
-
-    // Start refreshing the run to reflect rerunning in UI
-    args.store.pollRun(run.run.id, gitHubRepoContext, 1000, 20);
-  }));
-}
 
 export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
@@ -69,10 +46,8 @@ function createTerminal() {
   return writeEmitter;
 }
 
-
-export function compileProject(
-  folder: string,
-  output: string
+export function compressProject(
+  folder: string
 ) {
 
   function addFolderToZip(zip: AdmZip, folderPath: string, baseFolder = "") {
@@ -97,13 +72,27 @@ export function compileProject(
       }
     });
   }
+
+  const zip = new AdmZip();
+  addFolderToZip(zip, folder);
+  return zip.toBuffer();
+}
+
+export function compileProject(
+  zipBuffer: Buffer,
+  output: string
+) {  
   const buildPath = path.join(output, "build");
   fs.mkdirSync(buildPath);
   fs.writeFileSync(path.join(buildPath, "STATUS"), "inprogress");
 
-  const zip = new AdmZip();
-  addFolderToZip(zip, folder);
-  const zipBuffer = zip.toBuffer();
+  const source_path = path.join(buildPath, "source.zip");
+
+  fs.writeFile(source_path, zipBuffer, function (err) {
+    if (err) {
+      vscode.window.showErrorMessage(err.message);
+    }
+  });
 
 
   const form = new FormData();
@@ -131,30 +120,6 @@ export function compileProject(
   //const req = https.request(options, (res) => {
   const req = https.request(options, (res) => {
     res.setEncoding('utf8');
-
-    function save_wasm(path: string, data: string) {
-      const buffer = Buffer.from(data, 'base64');
-
-      // Sauvegarder le fichier binaire
-      fs.writeFile(path, buffer, (err) => {
-        if (err) {
-          console.error('Error saving the binary file:', err);
-        } else {
-          console.log('Binary file successfully saved.');
-        }
-      });
-    }
-
-    function save_terminal(path: string, data: string) {
-      // Sauvegarder le fichier binaire
-      fs.writeFile(path, data, (err) => {
-        if (err) {
-          console.error('Error saving the terminal file:', err);
-        } else {
-          console.log('Binary file successfully saved.');
-        }
-      });
-    }
 
     function parseSSEData(sseData: string) {
       // Split the SSE data by newline and filter out empty lines
@@ -188,7 +153,7 @@ export function compileProject(
           fs.writeFile(path.join(current_path, "NAME"), name, (err) => {
             vscode.commands.executeCommand('bevara-compiler.refreshEntry');
             if (err) {
-              vscode.window.showErrorMessage(message);
+              vscode.window.showErrorMessage(err.message);
             }
           });
         } else if (message.startsWith('terminal: ')) {
@@ -197,7 +162,7 @@ export function compileProject(
           if (current_path) {
             fs.writeFile(path.join(current_path, "TERMINAL"), term + "\n", { flag: 'a' }, (err) => {
               if (err) {
-                vscode.window.showErrorMessage(message);
+                vscode.window.showErrorMessage(err.message);
               }
             });
           }
@@ -208,14 +173,14 @@ export function compileProject(
             fs.writeFile(path.join(current_path, "RETURNCODE"), returncode, (err) => {
               vscode.commands.executeCommand('bevara-compiler.refreshEntry');
               if (err) {
-                vscode.window.showErrorMessage(message);
+                vscode.window.showErrorMessage(err.message);
               }
             });
-          }else{
+          } else {
             fs.writeFile(path.join(buildPath, "RETURNCODE"), returncode, (err) => {
               vscode.commands.executeCommand('bevara-compiler.refreshEntry');
               if (err) {
-                vscode.window.showErrorMessage(message);
+                vscode.window.showErrorMessage(err.message);
               }
             });
           }
@@ -224,7 +189,7 @@ export function compileProject(
             const buffer = Buffer.from(current_filedata, 'base64');
             fs.writeFile(path.join(output, current_filename), buffer, (err) => {
               if (err) {
-                vscode.window.showErrorMessage(message);
+                vscode.window.showErrorMessage(err.message);
               }
             });
           }
@@ -238,7 +203,7 @@ export function compileProject(
           if (current_path) {
             fs.writeFile(path.join(current_path, "ERROR"), errMsg, (err) => {
               if (err) {
-                vscode.window.showErrorMessage(message);
+                vscode.window.showErrorMessage(err.message);
               }
             });
           }
@@ -300,7 +265,7 @@ export function getCompilationOutputPath(fullpath: string) {
     }
   }
 
-  const newAttemptsId = attempts.length > 0 ? Math.max(...attempts) + 1  :1;
+  const newAttemptsId = attempts.length > 0 ? Math.max(...attempts) + 1 : 1;
   const newPath = path.join(bevaraPath, newAttemptsId.toString());
   fs.mkdirSync(newPath);
   return newPath;
