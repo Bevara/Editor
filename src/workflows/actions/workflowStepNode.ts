@@ -12,7 +12,7 @@ export class WorkflowStepNode extends vscode.TreeItem {
   ) {
     super(step.name);
 
-    this.contextValue = "step";
+    this.contextValue = "s_actions";
     if (this.step.status === "completed") {
       this.contextValue += " completed";
     }

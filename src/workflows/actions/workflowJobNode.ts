@@ -11,7 +11,7 @@ export class WorkflowJobNode extends vscode.TreeItem {
       (job.job.steps && job.job.steps.length > 0 && vscode.TreeItemCollapsibleState.Collapsed) || undefined
     );
 
-    this.contextValue = "job";
+    this.contextValue = "j_actions";
     if (this.job.job.status === "completed") {
       this.contextValue += " completed";
     }

@@ -53,7 +53,7 @@ abstract class WorkflowRunBase {
     }
 
     contextValue(permission: RepositoryPermission): string {
-      const contextValues = ["run"];
+      const contextValues = ["r_actions"];
       const completed = this._run.status === "completed";
       if (hasWritePermission(permission)) {
         contextValues.push(completed ? "rerunnable" : "cancelable");

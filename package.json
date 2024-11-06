@@ -300,17 +300,17 @@
 			"view/item/context": [
 				{
 					"command": "bevara-compiler.workflow.run.rerun",
-					"when": "viewItem =~ /run/ && viewItem =~ /rerunnable/"
+					"when": "viewItem =~ /r_actions/ && viewItem =~ /rerunnable/"
 				},
 				{
 					"command": "bevara-compiler.workflow.logs",
 					"group": "inline",
-					"when": "viewItem =~ /job/ && viewItem =~ /completed/"
+					"when": "viewItem =~ /j_actions/ && viewItem =~ /completed/"
 				},
 				{
 					"command": "bevara-compiler.step.logs",
 					"group": "inline",
-					"when": "viewItem =~ /step/ && viewItem =~ /completed/"
+					"when": "viewItem =~ /s_actions/ && viewItem =~ /completed/"
 				}
 			],
 			"commandPalette": [

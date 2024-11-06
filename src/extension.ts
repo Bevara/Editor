@@ -14,6 +14,8 @@ import {WelcomePanel } from './sdk/welcomeWebviewProvider';
 import { isEulaAccepted } from './sdk/options';
 import { registerOpenWorkflowStepLogs } from './commands/openWorkflowStepLogs';
 import { registerOpenWorkflowJobLogs } from './commands/openWorkflowJobLogs';
+import { LogScheme } from './logs/constants';
+import { WorkflowStepLogProvider } from './logs/fileProvider';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));
@@ -70,6 +72,10 @@ export function activate(context: vscode.ExtensionContext) {
 	registerRerunCompilation(context);
 	registerOpenWorkflowStepLogs(context);
 	registerOpenWorkflowJobLogs(context);
+
+	context.subscriptions.push(
+		vscode.workspace.registerTextDocumentContentProvider(LogScheme, new WorkflowStepLogProvider())
+	);
 
 	context.subscriptions.push(vscode.authentication.registerAuthenticationProvider(
 		BevaraAuthenticationProvider.id,
