@@ -12,6 +12,8 @@ import { registerRerunCompilation, registerDynamicCompilation } from './commands
 import { initSdkTreeViews } from './sdk/sdkTreeViews';
 import {WelcomePanel } from './sdk/welcomeWebviewProvider';
 import { isEulaAccepted } from './sdk/options';
+import { registerOpenWorkflowStepLogs } from './commands/openWorkflowStepLogs';
+import { registerOpenWorkflowJobLogs } from './commands/openWorkflowJobLogs';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));
@@ -66,6 +68,8 @@ export function activate(context: vscode.ExtensionContext) {
 	initResources(context);
 	initSdkTreeViews(context, store, bevaraAuthenticationProvider);
 	registerRerunCompilation(context);
+	registerOpenWorkflowStepLogs(context);
+	registerOpenWorkflowJobLogs(context);
 
 	context.subscriptions.push(vscode.authentication.registerAuthenticationProvider(
 		BevaraAuthenticationProvider.id,
