@@ -110,7 +110,7 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 			}
 		
 			const stats = fs.statSync(fullPath);
-			const run = new InternalRun(fullPath);
+			const run = new InternalRun(fullPath, item);
 			if (stats.isDirectory()) {
 				runs.push(new InternalRunNode(fullPath, item, run));
 			}

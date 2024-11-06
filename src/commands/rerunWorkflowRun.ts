@@ -7,7 +7,7 @@ import { InternalRunNode } from "../workflows/internal/internalRunNode";
 import { compileProject, getCompilationOutputPath, rootPath } from "./compilation";
 
 export function registerRerunCompilation(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.workflow.run.rerun", async (args: WorkflowRunCommandArgs) => {
+  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.actions.workflow.run.rerun", async (args: WorkflowRunCommandArgs) => {
     const gitHubRepoContext = args.gitHubRepoContext;
     const run = args.run;
 
@@ -25,7 +25,7 @@ export function registerRerunCompilation(context: vscode.ExtensionContext) {
     args.store.pollRun(run.run.id, gitHubRepoContext, 1000, 20);
   }));
 
-  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.internal.run.rerun", async (args: InternalRunNode) => {
+  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.internal.workflow.run.rerun", async (args: InternalRunNode) => {
     const folder = rootPath();
     if (folder) {
       const output = getCompilationOutputPath(folder);

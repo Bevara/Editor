@@ -1,16 +1,19 @@
-import {OctokitResponse} from "@octokit/types";
 import * as vscode from "vscode";
-import {getGitHubContextForRepo} from "../git/repository";
-import {cacheLogInfo} from "./logInfo";
-import {parseLog} from "./model";
-import {parseUri} from "./scheme";
+import * as fs from 'fs';
+import * as path from 'path';
 
-export class WorkflowStepLogProvider implements vscode.TextDocumentContentProvider {
+import { OctokitResponse } from "@octokit/types";
+import { getGitHubContextForRepo } from "../git/repository";
+import { cacheLogInfo } from "./logInfo";
+import { parseLog } from "./model";
+import { parseUri } from "./scheme";
+
+export class ActionsWorkflowStepLogProvider implements vscode.TextDocumentContentProvider {
   onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
   onDidChange = this.onDidChangeEmitter.event;
 
   async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
-    const {owner, repo, jobId} = parseUri(uri);
+    const { owner, repo, jobId } = parseUri(uri);
 
     const githubRepoContext = await getGitHubContextForRepo(owner, repo);
     if (!githubRepoContext) {
@@ -44,6 +47,71 @@ export class WorkflowStepLogProvider implements vscode.TextDocumentContentProvid
 
       console.error("Error loading logs", e);
       return `Could not open logs, unhandled error. ${(e as Error).message}`;
+    }
+  }
+}
+
+export class InternalWorkflowJobLogProvider implements vscode.TextDocumentContentProvider {
+  onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+  onDidChange = this.onDidChangeEmitter.event;
+
+  async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
+    try {
+      const items = fs.readdirSync(uri.path);
+      let log = '';
+      for (const item of items) {
+        const fullPath = path.join(uri.path, item);
+        if (item.startsWith('.')) {
+          continue;
+        }
+
+        const stats = fs.statSync(fullPath);
+        if (stats.isDirectory()) {
+          const terminalPath = path.join(fullPath, "TERMINAL");
+          if (fs.existsSync(terminalPath)) {
+            const data = fs.readFileSync(terminalPath, "utf-8");
+            log += data;
+          }
+        }
+      }
+
+      const logInfo = parseLog(log as string);
+      cacheLogInfo(uri, logInfo);
+
+      return logInfo.updatedLogLines.join("\n");
+    } catch (e: any) {
+      cacheLogInfo(uri, {
+        sections: [],
+        updatedLogLines: [],
+        styleFormats: []
+      });
+      console.error("Error loading logs", e);
+      return `Could not open logs, unhandled error. ${(e as Error).message}`;
+    }
+  }
+}
+
+export class InternalWorkflowStepLogProvider implements vscode.TextDocumentContentProvider {
+  onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+  onDidChange = this.onDidChangeEmitter.event;
+
+  async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
+    try {
+      const dirPath = uri.path.replace(/\/$/, "");
+      const terminalPath = path.join(dirPath, "TERMINAL");
+      const log = fs.readFileSync(terminalPath, "utf-8");
+
+      const logInfo = parseLog(log as string);
+      cacheLogInfo(uri, logInfo);
+
+      return logInfo.updatedLogLines.join("\n");
+    } catch (e: any) {
+      cacheLogInfo(uri, {
+        sections: [],
+        updatedLogLines: [],
+        styleFormats: []
+      });
+      return `No terminal information`;
     }
   }
 }

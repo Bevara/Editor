@@ -13,8 +13,8 @@ import {WelcomePanel } from './sdk/welcomeWebviewProvider';
 import { isEulaAccepted } from './sdk/options';
 import { registerOpenWorkflowStepLogs } from './commands/openWorkflowStepLogs';
 import { registerOpenWorkflowJobLogs } from './commands/openWorkflowJobLogs';
-import { LogScheme } from './logs/constants';
-import { WorkflowStepLogProvider } from './logs/fileProvider';
+import { ActionsLogScheme, InternaJobLogScheme, InternaStepLogScheme } from './logs/constants';
+import { ActionsWorkflowStepLogProvider, InternalWorkflowJobLogProvider, InternalWorkflowStepLogProvider } from './logs/fileProvider';
 import { registerRerunCompilation } from './commands/rerunWorkflowRun';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -74,7 +74,15 @@ export function activate(context: vscode.ExtensionContext) {
 	registerOpenWorkflowJobLogs(context);
 
 	context.subscriptions.push(
-		vscode.workspace.registerTextDocumentContentProvider(LogScheme, new WorkflowStepLogProvider())
+		vscode.workspace.registerTextDocumentContentProvider(ActionsLogScheme, new ActionsWorkflowStepLogProvider())
+	);
+
+	context.subscriptions.push(
+		vscode.workspace.registerTextDocumentContentProvider(InternaJobLogScheme, new InternalWorkflowJobLogProvider())
+	);
+
+	context.subscriptions.push(
+		vscode.workspace.registerTextDocumentContentProvider(InternaStepLogScheme, new InternalWorkflowStepLogProvider())
 	);
 
 	context.subscriptions.push(vscode.authentication.registerAuthenticationProvider(

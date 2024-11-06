@@ -250,20 +250,20 @@
 				}
 			},
 			{
-				"command": "bevara-compiler.workflow.run.rerun",
+				"command": "bevara-compiler.actions.workflow.run.rerun",
 				"category": "Bevara compiler",
 				"title": "Rerun compilation",
 				"when": "viewItem =~ /r_actions/ && viewItem =~ /rerunnable/"
 			},
 			{
-				"command": "bevara-compiler.internal.run.rerun",
+				"command": "bevara-compiler.internal.workflow.run.rerun",
 				"category": "Bevara compiler",
 				"title": "Rerun compilation",
 				"when": "viewItem =~ /r_internal/ && viewItem =~ /rerunnable/"
 			},
 			{
-				"command": "bevara-compiler.workflow.logs",
-				"category": "GitHub Actions",
+				"command": "bevara-compiler.actions.workflow.logs",
+				"category": "Bevara compiler",
 				"title": "View job logs",
 				"when": "viewItem =~ /j_actions/",
 				"icon": {
@@ -272,11 +272,31 @@
 				}
 			},
 			{
-				"command": "bevara-compiler.step.logs",
-				"category": "GitHub Actions",
+				"command": "bevara-compiler.internal.workflow.logs",
+				"category": "Bevara compiler",
+				"title": "View build logs",
+				"when": "viewItem =~ /j_internal/",
+				"icon": {
+					"dark": "images/dark/logs.svg",
+					"light": "images/light/logs.svg"
+				}
+			},
+			{
+				"command": "bevara-compiler.actions.step.logs",
+				"category": "Bevara compiler",
 				"title": "View step logs",
 				"when": "viewItem =~ /s_actions/",
 				"icon": "$(globe)"
+			},
+			{
+				"command": "bevara-compiler.internal.step.logs",
+				"category": "Bevara compiler",
+				"title": "View step logs",
+				"when": "viewItem =~ /s_internal/",
+				"icon": {
+					"dark": "images/dark/logs.svg",
+					"light": "images/light/logs.svg"
+				}
 			}
 		],
 		"menus": {
@@ -305,39 +325,57 @@
 			],
 			"view/item/context": [
 				{
-					"command": "bevara-compiler.workflow.run.rerun",
+					"command": "bevara-compiler.actions.workflow.run.rerun",
 					"when": "viewItem =~ /r_actions/ && viewItem =~ /rerunnable/"
 				},
 				{
-					"command": "bevara-compiler.internal.run.rerun",
+					"command": "bevara-compiler.internal.workflow.run.rerun",
 					"when": "viewItem =~ /r_internal/ && viewItem =~ /rerunnable/"
 				},
 				{
-					"command": "bevara-compiler.workflow.logs",
+					"command": "bevara-compiler.actions.workflow.logs",
 					"group": "inline",
 					"when": "viewItem =~ /j_actions/ && viewItem =~ /completed/"
 				},
 				{
-					"command": "bevara-compiler.step.logs",
+					"command": "bevara-compiler.internal.workflow.logs",
+					"group": "inline",
+					"when": "viewItem =~ /j_internal/ && viewItem =~ /completed/"
+				},
+				{
+					"command": "bevara-compiler.actions.step.logs",
 					"group": "inline",
 					"when": "viewItem =~ /s_actions/ && viewItem =~ /completed/"
+				},
+				{
+					"command": "bevara-compiler.internal.step.logs",
+					"group": "inline",
+					"when": "viewItem =~ /s_internal/ && viewItem =~ /completed/"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "bevara-compiler.workflow.run.rerun",
+					"command": "bevara-compiler.actions.workflow.run.rerun",
 					"when": "false"
 				},
 				{
-					"command": "bevara-compiler.internal.run.rerun",
+					"command": "bevara-compiler.internal.workflow.run.rerun",
 					"when": "false"
 				},
 				{
-					"command": "bevara-compiler.workflow.logs",
+					"command": "bevara-compiler.actions.workflow.logs",
 					"when": "false"
 				},
 				{
-					"command": "bevara-compiler.step.logs",
+					"command": "bevara-compiler.internal.workflow.logs",
+					"when": "false"
+				},
+				{
+					"command": "bevara-compiler.actions.step.logs",
+					"when": "false"
+				},
+				{
+					"command": "bevara-compiler.internal.step.logs",
 					"when": "false"
 				}
 			]

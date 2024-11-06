@@ -11,7 +11,7 @@ export class InternalRun {
 
 	protected _run: StatusAndConclusion ={"status":null, conclusion : null};
 
-	constructor(fullpath: string) {
+	constructor(fullpath: string, readonly run_id:string) {
 		this._path = fullpath;
 		const statusPath = path.join(fullpath, "build", "STATUS");
 		const returnCodePath = path.join(fullpath, "build",  "RETURNCODE");
@@ -39,7 +39,7 @@ export class InternalRun {
 
 			const stats = fs.statSync(fullPath);
 			if (stats.isDirectory()) {
-				jobs.push(new InternalJob(item, fullPath));
+				jobs.push(new InternalJob(item, this.run_id, fullPath));
 			}
 		}
 

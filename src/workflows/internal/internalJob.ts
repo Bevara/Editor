@@ -4,16 +4,13 @@ import * as path from 'path';
 import { StatusAndConclusion } from '../actions/icons';
 
 export class InternalJob {
-  public name = "";
   public steps : string[] = [];
-  private _fullPath :string;
   public job : StatusAndConclusion ={"status":null, conclusion : null};
 
-  constructor(name:string, fullPath : string) {
+  constructor(readonly name:string, readonly run_id:string, readonly fullPath : string) {
     this.name = name;
-    this._fullPath = fullPath;
-    const statusPath = path.join(this._fullPath, "STATUS");
-    const conclusionPath = path.join(this._fullPath, "RETURNCODE");
+    const statusPath = path.join(this.fullPath, "STATUS");
+    const conclusionPath = path.join(this.fullPath, "RETURNCODE");
     
     if (fs.existsSync(statusPath)) {
       const status = fs.readFileSync(statusPath, 'utf8');
@@ -26,9 +23,9 @@ export class InternalJob {
 
     }
     
-    const items = fs.readdirSync(this._fullPath);
+    const items = fs.readdirSync(this.fullPath);
 		for (const item of items) {
-			const fullPath = path.join(this._fullPath, item);
+			const fullPath = path.join(this.fullPath, item);
 			if (item.startsWith('.')) {
 				continue;
 			}

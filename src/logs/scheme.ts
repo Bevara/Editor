@@ -1,11 +1,17 @@
 import * as vscode from "vscode";
-import { LogScheme } from "./constants";
+import { ActionsLogScheme, InternaJobLogScheme, InternaStepLogScheme } from "./constants";
+import { TreeItemLabel } from "vscode";
 
-/**
- * @param displayName Must not contain '/'
- */
-export function buildLogURI(displayName: string, owner: string, repo: string, jobId: number): vscode.Uri {
-  return vscode.Uri.parse(`${LogScheme}://${owner}/${repo}/${displayName}?${jobId}`);
+export function buildActionsLogURI(displayName: string, owner: string, repo: string, jobId: number): vscode.Uri {
+  return vscode.Uri.parse(`${ActionsLogScheme}://${owner}/${repo}/${displayName}?${jobId}`);
+}
+
+export function buildInternalJobLogURI(fullPath : string): vscode.Uri {
+  return vscode.Uri.parse(`${InternaJobLogScheme}:${fullPath}`);
+}
+
+export function buildInternalStepLogURI(fullPath : string, label:string | TreeItemLabel | undefined): vscode.Uri {
+  return vscode.Uri.parse(`${InternaStepLogScheme}:${fullPath}/${label}`);
 }
 
 export function parseUri(uri: vscode.Uri): {
@@ -13,7 +19,7 @@ export function parseUri(uri: vscode.Uri): {
   repo: string;
   jobId: number;
 } {
-  if (uri.scheme != LogScheme) {
+  if (uri.scheme != ActionsLogScheme) {
     throw new Error("Uri is not of log scheme");
   }
 

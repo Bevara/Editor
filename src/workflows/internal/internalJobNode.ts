@@ -13,7 +13,7 @@ export class InternalJobNode extends vscode.TreeItem {
       (job.steps && job.steps.length > 0 && vscode.TreeItemCollapsibleState.Collapsed) || undefined
     );
 
-    this.contextValue = "job";
+    this.contextValue = "j_internal";
     if (this.job.job.status === "completed") {
       this.contextValue += " completed";
     }

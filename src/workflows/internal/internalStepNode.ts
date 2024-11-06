@@ -19,7 +19,7 @@ export class InternalStepNode extends vscode.TreeItem {
     }
 
     super(name);
-    this.contextValue = "step";
+    this.contextValue = "s_internal";
     if (this.step.status === "completed") {
       this.contextValue += " completed";
     }
