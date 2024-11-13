@@ -3,18 +3,11 @@ import * as fs from 'fs';
 import * as AdmZip from 'adm-zip';
 import * as path from 'path';
 
-import { filterDescFromFilterName, getCMakeFromUri, getFilterNameFromCMake, getFilterVersionFromCMake, getOutputFromCmake } from './cmake';
 import { getArtifact, GitHubRepoContext, listArtifacts } from '../git/repository';
 import { Credentials } from '../auth/credentials';
+import { checkGlobalStorateInitialized } from './utils';
 
-
-function checkGlobalStorateInitialized(context: vscode.ExtensionContext) {
-	if (!fs.existsSync(context.globalStoragePath)) {
-		fs.mkdirSync(context.globalStoragePath, { recursive: true });
-	}
-}
-
-function decompressArtifact(buffer: Buffer) {
+export function decompressArtifact(buffer: Buffer) {
 	const files: { [key: string]: Buffer } = {};
 	const zip = new AdmZip(buffer);
 
@@ -31,11 +24,11 @@ export async function addToLibs(context: vscode.ExtensionContext, repoContext: G
 
 
 	checkGlobalStorateInitialized(context);
-	const artifacts = await listArtifacts(repoContext, artifact_id);
+	const artifacts = await listArtifacts(repoContext.client, repoContext.name, repoContext.owner, artifact_id);
 	if (artifacts.length != 1) {
 		return;
 	}
-	const buffer = await getArtifact(repoContext, artifacts[0].id);
+	const buffer = await getArtifact(repoContext.client, repoContext.name, repoContext.owner, artifacts[0].id);
 	const files = decompressArtifact(buffer);
 
 	Object.keys(files).filter(x => x.endsWith(".wasm"))

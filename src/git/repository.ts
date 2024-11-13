@@ -13,6 +13,7 @@ import { RefType } from "./vscode.git.enums";
 import { GitExtension, API, RepositoryState, Repository } from '../git/vscode.git';
 import { RepositoryPermission, getRepositoryPermission } from "./repository-permissions";
 import { Credentials } from "../auth/credentials";
+import { Workflow, WorkflowRun } from "../workflows/actions/model";
 //import {getGitHubApiUri} from "../configuration/configuration";
 
 interface GitHubUrls {
@@ -314,21 +315,23 @@ export async function unregisterGitRepositoryChangeListener() {
   });
 }
 
+export async function getLastCompletedRun(octokit : Octokit, repo : string, owner : string, branch : string | undefined){
+  const opts = await octokit.actions.listWorkflowRunsForRepo.endpoint.merge({
+    owner: owner,
+    repo: repo,
+    branch: branch
+  });
+  const workflowRuns = await octokit.paginate<WorkflowRun>(opts);
+
+  return workflowRuns.find(x => x.conclusion == 'success');
+}
+
 export async function registerGitArtifactChangeListener(repoContext : GitHubRepoContext, current_completed_run: number | null,currentBranch : string|undefined,  callback: (runId: number) => void, intervalMs = 5000) {
     let handle :any = null;
 
     async function artifactChecker(){
-      const result = await repoContext.client.actions.listWorkflowRunsForRepo({
-        owner: repoContext.owner,
-        repo: repoContext.name,
-        branch: currentBranch,
-        per_page: 100
-      });
 
-      const resp = result.data;
-      const runs = resp.workflow_runs;
-
-      const last_completed_run = runs.find(x => x.conclusion == 'success');
+      const last_completed_run = await getLastCompletedRun(repoContext.client, repoContext.name, repoContext.owner, currentBranch);
       if (!last_completed_run) {
         return;
       }
@@ -337,7 +340,7 @@ export async function registerGitArtifactChangeListener(repoContext : GitHubRepo
         return ;
       }
       
-      const artifacts = await listArtifacts(repoContext, last_completed_run.id);
+      const artifacts = await listArtifacts(repoContext.client, repoContext.name, repoContext.owner, last_completed_run.id);
 
       if (artifacts.length > 0 ){
         callback(last_completed_run.id);
@@ -348,20 +351,20 @@ export async function registerGitArtifactChangeListener(repoContext : GitHubRepo
     return handle;
 }
 
-export async function listArtifacts(repoContext : GitHubRepoContext, runId: number) {
+export async function listArtifacts(octokit : Octokit, repo : string, owner : string, runId: number) {
 
-  const response = await repoContext.client.actions.listWorkflowRunArtifacts({
-    owner: repoContext.owner,
-    repo: repoContext.name,
+  const response = await octokit.actions.listWorkflowRunArtifacts({
+    owner: owner,
+    repo: repo,
     run_id: runId
   });
   return response.data.artifacts;
 }
 
-export async function getArtifact(repoContext : GitHubRepoContext, artifactId: number) {
-  const response = await repoContext.client.actions.downloadArtifact({
-    owner: repoContext.owner,
-    repo: repoContext.name,
+export async function getArtifact(octokit : Octokit, repo : string, owner : string, artifactId: number) {
+  const response = await octokit.actions.downloadArtifact({
+    owner: owner,
+    repo: repo,
     artifact_id: artifactId,
     archive_format: 'zip'
   });
