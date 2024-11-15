@@ -97,7 +97,7 @@ export class InternalWorkflowStepLogProvider implements vscode.TextDocumentConte
 
   async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
     try {
-      const dirPath = uri.path.replace(/\/$/, "");
+      const dirPath = path.dirname(uri.path);
       const terminalPath = path.join(dirPath, "TERMINAL");
       const log = fs.readFileSync(terminalPath, "utf-8");
 

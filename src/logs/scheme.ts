@@ -11,7 +11,7 @@ export function buildInternalJobLogURI(fullPath : string): vscode.Uri {
 }
 
 export function buildInternalStepLogURI(fullPath : string, label:string | TreeItemLabel | undefined): vscode.Uri {
-  return vscode.Uri.parse(`${InternaStepLogScheme}:${fullPath}/${label}`);
+  return vscode.Uri.parse(`${InternaStepLogScheme}:${fullPath}/Step-${label}`);
 }
 
 export function parseUri(uri: vscode.Uri): {
