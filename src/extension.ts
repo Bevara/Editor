@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 	updateActivityBarVisibility();
 	vscode.workspace.onDidChangeWorkspaceFolders(updateActivityBarVisibility);
 	
-	const bevaraAuthenticationProvider = new BevaraAuthenticationProvider(context.secrets);
+	const bevaraAuthenticationProvider = new BevaraAuthenticationProvider(context, context.secrets);
 	const store = new RunStore();
 	initResources(context);
 	initSdkTreeViews(context, store, bevaraAuthenticationProvider);

@@ -37,7 +37,6 @@ export class BevaraSession implements AuthenticationSession {
 
 export class BevaraAuthenticationProvider implements AuthenticationProvider, Disposable {
 	static id = 'bevaraSessionToken';
-	static _context: ExtensionContext;
 
 	private static secretKey = 'Bevara_Session_Token';
 
@@ -45,6 +44,12 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 	private initializedDisposable: Disposable | undefined;
 	private currentToken: Promise<string | undefined> | undefined;
 	private state: string | null = null;
+
+	constructor(
+		private readonly context: ExtensionContext,
+		private readonly secretStorage: SecretStorage) {
+	}
+	
 
 
 	async info(accessToken:string){
@@ -127,10 +132,6 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 		return this.currentToken;
 	}
 
-
-	constructor(private readonly secretStorage: SecretStorage) {
-	}
-
 	dispose() {
 		this.initializedDisposable?.dispose();
 	}
@@ -166,67 +167,68 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 		return `${config.casdoorUrl.trim()}/login/oauth/authorize?client_id=${config.clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
 	}
 
+	async getCasDoorCode(state:string): Promise<string | undefined> {
+		return new Promise((resolve, reject) => {
+			function parseQuery(queryString: string): { [key: string]: string } {
+				const query: { [key: string]: string } = {};
+				const pairs = queryString.split('&');
+				for (const pair of pairs) {
+					const [key, value] = pair.split('=');
+					if (key) {
+						query[decodeURIComponent(key)] = decodeURIComponent(value || '');
+					}
+				}
+				return query;
+			}
+
+			const handlerDisposable = window.registerUriHandler({
+				handleUri(uri: Uri) {
+					handlerDisposable.dispose();
+					const keys = parseQuery(uri.query);
+					if (keys.state != state) reject('Wrong state is given');
+					resolve(uri.query);
+				}
+			});
+			this.context.subscriptions.push(handlerDisposable);
+		});
+	}
+
+	async getOauthToken(uri: string): Promise<string | undefined> {
+		return new Promise((resolve, reject) => {
+			https.get(uri, (res) => {
+				if (res.statusCode == 200) {
+					let data = '';
+
+					// A chunk of data has been received.
+					res.on('data', (chunk) => {
+						data += chunk;
+					});
+
+					// The whole response has been received.
+					res.on('end', () => {
+						try {
+							// Parse JSON data
+							const jsonData = JSON.parse(data);
+							resolve(jsonData.token);
+						} catch (e) {
+							reject(e);
+						}
+					});
+				} else {
+					reject(`Failed to authentification to server. Status code: ${res.statusCode}`);
+				}
+			});
+		});
+	}
+
 	async createSession(scopes: readonly string[]): Promise<AuthenticationSession> {
 
-		function parseQuery(queryString: string): { [key: string]: string } {
-			const query: { [key: string]: string } = {};
-			const pairs = queryString.split('&');
-			for (const pair of pairs) {
-				const [key, value] = pair.split('=');
-				if (key) {
-					query[decodeURIComponent(key)] = decodeURIComponent(value || '');
-				}
-			}
-			return query;
-		}
-
-		async function getCasDoorCode(): Promise<string | undefined> {
-			return new Promise((resolve, reject) => {
-				window.registerUriHandler({
-					async handleUri(uri: Uri): Promise<void | null | undefined> {
-						const keys = parseQuery(uri.query);
-						if (keys.state != state) reject('Wrong state is given');
-						resolve(uri.query);
-					}
-				});
-			});
-		}
-
-		async function getOauthToken(uri: string): Promise<string | undefined> {
-			return new Promise((resolve, reject) => {
-				https.get(uri, (res) => {
-					if (res.statusCode == 200) {
-						let data = '';
-
-						// A chunk of data has been received.
-						res.on('data', (chunk) => {
-							data += chunk;
-						});
-
-						// The whole response has been received.
-						res.on('end', () => {
-							try {
-								// Parse JSON data
-								const jsonData = JSON.parse(data);
-								resolve(jsonData.token);
-							} catch (e) {
-								reject(e);
-							}
-						});
-					} else {
-						reject(`Failed to authentification to server. Status code: ${res.statusCode}`);
-					}
-				});
-			});
-		}
-
-
+		
 		this.ensureInitialized();
-		const state = this.getOrSaveState();
 		const secretStorage = this.secretStorage;
 		env.openExternal(Uri.parse(this.getSigninUrl()));
-		const query = await getCasDoorCode();
-		const token = await getOauthToken(`${config.serverUrl.trim()}/api/signin?${query}`);
+		const query = await this.getCasDoorCode(this.getOrSaveState());
+		const token = await this.getOauthToken(`${config.serverUrl.trim()}/api/signin?${query}`);
 
 		if (!token) {
 			throw new Error('Authentification is required');
