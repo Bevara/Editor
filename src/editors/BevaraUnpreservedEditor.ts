@@ -9,6 +9,7 @@ import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
 import { exportHTMLTemplate, exportLibs, storeRelease } from '../filters/libraries';
+import { checkSolver, downloadSolver } from '../filters/solver';
 
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -212,10 +213,10 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		}
 
 		/*if (!checkSolver(this._context.globalStorageUri)){
-			await downloadSolver(this._context);
+			await downloadSolver(this._context, this._credentials);
 		}*/
 
-		async function checkSolver(storageUri: vscode.Uri, file: string) {
+		async function checkSolverLegacy(storageUri: vscode.Uri, file: string) {
 			const release = "https://github.com/Bevara/solver/releases/download/1/" + file;
 			const uri = vscode.Uri.joinPath(storageUri, file).fsPath;
 			if (!fs.existsSync(file)) {
@@ -223,8 +224,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			}
 		}
 
-		await checkSolver(this._context.globalStorageUri, "solver_1.js");
-		await checkSolver(this._context.globalStorageUri, "solver_1.wasm");
+		await checkSolverLegacy(this._context.globalStorageUri, "solver_1.js");
+		await checkSolverLegacy(this._context.globalStorageUri, "solver_1.wasm");
 		const wasms: any = {};
 
 		for (let id of ids) {
@@ -265,7 +266,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		webviewPanel.webview.onDidReceiveMessage(async e => {
 			if (e.type === 'ready') {
 				// Get all credentials
-				this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
+				await this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
 
 				const filter_list: any = this._context.globalState.get("filterList");
 

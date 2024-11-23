@@ -104,20 +104,25 @@ export function compileProject(
   // Get the headers required for the multipart form data
   const formHeaders = form.getHeaders();
 
-  const options = {
-    hostname: "bevara.ddns.net",
-    //hostname: config.serverUrl, // e.g. 'example.com'
-    //hostname: "192.168.1.120", // e.g. 'example.com'
-    //hostname: "localhost", // e.g. 'example.com'
+
+  const optionsTest = {
+    hostname: "192.168.1.120", // e.g. 'example.com'
     path: "/api/file",    // e.g. '/upload'
-    //port: 8000,
+    port: 8000,
+    method: 'POST',
+    headers: formHeaders,
+  };
+
+   const options = {
+    hostname: "bevara.ddns.net",
+    path: "/api/file",    // e.g. '/upload'
     method: 'POST',
     headers: formHeaders,
   };
 
   const writeEmitter = createTerminal();
 
-  //const req = https.request(options, (res) => {
+  //const req = http.request(optionsTest, (res) => {
   const req = https.request(options, (res) => {
     res.setEncoding('utf8');
 

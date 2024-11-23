@@ -18,12 +18,10 @@ export function checkSolver(storageUri: vscode.Uri) {
 }
 
 
-export async function downloadSolver(context: vscode.ExtensionContext) {
+export async function downloadSolver(context: vscode.ExtensionContext, credentials : Credentials) {
 	checkGlobalStorateInitialized(context);
 
 	try {
-		const credentials = new Credentials();
-
 		const last_completed_run = await getLastCompletedRun(credentials.octokit, bevaraRepo.repo, bevaraRepo.owner, bevaraRepo.branch);
 		
 		if (!last_completed_run) {
