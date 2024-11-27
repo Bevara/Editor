@@ -41,7 +41,7 @@ function createTerminal() {
     close: () => { /* noop*/ },
     handleInput: (data: string) => { /* noop*/ }
   };
-  const terminal = vscode.window.createTerminal({ name: `Bevara comiler`, pty });
+  const terminal = vscode.window.createTerminal({ name: `Compilation terminal`, pty });
   terminal.show();
   return writeEmitter;
 }
