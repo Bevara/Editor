@@ -385,7 +385,9 @@ export function addToLibsInternal(context: vscode.ExtensionContext, directory: s
       const filter_desc = JSON.parse(json_data);
       const filterName = item.substring(0, item.lastIndexOf(".json"));
       filter_desc.isDev = true;
-      filter_list[filterName] = filter_desc;
+      filter_desc.directory = directory;
+      filter_desc.internal_id = internal_id;
+      filter_list[filterName +".wasm"] = filter_desc;
     }
   }
 

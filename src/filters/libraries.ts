@@ -66,7 +66,7 @@ export function getLastInternalId(context: vscode.ExtensionContext, directory:st
 
 	const filter_list: any = context.globalState.get("filterList");
 
-	const filter: any = Object.values(filter_list).find((x: any) => x.source == directory && x.isDev == true);
+	const filter: any = Object.values(filter_list).find((x: any) => x.directory == directory && x.isDev == true);
 
 	return filter ? filter.internal_id : null;
 }
