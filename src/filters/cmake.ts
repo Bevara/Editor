@@ -51,6 +51,14 @@ export function getOutputFromCmake(uri: string){
 	return name +"_"+version+".wasm";
 }
 
+export function getJSONNameFromCmake(uri: string){
+	const cmake = getCMakeFromUri(uri);
+	const name = getFilterNameFromCMake(cmake);
+	const version = getFilterVersionFromCMake(cmake);
+	return name +"_"+version+".json";
+}
+
+
 
 export function filterDescFromFilterName(uri: string, filterName:string){
 	const descpath = uri + "/"+filterName + ".json";
@@ -63,7 +71,8 @@ export function filterDescFromFilterName(uri: string, filterName:string){
 }
 
 export function getFilterDesc(uri: string){
-	const filterName = getFilterNameFromCMake(uri);
+	const ast = getCMakeFromUri(uri);
+	const filterName = getFilterNameFromCMake(ast);
 	if (!filterName){
 		return null;
 	}

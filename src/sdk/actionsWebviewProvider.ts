@@ -3,9 +3,9 @@ import { getCurrentBranch, getGitHubContext, GitHubRepoContext, listArtifacts, r
 import { Repository } from '../git/vscode.git';
 import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
-import { addToLibs, getLastArtifactId } from '../filters/libraries';
+import { addToLibsActions, getLastArtifactId, getLastInternalId } from '../filters/libraries';
 import { isInternalCompiler } from './options';
-import { compileProject, compressProject, getCompilationOutputPath, rootPath } from '../commands/compilation';
+import { addToLibsInternal, compileProject, compressProject, getCompilationOutputPath, registerInternalArtifactChangeListener, rootPath, saveJSONDesc } from '../commands/compilation';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
@@ -14,7 +14,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 	private readonly _context: vscode.ExtensionContext;
 	private _repoContext: GitHubRepoContext | null = null;
 	private _credentials = new Credentials();
-	private _registerGitRepositoryChangeListenerHandle: NodeJS.Timer | null = null;
+	private _artifactChangeListenerHandle: NodeJS.Timer | null = null;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -43,8 +43,12 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private async registerGithub(view: vscode.WebviewView, repoContext: GitHubRepoContext) {
-		let last_artifact_id: number | null = null;
+		view.webview.postMessage({ type: 'hideNewArtifacts' });
+		view.webview.postMessage({ type: 'hideCompilationInternal' });
+		view.webview.postMessage({ type: 'hideChangeBox' });
 
+		let last_artifact_id: number | null = null;
+		
 		function gitChangeCallback(repository: Repository) {
 			const changes = repository.state.workingTreeChanges;
 
@@ -59,7 +63,12 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 
 		function artifactChangeCallback(runId: number) {
-			view.webview.postMessage({ type: 'showNewArtifacts', body: runId });
+			view.webview.postMessage({
+				type: 'showNewArtifacts', body: {
+					artifact_id: runId,
+					internal_id: null
+				}
+			});
 		}
 
 		registerGitRepositoryChangeListener(gitChangeCallback);
@@ -68,10 +77,11 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		last_artifact_id = getLastArtifactId(this._context, repoContext);
 
 		const currentBranch = getCurrentBranch(repoContext.repositoryState);
-		this._registerGitRepositoryChangeListenerHandle = await registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
+		if (this._artifactChangeListenerHandle) {
+			clearInterval(this._artifactChangeListenerHandle);
+		}
 
-
-		view.webview.postMessage({ type: 'hideCompilationInternal' });
+		this._artifactChangeListenerHandle = await registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
 	}
 
 
@@ -81,12 +91,25 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		view.webview.postMessage({ type: 'hideNewArtifacts' });
 		unregisterGitRepositoryChangeListener();
 
-		if (this._registerGitRepositoryChangeListenerHandle) {
-			clearInterval(this._registerGitRepositoryChangeListenerHandle);
-			this._registerGitRepositoryChangeListenerHandle = null;
+		if (this._artifactChangeListenerHandle) {
+			clearInterval(this._artifactChangeListenerHandle);
 		}
 
+		function artifactChangeCallback(runId: number) {
+			view.webview.postMessage({
+				type: 'showNewArtifacts', body: {
+					artifact_id: null,
+					internal_id: runId
+				}
+			});
+		}
 
+		const folder = rootPath();
+		if (folder == undefined) return;
+
+		const last_artifact_id = getLastInternalId(this._context, folder);
+
+		this._artifactChangeListenerHandle = registerInternalArtifactChangeListener(last_artifact_id, folder, artifactChangeCallback);
 	}
 
 
@@ -112,20 +135,20 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 				case 'ready':
 					{
 						this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewView.webview);
-						
+
 						this.getGithubRepoContext().then((repoContext) => {
 							if (repoContext) {
 								this._repoContext = repoContext;
-								if (!isInternalCompiler(this._context)){
+								if (!isInternalCompiler(this._context)) {
 									this.registerGithub(webviewView, repoContext);
 								}
 							}
 						});
-						
-						if (isInternalCompiler(this._context)){
+
+						if (isInternalCompiler(this._context)) {
 							this.registerInternal(webviewView);
 						}
-							
+
 						break;
 					}
 				case 'showGitSCM':
@@ -135,16 +158,31 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					}
 				case 'updateArtifact':
 					{
-						if (!this._repoContext) break;
-						
-						unregisterGitRepositoryChangeListener();
-						if (this._registerGitRepositoryChangeListenerHandle) {
-							clearInterval(this._registerGitRepositoryChangeListenerHandle);
-							this._registerGitRepositoryChangeListenerHandle = null;
+						if (data.body.artifact_id != null){
+							if (!this._repoContext) break;
+
+							unregisterGitRepositoryChangeListener();
+							if (this._artifactChangeListenerHandle) {
+								clearInterval(this._artifactChangeListenerHandle);
+								this._artifactChangeListenerHandle = null;
+							}
+							await addToLibsActions(this._context, this._repoContext, data.body.artifact_id);
+							this.registerGithub(webviewView, this._repoContext);
 						}
-						await addToLibs(this._context, this._repoContext, data.body);
+
+						if (data.body.internal_id != null){
+							const folder = rootPath();
+							if (folder == undefined) return;
+							if (this._artifactChangeListenerHandle) {
+								clearInterval(this._artifactChangeListenerHandle);
+								this._artifactChangeListenerHandle = null;
+							}
+							await addToLibsInternal(this._context, folder, data.body.internal_id);
+							this.registerInternal(webviewView);
+						}
+
 						webviewView.webview.postMessage({ type: 'hideNewArtifacts' });
-						this.registerGithub(webviewView, this._repoContext);
+
 						break;
 					}
 				case 'loginToGithub':
@@ -162,10 +200,11 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 				case 'launchInternalCompilation':
 					{
 						const folder = rootPath();
-						if (folder){
+						if (folder) {
 							const output = getCompilationOutputPath(folder);
 							const zipBuffer = compressProject(folder);
 							compileProject(zipBuffer, output);
+							saveJSONDesc(folder, output);
 						}
 						break;
 					}
@@ -248,7 +287,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 		if (value == true) {
 			this.registerInternal(this._view);
-		} else if (this._repoContext){
+		} else if (this._repoContext) {
 			this.registerGithub(this._view, this._repoContext);
 		}
 	}

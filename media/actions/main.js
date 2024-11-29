@@ -6,6 +6,7 @@
     const vscode = acquireVsCodeApi();
 
     let artifact_id = null;
+    let internal_id = null;
 
     const changeBox = document.querySelector('.changeBox');
     const commitAndPushButton = document.querySelector('.commit-and-push');
@@ -28,7 +29,12 @@
     });
 
     updateArtifactButton?.addEventListener('click', () => {
-        vscode.postMessage({ type: 'updateArtifact', body : artifact_id });
+        vscode.postMessage({
+            type: 'updateArtifact', body: {
+                artifact_id: artifact_id,
+                internal_id: internal_id
+            }
+        });
     });
 
     authBevaraButton?.addEventListener('click', () => {
@@ -75,7 +81,8 @@
             case 'showNewArtifacts':
                 {
                     newArtifactsBox.style.display = "block";
-                    artifact_id= body;
+                    artifact_id = body.artifact_id;
+                    internal_id = body.internal_id;
                     break;
                 }
             case 'hideCompilationInternal':

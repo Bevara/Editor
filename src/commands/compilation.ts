@@ -10,6 +10,8 @@ import { BooleanTreeItem, SettingsTreeProvider } from "../sdk/settingsTreeProvid
 import { isInternalCompiler, setInternalCompiler } from "../sdk/options";
 import { ActionsViewProvider } from "../sdk/actionsWebviewProvider";
 import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
+import { checkGlobalStorateInitialized } from "../filters/utils";
+import { getCMakeFromUri, getFilterDesc, getFilterVersionFromCMake, getJSONNameFromCmake } from "../filters/cmake";
 
 export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
@@ -81,7 +83,7 @@ export function compressProject(
 export function compileProject(
   zipBuffer: Buffer,
   output: string
-) {  
+) {
   const buildPath = path.join(output, "build");
   fs.mkdirSync(buildPath);
   fs.writeFileSync(path.join(buildPath, "STATUS"), "inprogress");
@@ -113,7 +115,7 @@ export function compileProject(
     headers: formHeaders,
   };
 
-   const options = {
+  const options = {
     hostname: "bevara.ddns.net",
     path: "/api/file",    // e.g. '/upload'
     method: 'POST',
@@ -229,6 +231,7 @@ export function compileProject(
     });
 
     res.on('end', () => {
+
       fs.writeFileSync(path.join(buildPath, "STATUS"), "completed");
       fs.writeFileSync(path.join(buildPath, "RETURNCODE"), build_returncode.toString());
       vscode.window.showInformationMessage("Compilation ended successfully!");
@@ -274,4 +277,117 @@ export function getCompilationOutputPath(fullpath: string) {
   const newPath = path.join(bevaraPath, newAttemptsId.toString());
   fs.mkdirSync(newPath);
   return newPath;
+}
+
+export function getCompilationStatus(directory: string) {
+  const statusPath = path.join(directory, "build", 'STATUS');
+
+  if (fs.existsSync(statusPath) &&
+    fs.readFileSync(statusPath,
+      { encoding: 'utf8', flag: 'r' }) == 'completed') {
+    return 'success';
+  }
+  return 'failed';
+}
+
+export async function getLastCompletedCompilation(directory: string) {
+  const bevaraPath = path.join(directory, ".bevara");
+
+  if (!fs.existsSync(bevaraPath)) {
+    return undefined;
+  }
+
+  const items = fs.readdirSync(bevaraPath);
+  const compilation_folders = [];
+  for (const item of items) {
+    // Skip hidden folders/files (starting with a dot)
+    if (item.startsWith('.')) {
+      continue;
+    }
+
+    const fullPath = path.join(bevaraPath, item);
+    const stats = fs.statSync(fullPath);
+
+    if (stats.isDirectory() && getCompilationStatus(fullPath) == 'success') {
+      compilation_folders.push(parseInt(item, 10));
+    }
+  }
+
+  if (compilation_folders.length == 0) {
+    return undefined;
+  }
+  return compilation_folders.sort().reverse()[0];
+}
+
+export function saveJSONDesc(
+  source: string,
+  output: string
+) {
+  const desc = getFilterDesc(source);
+  const json_name = getJSONNameFromCmake(source);
+  desc.sources = path.join(output, "build", "source.zip");
+  desc.build = output;
+  const jsonData = JSON.stringify(desc);
+  const outName = path.join(output, json_name);
+  fs.writeFile(outName, jsonData, 'utf8', (err) => {
+    if (err) {
+      vscode.window.showErrorMessage(err.message);
+    }
+  });
+}
+
+
+export function registerInternalArtifactChangeListener(current_completed_run: number | null, directory: string, callback: (runId: number) => void, intervalMs = 5000) {
+  let handle: any = null;
+
+  async function artifactChecker() {
+
+    const last_completed_run = await getLastCompletedCompilation(directory);
+    if (!last_completed_run) {
+      return;
+    }
+
+    if (last_completed_run != current_completed_run) {
+      callback(last_completed_run);
+    }
+
+  }
+  artifactChecker();
+  handle = setInterval(async () => artifactChecker(), intervalMs);
+  return handle;
+}
+
+export function addToLibsInternal(context: vscode.ExtensionContext, directory: string, internal_id: number) {
+  const filter_list: any = context.globalState.get("filterList");
+
+  checkGlobalStorateInitialized(context);
+  const buildPath = path.join(directory, ".bevara", internal_id.toString());
+
+  if (!fs.existsSync(buildPath)) {
+    vscode.window.showErrorMessage("The current build doesn't exist in the project.");
+    return;
+  }
+
+  const items = fs.readdirSync(buildPath);
+
+  for (const item of items) {
+    const fullPath = path.join(buildPath, item);
+    const stats = fs.statSync(fullPath);
+    if (stats.isDirectory()) {
+      continue;
+    }
+
+    if (item.endsWith(".wasm")) {
+      const fs_file = vscode.Uri.joinPath(context.globalStorageUri, item).fsPath;
+      fs.writeFileSync(fullPath, fs_file);
+    } else if (item.endsWith(".json")) {
+      const json_data = fs.readFileSync(fullPath, 'utf-8');
+      const filter_desc = JSON.parse(json_data);
+      const filterName = item.substring(0, item.lastIndexOf(".json"));
+      filter_desc.isDev = true;
+      filter_list[filterName] = filter_desc;
+    }
+  }
+
+  context.globalState.update("filterList", filter_list);
 }

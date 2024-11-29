@@ -19,7 +19,7 @@ export function decompressArtifact(buffer: Buffer) {
 	return files;
 }
 
-export async function addToLibs(context: vscode.ExtensionContext, repoContext: GitHubRepoContext, artifact_id: number) {
+export async function addToLibsActions(context: vscode.ExtensionContext, repoContext: GitHubRepoContext, artifact_id: number) {
 	const filter_list: any = context.globalState.get("filterList");
 
 
@@ -44,6 +44,7 @@ export async function addToLibs(context: vscode.ExtensionContext, repoContext: G
 				filterDesc.repo = repoContext.name;
 				filterDesc.source = repoContext.workspaceUri;
 				filterDesc.artifact_id = artifact_id;
+				filterDesc.internal_id = null;
 
 				filter_list[x] = filterDesc;
 			}
@@ -58,6 +59,16 @@ export function getLastArtifactId(context: vscode.ExtensionContext, repoContext:
 	const filter: any = Object.values(filter_list).find((x: any) => x.owner == repoContext.owner && x.repo == repoContext.name && x.isDev == true);
 
 	return filter ? filter.artifact_id : null;
+}
+
+export function getLastInternalId(context: vscode.ExtensionContext, directory:string) {
+	if (directory == undefined) return null;
+
+	const filter_list: any = context.globalState.get("filterList");
+
+	const filter: any = Object.values(filter_list).find((x: any) => x.source == directory && x.isDev == true);
+
+	return filter ? filter.internal_id : null;
 }
 
 export async function storeRelease(credentials: Credentials, owner: string, repo: string, asset_id: number, target: string) {
