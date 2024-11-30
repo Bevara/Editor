@@ -27,9 +27,9 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExp
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   public settings: { [key: string]: BooleanTreeItem[] } = {
-    'Compiler': [
+   /* 'Compiler': [
         new BooleanTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None)
-    ]
+    ]*/
 };
 
   // Create the list of parent category items
