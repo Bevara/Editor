@@ -70,6 +70,21 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
     return;
   }
 
+    // Periodically check for new compilation in the repository
+    const intervalId = setInterval(() => {
+      compilationTreeProvider.refresh();
+    }, 10000);
+
+    // Wrap the interval in a Disposable
+    const checkUpdateDisposable = {
+        dispose: () => {
+            clearInterval(intervalId);
+        },
+    };
+
+
+  context.subscriptions.push(checkUpdateDisposable);
+
   for (const repo of gitHubContext.repos) {
     if (!repo.repositoryState) {
       continue;
@@ -80,6 +95,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
     repo.repositoryState.onDidChange(async () => {
       // When the current head/branch changes, or the number of commits ahead changes (which indicates
       // a push), refresh the current-branch view
+      
       if (
         repo.repositoryState?.HEAD?.name !== currentHeadName ||
         (repo.repositoryState?.HEAD?.ahead || 0) < (currentAhead || 0)

@@ -219,7 +219,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		async function checkSolverLegacy(storageUri: vscode.Uri, file: string) {
 			const release = "https://github.com/Bevara/solver/releases/download/1/" + file;
 			const uri = vscode.Uri.joinPath(storageUri, file).fsPath;
-			if (!fs.existsSync(file)) {
+			if (!fs.existsSync(uri)) {
 				await fetchWasm(uri, release);
 			}
 		}
@@ -266,7 +266,12 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		webviewPanel.webview.onDidReceiveMessage(async e => {
 			if (e.type === 'ready') {
 				// Get all credentials
-				await this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
+				try{
+					await this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
+				}catch (e :any){
+					vscode.window.showInformationMessage(`Logging failed for the following reason ${e.message}`);
+				}
+				
 
 				const filter_list: any = this._context.globalState.get("filterList");
 
