@@ -1,17 +1,27 @@
 import * as vscode from "vscode";
 
-export type SettingsExplorerNode = BooleanTreeItem;
+export type SettingsExplorerNode = DynamicCompilationTreeItem | DebugCompilationTreeItem | TreeItem;
 
-export class BooleanTreeItem extends vscode.TreeItem {
+class TreeItem extends vscode.TreeItem {
+  constructor(
+      public readonly label: string,
+      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+      public readonly command?: vscode.Command
+  ) {
+      super(label, collapsibleState);
+  }
+}
+
+export class DynamicCompilationTreeItem extends vscode.TreeItem {
   constructor(
       public readonly label: string,
       public boolValue: boolean | undefined,
       public readonly collapsibleState: vscode.TreeItemCollapsibleState,
       public readonly category?: boolean
   ) {
-      super(label, collapsibleState);
-      this.description = (boolValue !== undefined) ? (boolValue ? 'True' : 'False') : '';
-      this.contextValue = category ? 'category' : 'booleanItem'; // Assign context values for category and boolean item
+    super(label, collapsibleState);
+    this.description = (boolValue !== undefined) ? (boolValue ? 'True' : 'False') : '';
+    this.contextValue = category ? 'category' : 'booleanItem'; // Assign context values for
   }
 
   command = this.boolValue !== undefined ? {
@@ -21,21 +31,36 @@ export class BooleanTreeItem extends vscode.TreeItem {
   } : undefined;
 }
 
+export class DebugCompilationTreeItem extends vscode.TreeItem {
+  constructor(
+      public readonly label: string,
+      public boolValue: boolean | undefined,
+      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+      public readonly category?: boolean
+  ) {
+    super(label, collapsibleState);
+    this.description = (boolValue !== undefined) ? (boolValue ? 'True' : 'False') : '';
+    this.contextValue = category ? 'category' : 'booleanItem'; // Assign context values for
+  }
+
+  command = this.boolValue !== undefined ? {
+      command: 'bevara-compiler.use-debug-compilation',
+      title: 'Compile with debug information',
+      arguments: [this]
+  } : undefined;
+}
+
 
 export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExplorerNode> {
   private _onDidChangeTreeData = new vscode.EventEmitter<SettingsExplorerNode | null>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  public settings: { [key: string]: BooleanTreeItem[] } = {
-   /* 'Compiler': [
-        new BooleanTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None)
-    ]*/
+  public settings: { [key: string]: SettingsExplorerNode[] } = {
+    'Compiler': [
+        new DynamicCompilationTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None),
+        new DebugCompilationTreeItem('Compile with debug information', false, vscode.TreeItemCollapsibleState.None)
+    ]
 };
-
-  // Create the list of parent category items
-    private rootItems: BooleanTreeItem[] = Object.keys(this.settings).map(category => 
-      new BooleanTreeItem(category, undefined, vscode.TreeItemCollapsibleState.Collapsed, true)
-  );
 
   getTreeItem(element: SettingsExplorerNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
@@ -44,18 +69,19 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExp
   getChildren(element?: SettingsExplorerNode ): SettingsExplorerNode[] {
     // Return the list of items when requested
     if (!element) {
-      return this.rootItems;
+      return [new TreeItem('Compiler', vscode.TreeItemCollapsibleState.Expanded)];
     }
 
-    if (element.category) {
-      return this.settings[element.label] || [];
+    if (element.label) {
+      const settings = this.settings[element.label] || [];
+      return settings;
     }
 
     return [];
   }
 
   // Method to toggle boolean value and trigger tree update
-  toggleBoolean(item: BooleanTreeItem): void {
+  toggleBoolean(item:  DynamicCompilationTreeItem | DebugCompilationTreeItem): void {
     item.boolValue = !item.boolValue;
     item.description = item.boolValue ? 'True' : 'False';
     this.refresh();

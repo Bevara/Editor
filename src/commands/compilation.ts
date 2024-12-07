@@ -6,8 +6,8 @@ import * as FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { BooleanTreeItem, SettingsTreeProvider } from "../sdk/settingsTreeProvider";
-import { isInternalCompiler, setInternalCompiler } from "../sdk/options";
+import { DebugCompilationTreeItem, DynamicCompilationTreeItem, SettingsExplorerNode, SettingsTreeProvider } from "../sdk/settingsTreeProvider";
+import { isDebugCompiler, isInternalCompiler, setDebugCompiler, setInternalCompiler } from "../sdk/options";
 import { ActionsViewProvider } from "../sdk/actionsWebviewProvider";
 import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
 import { checkGlobalStorateInitialized } from "../filters/utils";
@@ -19,19 +19,44 @@ export function registerDynamicCompilation(context: vscode.ExtensionContext,
   compilationTreeProvider: CompilationTreeProvider
 ) {
   const isInternal = isInternalCompiler(context);
+  
   settingsTreeProvider.settings['Compiler'] = [
-    new BooleanTreeItem('Use dynamic compilation', isInternal, vscode.TreeItemCollapsibleState.None)
+    new DynamicCompilationTreeItem('Use dynamic compilation', isInternal, vscode.TreeItemCollapsibleState.None)
   ];
+
+  if (isInternal == true){
+    const isDebug = isDebugCompiler(context);
+    settingsTreeProvider.settings['Compiler'].push(
+      new DebugCompilationTreeItem('Compile with debug information', isDebug, vscode.TreeItemCollapsibleState.None)
+    );
+  }
+  
 
   actionsViewProvider.toggleInternalCompiler(isInternal);
   compilationTreeProvider.toggleInternalCompiler(isInternal);
 
-  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.use-dynamic-compilation", async (item: BooleanTreeItem) => {
+  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.use-dynamic-compilation", async (item: DynamicCompilationTreeItem | DebugCompilationTreeItem) => {
     if (item.boolValue == undefined) return;
+
     settingsTreeProvider.toggleBoolean(item);
     setInternalCompiler(context, item.boolValue);
     actionsViewProvider.toggleInternalCompiler(item.boolValue);
     compilationTreeProvider.toggleInternalCompiler(item.boolValue);
+
+    if(item.boolValue == false){
+      settingsTreeProvider.settings['Compiler'].pop();
+    }else{
+      const isDebug = isDebugCompiler(context);
+      settingsTreeProvider.settings['Compiler'].push(
+        new DebugCompilationTreeItem('Compile with debug information', isDebug, vscode.TreeItemCollapsibleState.None)
+      );
+    }
+  }));
+
+  context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.use-debug-compilation", async (item: DynamicCompilationTreeItem | DebugCompilationTreeItem) => {
+    if (item.boolValue == undefined) return;
+    settingsTreeProvider.toggleBoolean(item);
+    setDebugCompiler(context, item.boolValue);
   }));
 }
 

@@ -31,6 +31,17 @@ export function setInternalCompiler(context : vscode.ExtensionContext, value: bo
 	context.globalState.update("bevara_sdk", bevara_sdk);
 }
 
+export function setDebugCompiler(context : vscode.ExtensionContext, value: boolean) {
+	const bevara_sdk = getBevaraContext(context);
+	bevara_sdk.debug_compiler = value;
+	context.globalState.update("bevara_sdk", bevara_sdk);
+}
+
+export function isDebugCompiler(context : vscode.ExtensionContext) {
+	const debug_compiler = getBevaraContext(context).debug_compiler;
+	return debug_compiler == null ? false : debug_compiler;
+}
+
 export function showPopUp(context : vscode.ExtensionContext) {
 	const showPopUp = getBevaraContext(context).showPopUp;
 	return showPopUp == null ? true : showPopUp;
