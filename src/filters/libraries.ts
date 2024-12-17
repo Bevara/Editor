@@ -94,6 +94,13 @@ export async function storeLibrary(context: vscode.ExtensionContext, credentials
 	fs.copyFileSync(file, target + "/" + wasmFilter);
 }
 
+export async function deleteLibrary(context: vscode.ExtensionContext, name: any) {
+	const file = vscode.Uri.joinPath(context.globalStorageUri, name).fsPath;
+	if (fs.existsSync(file)) {
+		fs.unlinkSync(file);
+	}
+}
+
 export async function storeUsing(context: vscode.ExtensionContext, credentials: Credentials, lib: any, target: string) {
 	const using = lib.name;
 	const file = vscode.Uri.joinPath(context.globalStorageUri, using).fsPath;

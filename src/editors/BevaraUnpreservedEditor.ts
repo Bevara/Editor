@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
-import { exportHTMLTemplate, exportLibs, storeRelease } from '../filters/libraries';
+import { deleteLibrary, exportHTMLTemplate, exportLibs, storeRelease } from '../filters/libraries';
 import { checkSolver, downloadSolver } from '../filters/solver';
 
 
@@ -379,11 +379,10 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					});
 				}
 			} else if (e.type === 'removeFromList') {
-				for (const keys in this._filter_list) {
-					const filter_desc = this._filter_list[keys];
-					if (filter_desc.name == e.filter) {
-						delete this._filter_list[keys];
-					}
+				const key = e.filter + ".wasm";
+				if (key in this._filter_list ){
+					deleteLibrary(this._context, key);
+					delete this._filter_list[key];
 				}
 
 				this._context.globalState.update("filterList", this._filter_list);
