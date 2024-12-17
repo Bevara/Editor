@@ -11,7 +11,7 @@ import { isDebugCompiler, isInternalCompiler, setDebugCompiler, setInternalCompi
 import { ActionsViewProvider } from "../sdk/actionsWebviewProvider";
 import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
 import { checkGlobalStorateInitialized } from "../filters/utils";
-import { getCMakeFromUri, getFilterDesc, getFilterVersionFromCMake, getJSONNameFromCmake } from "../filters/cmake";
+import { getFilterDesc, getJSONNameFromCmake } from "../filters/cmake";
 
 export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
@@ -19,18 +19,18 @@ export function registerDynamicCompilation(context: vscode.ExtensionContext,
   compilationTreeProvider: CompilationTreeProvider
 ) {
   const isInternal = isInternalCompiler(context);
-  
+
   settingsTreeProvider.settings['Compiler'] = [
     new DynamicCompilationTreeItem('Use dynamic compilation', isInternal, vscode.TreeItemCollapsibleState.None)
   ];
 
-  if (isInternal == true){
+  if (isInternal == true) {
     const isDebug = isDebugCompiler(context);
     settingsTreeProvider.settings['Compiler'].push(
       new DebugCompilationTreeItem('Compile with debug information', isDebug, vscode.TreeItemCollapsibleState.None)
     );
   }
-  
+
 
   actionsViewProvider.toggleInternalCompiler(isInternal);
   compilationTreeProvider.toggleInternalCompiler(isInternal);
@@ -43,9 +43,9 @@ export function registerDynamicCompilation(context: vscode.ExtensionContext,
     actionsViewProvider.toggleInternalCompiler(item.boolValue);
     compilationTreeProvider.toggleInternalCompiler(item.boolValue);
 
-    if(item.boolValue == false){
+    if (item.boolValue == false) {
       settingsTreeProvider.settings['Compiler'].pop();
-    }else{
+    } else {
       const isDebug = isDebugCompiler(context);
       settingsTreeProvider.settings['Compiler'].push(
         new DebugCompilationTreeItem('Compile with debug information', isDebug, vscode.TreeItemCollapsibleState.None)
@@ -107,7 +107,8 @@ export function compressProject(
 
 export function compileProject(
   zipBuffer: Buffer,
-  output: string
+  output: string,
+  debug : boolean
 ) {
   const buildPath = path.join(output, "build");
   fs.mkdirSync(buildPath);
@@ -127,6 +128,7 @@ export function compileProject(
     filename: 'compressed-folder.zip',
     contentType: 'application/zip',
   });
+  form.append('debug', debug? "True" : "False");
 
   // Get the headers required for the multipart form data
   const formHeaders = form.getHeaders();
@@ -137,20 +139,20 @@ export function compileProject(
     path: "/api/file",    // e.g. '/upload'
     port: 8000,
     method: 'POST',
-    headers: formHeaders,
+    headers: formHeaders
   };
 
   const options = {
     hostname: "bevara.ddns.net",
     path: "/api/file",    // e.g. '/upload'
     method: 'POST',
-    headers: formHeaders,
+    headers: formHeaders
   };
 
   const writeEmitter = createTerminal();
 
-  //const req = http.request(optionsTest, (res) => {
-  const req = https.request(options, (res) => {
+  const req = http.request(optionsTest, (res) => {
+  //const req = https.request(options, (res) => {
     res.setEncoding('utf8');
 
     function parseSSEData(sseData: string) {
@@ -264,6 +266,8 @@ export function compileProject(
   });
 
   req.on('error', (e) => {
+    fs.writeFileSync(path.join(buildPath, "STATUS"), "completed");
+    fs.writeFileSync(path.join(buildPath, "RETURNCODE"), "1");
     vscode.window.showErrorMessage(e.message);
   });
 
@@ -412,7 +416,7 @@ export function addToLibsInternal(context: vscode.ExtensionContext, directory: s
       filter_desc.isDev = true;
       filter_desc.directory = directory;
       filter_desc.internal_id = internal_id;
-      filter_list[filterName +".wasm"] = filter_desc;
+      filter_list[filterName + ".wasm"] = filter_desc;
     }
   }
 

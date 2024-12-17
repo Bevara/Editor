@@ -8,6 +8,8 @@
     let artifact_id = null;
     let internal_id = null;
 
+    const emptyBox = document.querySelector('.emptyBox');
+
     const changeBox = document.querySelector('.changeBox');
     const commitAndPushButton = document.querySelector('.commit-and-push');
 
@@ -70,6 +72,7 @@
                 }
             case 'showChangeBox':
                 {
+                    emptyBox.style.display = "none";
                     changeBox.style.display = "block";
                     break;
                 }
@@ -83,6 +86,16 @@
                     newArtifactsBox.style.display = "block";
                     artifact_id = body.artifact_id;
                     internal_id = body.internal_id;
+                    break;
+                }
+            case 'showEmpty':
+                {
+                    emptyBox.style.display = "block";
+                    break;
+                }
+            case 'hideEmpty':
+                {
+                    emptyBox.style.display = "none";
                     break;
                 }
             case 'hideCompilationInternal':

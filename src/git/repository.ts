@@ -315,13 +315,17 @@ export async function unregisterGitRepositoryChangeListener() {
   });
 }
 
-export async function getLastCompletedRun(octokit : Octokit, repo : string, owner : string, branch : string | undefined){
+export async function getLastRun(octokit : Octokit, repo : string, owner : string, branch : string | undefined){
   const opts = await octokit.actions.listWorkflowRunsForRepo.endpoint.merge({
     owner: owner,
     repo: repo,
     branch: branch
   });
-  const workflowRuns = await octokit.paginate<WorkflowRun>(opts);
+  return await octokit.paginate<WorkflowRun>(opts);
+}
+
+export async function getLastCompletedRun(octokit : Octokit, repo : string, owner : string, branch : string | undefined){
+  const workflowRuns = await getLastRun(octokit, repo, owner, branch);
 
   return workflowRuns.find(x => x.conclusion == 'success');
 }

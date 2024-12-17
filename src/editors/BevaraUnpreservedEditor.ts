@@ -267,7 +267,9 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			if (e.type === 'ready') {
 				// Get all credentials
 				try{
-					await this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewPanel.webview);
+					await this._credentials.initialize(this._context, this._bevaraAuthenticationProvider);
+					this._credentials.addWebView(webviewPanel.webview);
+					this._credentials.updateInterface();
 				}catch (e :any){
 					vscode.window.showInformationMessage(`Logging failed for the following reason ${e.message}`);
 				}

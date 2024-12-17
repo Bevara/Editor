@@ -12,7 +12,8 @@ const SCOPES = ['user:email', 'repo', 'read:actions'];
 
 export class Credentials {
 	public octokit: Octokit.Octokit = new Octokit.Octokit();
-	private _webview: vscode.Webview | null = null;
+	private _webviews: vscode.Webview[] = [];
+	private _eventEmitters: vscode.EventEmitter<any>[] = [];
 	private _bevaraAuthenticationProvider: BevaraAuthenticationProvider | null = null;
 	private _githubUserInfo: any = null;
 	private _bevaraUserInfo: any = null;
@@ -20,11 +21,9 @@ export class Credentials {
 	private _gitHubSession : vscode.AuthenticationSession | undefined = undefined;
 
 	async initialize(context: vscode.ExtensionContext,
-		bevaraAuthenticationProvider: BevaraAuthenticationProvider,
-		webview: vscode.Webview): Promise<void> {
+		bevaraAuthenticationProvider: BevaraAuthenticationProvider): Promise<void> {
 
 		this._bevaraAuthenticationProvider = bevaraAuthenticationProvider;
-		this._webview = webview;
 
 		this.registerListeners(context);
 		await this.setOctokit();
@@ -67,12 +66,16 @@ export class Credentials {
 		return false;
 	}
 
-	private async updateInterface() {
-		this.postMessage(this._webview, 'updateProfile', {
+	public async updateInterface() {
+		this.postMessage('updateProfile', {
 			account: this._bevaraUserInfo,
 			github: this._githubUserInfo,
 			hasGit: this._gitExt != undefined ? true : false
 		});
+
+		for (const eventEmitters of this._eventEmitters){
+			eventEmitters.fire(null);
+		}
 
 		return false;
 	}
@@ -126,11 +129,20 @@ export class Credentials {
 		return this.octokit;
 	}
 
-	private postMessage(webview: vscode.Webview | null, type: string, body: any): void {
-		if (webview) {
+	private postMessage(type: string, body: any): void {
+		for (const webview of this._webviews) {
 			webview.postMessage({ type, body });
 		}
 	}
+
+	public addWebView( webview : vscode.Webview){
+		this._webviews.push(webview);
+	}
+
+	public addEventEmitter( eventEmitter : vscode.EventEmitter<any>){
+		this._eventEmitters.push(eventEmitter);
+	}
+
 
 	async cloneRepository(repository: any) {
 
@@ -343,5 +355,14 @@ export class Credentials {
 			await this.setOctokit();
 		}
 		return this._gitHubSession;
+	}
+
+	get isPayedUser(){
+		if (!this._bevaraUserInfo || ! ("roles" in this._bevaraUserInfo)){
+			return false;
+		}
+		const role_paying_user = this._bevaraUserInfo["roles"].filter((x:any) => x.name == "role_paying_user");
+
+		return role_paying_user.length >0;
 	}
 }

@@ -5,6 +5,7 @@ import * as path from 'path';
 import { WorkflowRunCommandArgs } from "../workflows/actions/workflowRunNode";
 import { InternalRunNode } from "../workflows/internal/internalRunNode";
 import { compileProject, getCompilationOutputPath, rootPath } from "./compilation";
+import { isDebugCompiler } from "../sdk/options";
 
 export function registerRerunCompilation(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.commands.registerCommand("bevara-compiler.actions.workflow.run.rerun", async (args: WorkflowRunCommandArgs) => {
@@ -35,7 +36,7 @@ export function registerRerunCompilation(context: vscode.ExtensionContext) {
             if (err)
               vscode.window.showErrorMessage(err.message);
             else
-              compileProject(data, output);
+              compileProject(data, output, isDebugCompiler(context));
         });
     }
   }));

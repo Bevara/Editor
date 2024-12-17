@@ -78,7 +78,6 @@ export class BevaraAuthenticationProvider implements AuthenticationProvider, Dis
 				}
 			});
 		});
-		return "string";
 	}
 
 

@@ -1,23 +1,25 @@
 import * as vscode from "vscode";
+import { BevaraAuthenticationProvider } from "../auth/authProvider";
+import { Credentials } from "../auth/credentials";
 
 export type SettingsExplorerNode = DynamicCompilationTreeItem | DebugCompilationTreeItem | TreeItem;
 
 class TreeItem extends vscode.TreeItem {
   constructor(
-      public readonly label: string,
-      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-      public readonly command?: vscode.Command
+    public readonly label: string,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly command?: vscode.Command
   ) {
-      super(label, collapsibleState);
+    super(label, collapsibleState);
   }
 }
 
 export class DynamicCompilationTreeItem extends vscode.TreeItem {
   constructor(
-      public readonly label: string,
-      public boolValue: boolean | undefined,
-      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-      public readonly category?: boolean
+    public readonly label: string,
+    public boolValue: boolean | undefined,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly category?: boolean
   ) {
     super(label, collapsibleState);
     this.description = (boolValue !== undefined) ? (boolValue ? 'True' : 'False') : '';
@@ -25,18 +27,18 @@ export class DynamicCompilationTreeItem extends vscode.TreeItem {
   }
 
   command = this.boolValue !== undefined ? {
-      command: 'bevara-compiler.use-dynamic-compilation',
-      title: 'Use dynamic compiler',
-      arguments: [this]
+    command: 'bevara-compiler.use-dynamic-compilation',
+    title: 'Use dynamic compiler',
+    arguments: [this]
   } : undefined;
 }
 
 export class DebugCompilationTreeItem extends vscode.TreeItem {
   constructor(
-      public readonly label: string,
-      public boolValue: boolean | undefined,
-      public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-      public readonly category?: boolean
+    public readonly label: string,
+    public boolValue: boolean | undefined,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly category?: boolean
   ) {
     super(label, collapsibleState);
     this.description = (boolValue !== undefined) ? (boolValue ? 'True' : 'False') : '';
@@ -44,9 +46,9 @@ export class DebugCompilationTreeItem extends vscode.TreeItem {
   }
 
   command = this.boolValue !== undefined ? {
-      command: 'bevara-compiler.use-debug-compilation',
-      title: 'Compile with debug information',
-      arguments: [this]
+    command: 'bevara-compiler.use-debug-compilation',
+    title: 'Compile with debug information',
+    arguments: [this]
   } : undefined;
 }
 
@@ -55,21 +57,31 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExp
   private _onDidChangeTreeData = new vscode.EventEmitter<SettingsExplorerNode | null>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+  constructor(
+      private readonly _context: vscode.ExtensionContext,
+      private readonly _credentials : Credentials
+    ) {
+      _credentials.addEventEmitter(this._onDidChangeTreeData);
+  }
+
   public settings: { [key: string]: SettingsExplorerNode[] } = {
     'Compiler': [
-        new DynamicCompilationTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None),
-        new DebugCompilationTreeItem('Compile with debug information', false, vscode.TreeItemCollapsibleState.None)
+      new DynamicCompilationTreeItem('Use dynamic compilation', false, vscode.TreeItemCollapsibleState.None),
+      new DebugCompilationTreeItem('Compile with debug information', false, vscode.TreeItemCollapsibleState.None)
     ]
-};
+  };
 
   getTreeItem(element: SettingsExplorerNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
 
-  getChildren(element?: SettingsExplorerNode ): SettingsExplorerNode[] {
+  getChildren(element?: SettingsExplorerNode): SettingsExplorerNode[] {
     // Return the list of items when requested
     if (!element) {
-      return [new TreeItem('Compiler', vscode.TreeItemCollapsibleState.Expanded)];
+      if (this._credentials.isPayedUser == true){
+        return [new TreeItem('Compiler', vscode.TreeItemCollapsibleState.Expanded)];
+      }
+      return [];
     }
 
     if (element.label) {
@@ -81,7 +93,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<SettingsExp
   }
 
   // Method to toggle boolean value and trigger tree update
-  toggleBoolean(item:  DynamicCompilationTreeItem | DebugCompilationTreeItem): void {
+  toggleBoolean(item: DynamicCompilationTreeItem | DebugCompilationTreeItem): void {
     item.boolValue = !item.boolValue;
     item.description = item.boolValue ? 'True' : 'False';
     this.refresh();

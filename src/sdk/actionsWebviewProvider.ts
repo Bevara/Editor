@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { getCurrentBranch, getGitHubContext, GitHubRepoContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener, unregisterGitRepositoryChangeListener } from '../git/repository';
+import { getCurrentBranch, getGitHubContext, getLastRun, GitHubRepoContext, listArtifacts, registerGitArtifactChangeListener, registerGitRepositoryChangeListener, unregisterGitRepositoryChangeListener } from '../git/repository';
 import { Repository } from '../git/vscode.git';
 import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { addToLibsActions, getLastArtifactId, getLastInternalId } from '../filters/libraries';
-import { isInternalCompiler } from './options';
+import { isDebugCompiler, isInternalCompiler } from './options';
 import { addToLibsInternal, compileProject, compressProject, getCompilationOutputPath, registerInternalArtifactChangeListener, rootPath, saveJSONDesc } from '../commands/compilation';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
@@ -13,12 +13,11 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
 	private readonly _context: vscode.ExtensionContext;
 	private _repoContext: GitHubRepoContext | null = null;
-	private _credentials = new Credentials();
 	private _artifactChangeListenerHandle: NodeJS.Timer | null = null;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
-		private readonly _bevaraAuthenticationProvider: BevaraAuthenticationProvider
+		private readonly _credentials : Credentials
 	) {
 		this._context = context;
 
@@ -71,14 +70,26 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			});
 		}
 
-		registerGitRepositoryChangeListener(gitChangeCallback);
-
-
+		await registerGitRepositoryChangeListener(gitChangeCallback);
+		
 		last_artifact_id = getLastArtifactId(this._context, repoContext);
-
 		const currentBranch = getCurrentBranch(repoContext.repositoryState);
 		if (this._artifactChangeListenerHandle) {
 			clearInterval(this._artifactChangeListenerHandle);
+		}
+
+		const last_run = await getLastRun(repoContext.client, repoContext.name, repoContext.owner, currentBranch);
+		if (last_run.length == 0){
+			//Never commited, no actions
+			view.webview.postMessage({
+				type: 'showEmpty', body: {
+				}
+			});
+		}else{
+			view.webview.postMessage({
+				type: 'hideEmpty', body: {
+				}
+			});
 		}
 
 		this._artifactChangeListenerHandle = await registerGitArtifactChangeListener(repoContext, last_artifact_id, currentBranch, artifactChangeCallback);
@@ -119,6 +130,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		_token: vscode.CancellationToken,
 	) {
 		this._view = webviewView;
+		this._credentials.addWebView(webviewView.webview);
 
 
 		webviewView.webview.options = {
@@ -134,8 +146,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			switch (data.type) {
 				case 'ready':
 					{
-						this._credentials.initialize(this._context, this._bevaraAuthenticationProvider, webviewView.webview);
-
+						this._credentials.updateInterface();
 						this.getGithubRepoContext().then((repoContext) => {
 							if (repoContext) {
 								this._repoContext = repoContext;
@@ -203,7 +214,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 						if (folder) {
 							const output = getCompilationOutputPath(folder);
 							const zipBuffer = compressProject(folder);
-							compileProject(zipBuffer, output);
+							compileProject(zipBuffer, output, isDebugCompiler(this._context));
 							saveJSONDesc(folder, output);
 						}
 						break;
@@ -270,6 +281,11 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					A new version of the filter is available :
 					</div>
 					<button class="updateArtifact">Add latest filter version to Bevara library</button>
+				</div>
+				<div class="emptyBox">
+					<div>
+					There are no compilation yet. Save some changes in this code, commit and see how to goes!
+					</div>
 				</div>
 				<div class="internalCompileBox">
 					<div>
