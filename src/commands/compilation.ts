@@ -152,8 +152,8 @@ export function compileProject(
 
   const writeEmitter = createTerminal();
 
-  const req = http.request(optionsTest, (res) => {
-    //const req = https.request(options, (res) => {
+  //const req = http.request(optionsTest, (res) => {
+  const req = https.request(options, (res) => {
     res.setEncoding('utf8');
 
     let step = 0;
