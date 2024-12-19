@@ -228,16 +228,21 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		await checkSolverLegacy(this._context.globalStorageUri, "solver_1.wasm");
 		const wasms: any = {};
 
-		for (let id of ids) {
-			const wasmFilter = id + ".wasm";
-			if (wasmFilter in this._filter_list) {
-				const filter = (this._filter_list as any)[wasmFilter];
-				const file = vscode.Uri.joinPath(this._context.globalStorageUri, wasmFilter).fsPath;
-				if (!fs.existsSync(file)) {
-					await storeRelease(this._credentials, filter.owner, filter.repo, filter.binaries, file);
+		for (const id of ids) {
+			try {
+				const wasmFilter = id + ".wasm";
+				if (wasmFilter in this._filter_list) {
+					const filter = (this._filter_list as any)[wasmFilter];
+					const file = vscode.Uri.joinPath(this._context.globalStorageUri, wasmFilter).fsPath;
+					if (!fs.existsSync(file)) {
+						await storeRelease(this._credentials, filter.owner, filter.repo, filter.binaries, file);
+					}
+					wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
 				}
-				wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
+			}catch(e){
+				continue;
 			}
+			
 		}
 
 		return wasms;

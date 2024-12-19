@@ -105,6 +105,7 @@
                 }
             case 'showCompilationInternal':
                 {
+                    emptyBox.style.display = "none";
                     internalCompileBox.style.display = "block";
                     break;
                 }

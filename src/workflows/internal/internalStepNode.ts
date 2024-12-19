@@ -24,6 +24,13 @@ export class InternalStepNode extends vscode.TreeItem {
       this.contextValue += " completed";
     }
 
+    const returnPath = path.join(fullpath, "RETURNCODE");
+
+    if (fs.existsSync(returnPath)) {
+      const returnStatus = fs.readFileSync(returnPath, 'utf8');
+      this.step.conclusion = returnStatus == '0' ? 'success' : 'failure';
+    }
+
     this.iconPath = getIconForWorkflowStep(this.step);
   }
 }

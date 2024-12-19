@@ -5,6 +5,7 @@ import * as http from 'http';
 import * as FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 
 import { DebugCompilationTreeItem, DynamicCompilationTreeItem, SettingsExplorerNode, SettingsTreeProvider } from "../sdk/settingsTreeProvider";
 import { isDebugCompiler, isInternalCompiler, setDebugCompiler, setInternalCompiler } from "../sdk/options";
@@ -108,7 +109,7 @@ export function compressProject(
 export function compileProject(
   zipBuffer: Buffer,
   output: string,
-  debug : boolean
+  debug: boolean
 ) {
   const buildPath = path.join(output, "build");
   fs.mkdirSync(buildPath);
@@ -128,7 +129,7 @@ export function compileProject(
     filename: 'compressed-folder.zip',
     contentType: 'application/zip',
   });
-  form.append('debug', debug? "True" : "False");
+  form.append('debug', debug ? "True" : "False");
 
   // Get the headers required for the multipart form data
   const formHeaders = form.getHeaders();
@@ -152,35 +153,61 @@ export function compileProject(
   const writeEmitter = createTerminal();
 
   const req = http.request(optionsTest, (res) => {
-  //const req = https.request(options, (res) => {
+    //const req = https.request(options, (res) => {
     res.setEncoding('utf8');
+
+    let step = 0;
+    let current_path: string | null = null;
+    let current_filename: string | null = null;
+    let current_filesha256: string | null = null;
+    let current_step: string | null = null;
+    let build_returncode = 0;
 
     function parseSSEData(sseData: string) {
       // Split the SSE data by newline and filter out empty lines
       const lines = sseData.split('\n').filter(line => line.trim() !== '');
 
-      // Process each line that starts with 'data:'
-      const messages = lines
-        .filter(line => line.startsWith('data:'))
-        .map(line => line.replace(/^data:\s*/, '')); // Remove 'data: ' prefix
+      // // Process each line that starts with 'data:'
+      // const messages = lines
+      //   .filter(line => line.startsWith('data:'))
+      //   .map(line => line.replace(/^data:\s*/, '')); // Remove 'data: ' prefix
 
-      return messages;
+      // const remainings = lines
+      //   .filter(line => !line.startsWith('data:')); // Remaining data (FIXME : should be a better parsing)
+
+      // for (const remaining of remainings){
+      //   if (current_filedata != null) {
+      //     current_filedata += remaining;
+      //   }
+      // }
+
+      return lines;
     }
 
-    let step = 0;
-    let current_path: string | null = null;
-    let current_filename: string | null = null;
-    let current_filedata: string | null = null;
-    let current_step: string | null = null;
-    let build_returncode = 0;
+
+    let full_message = '';
 
     res.on('data', (chunk) => {
-      const messages = parseSSEData(chunk);
+      const messages = chunk.split('\n');
 
       for (const message of messages) {
-        if (message.startsWith('step: ')) {
+        full_message += message;
+
+        if (message != '') {
+          // Wait for the end of the message
+          continue;
+        }
+
+        if (!full_message.startsWith("data: ")) {
+          // Wrong data
+          continue;
+        }
+
+        full_message = full_message.replace("data: ", "");
+
+        if (full_message.startsWith('step: ')) {
           step++;
-          const name = message.replace("step: ", "");
+          const name = full_message.replace("step: ", "");
           current_step = name;
           current_path = path.join(buildPath, step.toString());
           fs.mkdirSync(current_path);
@@ -190,8 +217,8 @@ export function compileProject(
               vscode.window.showErrorMessage(err.message);
             }
           });
-        } else if (message.startsWith('terminal: ')) {
-          const term = message.replace("terminal: ", "");
+        } else if (full_message.startsWith('terminal: ')) {
+          const term = full_message.replace("terminal: ", "");
           writeEmitter.fire(term + "\r\n");
           if (current_path) {
             fs.writeFile(path.join(current_path, "TERMINAL"), term + "\n", { flag: 'a' }, (err) => {
@@ -200,8 +227,8 @@ export function compileProject(
               }
             });
           }
-        } else if (message.startsWith('returncode: ')) {
-          const returncode = message.replace('returncode: ', "");
+        } else if (full_message.startsWith('returncode: ')) {
+          const returncode = full_message.replace('returncode: ', "");
           build_returncode |= Number(returncode);
           if (current_path) {
             fs.writeFile(path.join(current_path, "RETURNCODE"), returncode, (err) => {
@@ -218,21 +245,8 @@ export function compileProject(
               }
             });
           }
-
-          if (current_filename != null && current_filedata != null) {
-            const buffer = Buffer.from(current_filedata, 'base64');
-            fs.writeFile(path.join(output, current_filename), buffer, (err) => {
-              if (err) {
-                vscode.window.showErrorMessage(err.message);
-              }
-            });
-          }
-
-          current_path = null;
-          current_filename = null;
-          current_filedata = null;
-        } else if (message.startsWith('error: ')) {
-          const errMsg = message.replace('error: ', "");
+        } else if (full_message.startsWith('error: ')) {
+          const errMsg = full_message.replace('error: ', "");
           writeEmitter.fire(errMsg + "\r\n");
           if (current_path) {
             fs.writeFile(path.join(current_path, "ERROR"), errMsg, (err) => {
@@ -241,24 +255,53 @@ export function compileProject(
               }
             });
           }
-        } else if (message.startsWith('name: ')) {
-          current_filename = message.replace('name: ', "");
-          current_filedata = "";
-        } else if (message.startsWith('base64-data: ')) {
-          const data = message.replace('base64-data: ', "");
-          if (current_filedata != null) {
-            current_filedata += data;
+        } else if (full_message.startsWith('name: ')) {
+          current_filename = full_message.replace('name: ', "");
+        } else if (full_message.startsWith('sha256: ')) {
+          current_filesha256 = full_message.replace('sha256: ', "");
+        } else if (full_message.startsWith('base64-data: ')) {
+          const base64data = full_message.replace('base64-data: ', "");
+          const buffer = Buffer.from(base64data, 'base64');
+
+          const hash = crypto.createHash('sha256');
+          hash.update(buffer);
+          const sha256HashBuffer = hash.digest('hex');
+          if (current_filesha256 && current_filesha256 != sha256HashBuffer) {
+            const errorMsg = 'Error when writing file ' + current_filename + " : Wrong hash";
+            writeEmitter.fire(errorMsg + "\r\n");
+            if (current_path) {
+              fs.writeFile(path.join(current_path, "ERROR"), "1", (err) => {
+                if (err) {
+                  vscode.window.showErrorMessage(err.message);
+                }
+              });
+              fs.writeFile(path.join(current_path, "TERMINAL"), errorMsg + "\n", { flag: 'a' }, (err) => {
+                if (err) {
+                  vscode.window.showErrorMessage(err.message);
+                }
+              });
+            }
+
           }
-        } else if (current_filedata != null) {
-          current_filedata += message;
+
+          if (current_filename != null) {
+            fs.writeFile(path.join(output, current_filename), buffer, (err) => {
+              if (err) {
+                vscode.window.showErrorMessage(err.message);
+              }
+            });
+          }
+          current_filename = null;
+          current_filesha256 = null;
         } else {
-          vscode.window.showErrorMessage(message);
+          vscode.window.showErrorMessage(full_message);
         }
+
+        full_message = '';
       }
     });
 
     res.on('end', () => {
-
       fs.writeFileSync(path.join(buildPath, "STATUS"), "completed");
       fs.writeFileSync(path.join(buildPath, "RETURNCODE"), build_returncode.toString());
       vscode.window.showInformationMessage("Compilation ended successfully!");
@@ -310,10 +353,14 @@ export function getCompilationOutputPath(fullpath: string) {
 
 export function getCompilationStatus(directory: string) {
   const statusPath = path.join(directory, "build", 'STATUS');
+  const returnPath = path.join(directory, "build", 'RETURNCODE');
 
   if (fs.existsSync(statusPath) &&
     fs.readFileSync(statusPath,
-      { encoding: 'utf8', flag: 'r' }) == 'completed') {
+      { encoding: 'utf8', flag: 'r' }) == 'completed' &&
+    fs.existsSync(returnPath) &&
+    fs.readFileSync(returnPath,
+      { encoding: 'utf8', flag: 'r' }) == '0') {
     return 'success';
   }
   return 'failed';
@@ -408,7 +455,7 @@ export function addToLibsInternal(context: vscode.ExtensionContext, directory: s
 
     if (item.endsWith(".wasm")) {
       const fs_file = vscode.Uri.joinPath(context.globalStorageUri, item).fsPath;
-      fs.writeFileSync(fullPath, fs_file);
+      fs.copyFileSync(fullPath, fs_file);
     } else if (item.endsWith(".json")) {
       const json_data = fs.readFileSync(fullPath, 'utf-8');
       const filter_desc = JSON.parse(json_data);
