@@ -187,29 +187,30 @@ export function compileProject(
     }
 
 
-    let full_message = '';
+    let remainingText = '';
 
     res.on('data', (chunk) => {
-      const messages = chunk.split('\n');
+      const full_message = remainingText + chunk;
+      const messages = full_message.match(/data:.*?\n/g) || [];
+      remainingText = full_message.replace(/data:.*?\n/g, '');
 
-      for (const message of messages) {
-        full_message += message;
-
-        if (message != '') {
-          // Wait for the end of the message
-          continue;
-        }
-
-        if (!full_message.startsWith("data: ")) {
+      for (let message of messages) {
+        if (!message.startsWith("data: ")) {
           // Wrong data
           continue;
         }
 
-        full_message = full_message.replace("data: ", "");
+        if (!message.endsWith("\n")) {
+          // Wrong data
+          continue;
+        }
 
-        if (full_message.startsWith('step: ')) {
+        message = message.replace("data: ", "");
+        message = message.replace("\n", "");
+
+        if (message.startsWith('step: ')) {
           step++;
-          const name = full_message.replace("step: ", "");
+          const name = message.replace("step: ", "");
           current_step = name;
           current_path = path.join(buildPath, step.toString());
           fs.mkdirSync(current_path);
@@ -219,8 +220,8 @@ export function compileProject(
               vscode.window.showErrorMessage(err.message);
             }
           });
-        } else if (full_message.startsWith('terminal: ')) {
-          const term = full_message.replace("terminal: ", "");
+        } else if (message.startsWith('terminal: ')) {
+          const term = message.replace("terminal: ", "");
           writeEmitter.fire(term + "\r\n");
           if (current_path) {
             fs.writeFile(path.join(current_path, "TERMINAL"), term + "\n", { flag: 'a' }, (err) => {
@@ -229,8 +230,8 @@ export function compileProject(
               }
             });
           }
-        } else if (full_message.startsWith('returncode: ')) {
-          const returncode = full_message.replace('returncode: ', "");
+        } else if (message.startsWith('returncode: ')) {
+          const returncode = message.replace('returncode: ', "");
           build_returncode |= Number(returncode);
           if (current_path) {
             fs.writeFile(path.join(current_path, "RETURNCODE"), returncode, (err) => {
@@ -247,8 +248,8 @@ export function compileProject(
               }
             });
           }
-        } else if (full_message.startsWith('error: ')) {
-          const errMsg = full_message.replace('error: ', "");
+        } else if (message.startsWith('error: ')) {
+          const errMsg = message.replace('error: ', "");
           writeEmitter.fire(errMsg + "\r\n");
           if (current_path) {
             fs.writeFile(path.join(current_path, "ERROR"), errMsg, (err) => {
@@ -257,12 +258,12 @@ export function compileProject(
               }
             });
           }
-        } else if (full_message.startsWith('name: ')) {
-          current_filename = full_message.replace('name: ', "");
-        } else if (full_message.startsWith('sha256: ')) {
-          current_filesha256 = full_message.replace('sha256: ', "");
-        } else if (full_message.startsWith('base64-data: ')) {
-          const base64data = full_message.replace('base64-data: ', "");
+        } else if (message.startsWith('name: ')) {
+          current_filename = message.replace('name: ', "");
+        } else if (message.startsWith('sha256: ')) {
+          current_filesha256 = message.replace('sha256: ', "");
+        } else if (message.startsWith('base64-data: ')) {
+          const base64data = message.replace('base64-data: ', "");
           const buffer = Buffer.from(base64data, 'base64');
 
           const hash = crypto.createHash('sha256');
@@ -296,10 +297,8 @@ export function compileProject(
           current_filename = null;
           current_filesha256 = null;
         } else {
-          vscode.window.showErrorMessage(full_message);
+          vscode.window.showErrorMessage(message);
         }
-
-        full_message = '';
       }
     });
 
