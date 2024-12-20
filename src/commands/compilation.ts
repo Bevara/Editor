@@ -108,6 +108,7 @@ export function compressProject(
 
 export function compileProject(
   zipBuffer: Buffer,
+  input : string,
   output: string,
   debug: boolean
 ) {
@@ -130,6 +131,7 @@ export function compileProject(
     contentType: 'application/zip',
   });
   form.append('debug', debug ? "True" : "False");
+  form.append('folder', input);
 
   // Get the headers required for the multipart form data
   const formHeaders = form.getHeaders();

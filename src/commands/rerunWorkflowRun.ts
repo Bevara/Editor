@@ -36,7 +36,7 @@ export function registerRerunCompilation(context: vscode.ExtensionContext) {
             if (err)
               vscode.window.showErrorMessage(err.message);
             else
-              compileProject(data, output, isDebugCompiler(context));
+              compileProject(data, folder, output, isDebugCompiler(context));
         });
     }
   }));

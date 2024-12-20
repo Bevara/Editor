@@ -214,7 +214,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 						if (folder) {
 							const output = getCompilationOutputPath(folder);
 							const zipBuffer = compressProject(folder);
-							compileProject(zipBuffer, output, isDebugCompiler(this._context));
+							compileProject(zipBuffer, folder, output, isDebugCompiler(this._context));
 							saveJSONDesc(folder, output);
 						}
 						break;
