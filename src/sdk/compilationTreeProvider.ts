@@ -42,6 +42,71 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 		this._onDidChangeTreeData.fire(null);
 	}
 
+	async deleteAllEntry(): Promise<void> {
+		if (isInternalCompiler(this._context)){
+			const folder = rootPath();
+			if (!folder || !fs.existsSync(folder+"/.bevara/")){
+				return;
+			}
+
+			const bevaraFolder = path.join(folder, "/.bevara/");
+			const items = fs.readdirSync(bevaraFolder);
+			for (const item of items) {
+				const fullPath = path.join(bevaraFolder, item);
+				if (item.startsWith('.')) {
+					continue;
+				}
+			
+				const stats = fs.statSync(fullPath);
+				if (stats.isDirectory()) {
+					fs.rmSync(fullPath, { recursive: true, force: true });
+				}
+			}
+		}else{
+			try {
+				const gitHubContext = await getGitHubContext();
+				if (!gitHubContext) {
+					//log(`Could not find current branch for ${repoContext.name}`);
+					return ;
+				}
+
+				const repoContext = gitHubContext.repos[0];
+				const currentBranch = getCurrentBranch(repoContext.repositoryState);
+				if (!currentBranch) {
+					//log(`Could not find current branch for ${repoContext.name}`);
+					return ;
+				}
+				// List all workflow runs
+				const workflowRunsResponse = await repoContext.client.actions.listWorkflowRunsForRepo({
+					owner: repoContext.owner,
+					repo: repoContext.name,
+					per_page: 100
+				});
+		
+				const workflowRuns = workflowRunsResponse.data.workflow_runs;
+		
+				console.log(`Found ${workflowRuns.length} workflow runs.`);
+		
+				// Delete each workflow run
+				for (const run of workflowRuns) {
+					console.log(`Deleting workflow run with ID: ${run.id}`);
+					await repoContext.client.actions.deleteWorkflowRun({
+						owner: repoContext.owner,
+						repo: repoContext.name,
+						run_id: run.id,
+					});
+					console.log(`Deleted workflow run with ID: ${run.id}`);
+				}
+		
+				console.log("All workflow runs deleted successfully.");
+			} catch (error) {
+				console.error("Error deleting workflow runs:", error);
+			}
+		}
+
+		this.refresh();
+	}
+
 	getTreeItem(element: CurrentBranchTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		return element;
 	}

@@ -3,7 +3,7 @@ import { RunStore } from "../workflows/actions/store";
 import { CompilationTreeProvider } from "./compilationTreeProvider";
 import { getGitHubContext } from "../git/repository";
 import { SettingsTreeProvider } from "./settingsTreeProvider";
-import {ActionsViewProvider} from './actionsWebviewProvider';
+import { ActionsViewProvider } from './actionsWebviewProvider';
 import { BevaraAuthenticationProvider } from "../auth/authProvider";
 import { registerDynamicCompilation } from "../commands/compilation";
 import { Credentials } from "../auth/credentials";
@@ -19,22 +19,36 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
   const compilationTreeProvider = new CompilationTreeProvider(context, store);
   const credentials = new Credentials();
   await credentials.initialize(context, bevaraAuthenticationProvider);
-  
+
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bevara-compiler.compiler', compilationTreeProvider)
   );
-  
+
   context.subscriptions.push(
     vscode.commands.registerCommand("bevara-compiler.refreshEntry", async () => {
       await compilationTreeProvider.refresh();
     })
   );
 
-  const actionsViewProvider = new ActionsViewProvider(context,credentials);
   context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ActionsViewProvider.viewType, actionsViewProvider));
+    vscode.commands.registerCommand("bevara-compiler.deleteAllEntry", async () => {
+      const result = await vscode.window.showInformationMessage(
+        'Do you want to proceed to the deletion?',
+        'Yes',
+        'No'
+      );
 
-  const settingsTreeProvider = new SettingsTreeProvider(context,credentials);
+      if (result === 'Yes') {
+        await compilationTreeProvider.deleteAllEntry();
+      } 
+    })
+  );
+
+  const actionsViewProvider = new ActionsViewProvider(context, credentials);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(ActionsViewProvider.viewType, actionsViewProvider));
+
+  const settingsTreeProvider = new SettingsTreeProvider(context, credentials);
   context.subscriptions.push(vscode.window.registerTreeDataProvider("bevara-compiler.settings", settingsTreeProvider));
   registerDynamicCompilation(context, settingsTreeProvider, actionsViewProvider, compilationTreeProvider);
 
@@ -74,17 +88,17 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
     return;
   }
 
-    // Periodically check for new compilation in the repository
-    const intervalId = setInterval(() => {
-      compilationTreeProvider.refresh();
-    }, 10000);
+  // Periodically check for new compilation in the repository
+  const intervalId = setInterval(() => {
+    compilationTreeProvider.refresh();
+  }, 10000);
 
-    // Wrap the interval in a Disposable
-    const checkUpdateDisposable = {
-        dispose: () => {
-            clearInterval(intervalId);
-        },
-    };
+  // Wrap the interval in a Disposable
+  const checkUpdateDisposable = {
+    dispose: () => {
+      clearInterval(intervalId);
+    },
+  };
 
 
   context.subscriptions.push(checkUpdateDisposable);
@@ -99,7 +113,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
     repo.repositoryState.onDidChange(async () => {
       // When the current head/branch changes, or the number of commits ahead changes (which indicates
       // a push), refresh the current-branch view
-      
+
       if (
         repo.repositoryState?.HEAD?.name !== currentHeadName ||
         (repo.repositoryState?.HEAD?.ahead || 0) < (currentAhead || 0)

@@ -250,6 +250,14 @@
 				}
 			},
 			{
+				"command": "bevara-compiler.deleteAllEntry",
+				"title": "Delete all entry",
+				"icon": {
+					"light": "images/light/remove.svg",
+					"dark": "images/dark/remove.svg"
+				}
+			},
+			{
 				"command": "bevara-compiler.actions.workflow.run.rerun",
 				"category": "Bevara compiler",
 				"title": "Rerun compilation",
@@ -319,6 +327,11 @@
 				},
 				{
 					"command": "bevara-compiler.refreshEntry",
+					"when": "view == bevara-compiler.compiler",
+					"group": "navigation"
+				},
+				{
+					"command": "bevara-compiler.deleteAllEntry",
 					"when": "view == bevara-compiler.compiler",
 					"group": "navigation"
 				}
