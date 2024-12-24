@@ -6,6 +6,7 @@ import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { addToLibsActions, getLastArtifactId, getLastInternalId } from '../filters/libraries';
 import { isDebugCompiler, isInternalCompiler } from './options';
 import { addToLibsInternal, compileProject, compressProject, getCompilationOutputPath, registerInternalArtifactChangeListener, rootPath, saveJSONDesc } from '../commands/compilation';
+import { CompilationTreeProvider } from './compilationTreeProvider';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
@@ -16,7 +17,8 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
-		private readonly _credentials : Credentials
+		private readonly credentials : Credentials,
+		private readonly compilationTreeProvider : CompilationTreeProvider
 	) {
 
 	}
@@ -128,7 +130,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		_token: vscode.CancellationToken,
 	) {
 		this._view = webviewView;
-		this._credentials.addWebView(webviewView.webview);
+		this.credentials.addWebView(webviewView.webview);
 
 
 		webviewView.webview.options = {
@@ -144,7 +146,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			switch (data.type) {
 				case 'ready':
 					{
-						this._credentials.updateInterface();
+						this.credentials.updateInterface();
 						this.getGithubRepoContext().then((repoContext) => {
 							if (repoContext) {
 								this._repoContext = repoContext;
@@ -176,6 +178,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 								this._artifactChangeListenerHandle = null;
 							}
 							await addToLibsActions(this.context, this._repoContext, data.body.artifact_id);
+							this.compilationTreeProvider.refresh();
 							this.registerGithub(webviewView, this._repoContext);
 						}
 
@@ -196,7 +199,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 					}
 				case 'loginToGithub':
 					{
-						const octokit = await this._credentials.loginToGithub();
+						const octokit = await this.credentials.loginToGithub();
 						const userInfo = await octokit.users.getAuthenticated();
 						vscode.window.showInformationMessage(`Logged into GitHub as ${userInfo.data.login}`);
 						break;

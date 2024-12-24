@@ -38,7 +38,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
     })
   );
 
-  const actionsViewProvider = new ActionsViewProvider(context, credentials);
+  const actionsViewProvider = new ActionsViewProvider(context, credentials, compilationTreeProvider);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(ActionsViewProvider.viewType, actionsViewProvider));
 
