@@ -52,7 +52,7 @@ abstract class WorkflowRunBase {
       return this._jobs;
     }
 
-    contextValue(permission: RepositoryPermission): string {
+    contextValue(permission: RepositoryPermission, installed : boolean): string {
       const contextValues = ["r_actions"];
       const completed = this._run.status === "completed";
       if (hasWritePermission(permission)) {
@@ -60,7 +60,16 @@ abstract class WorkflowRunBase {
       }
       if (completed) {
         contextValues.push("completed");
+        if (installed){
+          contextValues.push("installed");
+        }else{
+          contextValues.push("installable");
+        }
+        
       }
+
+      
+
       return contextValues.join(" ");
     }
 

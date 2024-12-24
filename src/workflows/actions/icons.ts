@@ -23,13 +23,16 @@ export function getAbsoluteIconPath(relativeIconPath: string): {
 export function getIconForWorkflowRun({
   status,
   conclusion
-}: StatusAndConclusion): string | vscode.ThemeIcon | {light: string | vscode.Uri; dark: string | vscode.Uri} {
+}: StatusAndConclusion, installed? : boolean): string | vscode.ThemeIcon | {light: string | vscode.Uri; dark: string | vscode.Uri} {
   switch (status) {
     case "completed": {
       switch (conclusion) {
         case "success":
-          return getAbsoluteIconPath("workflowruns/wr_success.svg");
-
+          if (installed){
+            return getAbsoluteIconPath("workflowruns/wr_installed.svg");
+          }else{
+            return getAbsoluteIconPath("workflowruns/wr_success.svg");
+          }
         case "startup_failure":
         case "failure":
           return getAbsoluteIconPath("workflowruns/wr_failure.svg");

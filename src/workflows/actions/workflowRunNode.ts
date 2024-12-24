@@ -15,11 +15,15 @@ import {getIconForWorkflowRun} from "./icons";
 export type WorkflowRunCommandArgs = Pick<WorkflowRunNode, "gitHubRepoContext" | "run" | "store">;
 
 export class WorkflowRunNode extends vscode.TreeItem {
+
+
   constructor(
     public readonly store: RunStore,
     public readonly gitHubRepoContext: GitHubRepoContext,
     public run: WorkflowRun,
-    public readonly workflowName?: string
+    public readonly artifactId : number,
+    public readonly installed : boolean,
+    public readonly workflowName?: string,
   ) {
     super(WorkflowRunNode._getLabel(run, workflowName), vscode.TreeItemCollapsibleState.Collapsed);
 
@@ -30,9 +34,9 @@ export class WorkflowRunNode extends vscode.TreeItem {
     this.run = run;
     this.label = WorkflowRunNode._getLabel(run, this.workflowName);
 
-    this.contextValue = this.run.contextValue(this.gitHubRepoContext.permissionLevel);
+    this.contextValue = this.run.contextValue(this.gitHubRepoContext.permissionLevel, this.installed);
 
-    this.iconPath = getIconForWorkflowRun(this.run.run);
+    this.iconPath = getIconForWorkflowRun(this.run.run, this.installed);
   //   this.tooltip = this.getTooltip();
   }
 

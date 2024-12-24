@@ -7,6 +7,7 @@ import { ActionsViewProvider } from './actionsWebviewProvider';
 import { BevaraAuthenticationProvider } from "../auth/authProvider";
 import { registerDynamicCompilation } from "../commands/compilation";
 import { Credentials } from "../auth/credentials";
+import { registerInstallWorkflow } from "../commands/installWorkflow";
 // import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
 // import {executeCacheClearCommand} from "../workflow/languageServer";
 // import {getGitHubContext} from "../git/repository";
@@ -19,7 +20,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
   const compilationTreeProvider = new CompilationTreeProvider(context, store);
   const credentials = new Credentials();
   await credentials.initialize(context, bevaraAuthenticationProvider);
-
+  
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bevara-compiler.compiler', compilationTreeProvider)
   );
@@ -51,7 +52,7 @@ export async function initSdkTreeViews(context: vscode.ExtensionContext, store: 
   const settingsTreeProvider = new SettingsTreeProvider(context, credentials);
   context.subscriptions.push(vscode.window.registerTreeDataProvider("bevara-compiler.settings", settingsTreeProvider));
   registerDynamicCompilation(context, settingsTreeProvider, actionsViewProvider, compilationTreeProvider);
-
+  registerInstallWorkflow(context, compilationTreeProvider);
 
 
   // const currentBranchTreeProvider = new CurrentBranchTreeProvider(store);

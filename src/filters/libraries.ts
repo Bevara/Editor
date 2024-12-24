@@ -61,6 +61,31 @@ export function getLastArtifactId(context: vscode.ExtensionContext, repoContext:
 	return filter ? filter.artifact_id : null;
 }
 
+export function isArtifactIdInstalled(context: vscode.ExtensionContext, artifact_id: number) {
+	const filter_list: any = context.globalState.get("filterList");
+	const filter = Object.values(filter_list).find((x: any) => x.artifact_id == artifact_id);
+
+	return filter? true:false;
+}
+
+export function removeArtifactId(context: vscode.ExtensionContext, artifact_id: number) {
+	const filter_list: any = context.globalState.get("filterList");
+	let filter = null;
+	
+	for (const key in filter_list) {
+		if (filter_list[key].artifact_id == artifact_id){
+			filter = key;
+			break;
+		}
+	}
+
+	if (filter){
+		deleteLibrary(context, filter);
+		delete filter_list[filter];
+		context.globalState.update("filterList", filter_list);
+	}
+}
+
 export function getLastInternalId(context: vscode.ExtensionContext, directory:string) {
 	if (directory == undefined) return null;
 

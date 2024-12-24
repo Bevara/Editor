@@ -16,6 +16,7 @@ import { registerOpenWorkflowJobLogs } from './commands/openWorkflowJobLogs';
 import { ActionsLogScheme, InternaJobLogScheme, InternaStepLogScheme } from './logs/constants';
 import { ActionsWorkflowStepLogProvider, InternalWorkflowJobLogProvider, InternalWorkflowStepLogProvider } from './logs/fileProvider';
 import { registerRerunCompilation } from './commands/rerunWorkflowRun';
+import { registerInstallWorkflow } from './commands/installWorkflow';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(BevaraPreservedEditorProvider.register(context));

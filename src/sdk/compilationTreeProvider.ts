@@ -26,7 +26,6 @@ type CurrentBranchTreeNode =
 export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	implements vscode.TreeDataProvider<CurrentBranchTreeNode> {
 	
-	private readonly _context: vscode.ExtensionContext;
 	protected _onDidChangeTreeData = new vscode.EventEmitter<CurrentBranchTreeNode | null>();
 	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
@@ -35,7 +34,6 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 		store: RunStore
 	) {
 		super(store);
-		this._context = context;
 	}
 
 	async refresh(): Promise<void> {
@@ -43,7 +41,7 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	}
 
 	async deleteAllEntry(): Promise<void> {
-		if (isInternalCompiler(this._context)){
+		if (isInternalCompiler(this.context)){
 			const folder = rootPath();
 			if (!folder || !fs.existsSync(folder+"/.bevara/")){
 				return;
@@ -157,7 +155,7 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 	}
 
 	async getChildren(element?: CurrentBranchTreeNode): Promise<CurrentBranchTreeNode[]> {
-		if (isInternalCompiler(this._context)){
+		if (isInternalCompiler(this.context)){
 			return this.getInternalChildren(element);
 		}else{
 			return this.getGithubChildren(element);
@@ -204,7 +202,7 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 			run.name = run.name?.replace(/(\r\n|\n|\r)/gm, " ");
 		}
 
-		return this.runNodes(gitHubRepoContext, runs, true);
+		return this.runNodes(this.context, gitHubRepoContext, runs, true);
 	}
 
 	protected _updateNode(node: WorkflowRunNode): void {
