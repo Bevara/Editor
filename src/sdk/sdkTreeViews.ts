@@ -8,13 +8,6 @@ import { BevaraAuthenticationProvider } from "../auth/authProvider";
 import { registerDynamicCompilation } from "../commands/compilation";
 import { Credentials } from "../auth/credentials";
 import { registerInstallWorkflow } from "../commands/installWorkflow";
-// import {canReachGitHubAPI} from "../api/canReachGitHubAPI";
-// import {executeCacheClearCommand} from "../workflow/languageServer";
-// import {getGitHubContext} from "../git/repository";
-// import {logDebug} from "../log";
-// import {CurrentBranchTreeProvider} from "./currentBranch";
-// import {SettingsTreeProvider} from "./settings";
-// import {WorkflowsTreeProvider} from "./workflows";
 
 export async function initSdkTreeViews(context: vscode.ExtensionContext, store: RunStore, bevaraAuthenticationProvider: BevaraAuthenticationProvider): Promise<void> {
   const compilationTreeProvider = new CompilationTreeProvider(context, store);

@@ -11,7 +11,6 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	public static readonly viewType = "bevara-compiler.actions";
 	private _view?: vscode.WebviewView;
-	private readonly _context: vscode.ExtensionContext;
 	private _repoContext: GitHubRepoContext | null = null;
 	private _artifactChangeListenerHandle: NodeJS.Timer | null = null;
 
@@ -19,7 +18,6 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		private readonly context: vscode.ExtensionContext,
 		private readonly _credentials : Credentials
 	) {
-		this._context = context;
 
 	}
 
@@ -72,7 +70,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 		await registerGitRepositoryChangeListener(gitChangeCallback);
 		
-		last_artifact_id = getLastArtifactId(this._context, repoContext);
+		last_artifact_id = getLastArtifactId(this.context, repoContext);
 		const currentBranch = getCurrentBranch(repoContext.repositoryState);
 		if (this._artifactChangeListenerHandle) {
 			clearInterval(this._artifactChangeListenerHandle);
@@ -118,7 +116,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 		const folder = rootPath();
 		if (folder == undefined) return;
 
-		const last_artifact_id = getLastInternalId(this._context, folder);
+		const last_artifact_id = getLastInternalId(this.context, folder);
 
 		this._artifactChangeListenerHandle = registerInternalArtifactChangeListener(last_artifact_id, folder, artifactChangeCallback);
 	}
@@ -138,7 +136,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 			enableScripts: true,
 
 			localResourceRoots: [
-				this._context.extensionUri
+				this.context.extensionUri
 			]
 		};
 
@@ -150,13 +148,13 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 						this.getGithubRepoContext().then((repoContext) => {
 							if (repoContext) {
 								this._repoContext = repoContext;
-								if (!isInternalCompiler(this._context)) {
+								if (!isInternalCompiler(this.context)) {
 									this.registerGithub(webviewView, repoContext);
 								}
 							}
 						});
 
-						if (isInternalCompiler(this._context)) {
+						if (isInternalCompiler(this.context)) {
 							this.registerInternal(webviewView);
 						}
 
@@ -177,7 +175,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 								clearInterval(this._artifactChangeListenerHandle);
 								this._artifactChangeListenerHandle = null;
 							}
-							await addToLibsActions(this._context, this._repoContext, data.body.artifact_id);
+							await addToLibsActions(this.context, this._repoContext, data.body.artifact_id);
 							this.registerGithub(webviewView, this._repoContext);
 						}
 
@@ -188,7 +186,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 								clearInterval(this._artifactChangeListenerHandle);
 								this._artifactChangeListenerHandle = null;
 							}
-							await addToLibsInternal(this._context, folder, data.body.internal_id);
+							await addToLibsInternal(this.context, folder, data.body.internal_id);
 							this.registerInternal(webviewView);
 						}
 
@@ -214,7 +212,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 						if (folder) {
 							const output = getCompilationOutputPath(folder);
 							const zipBuffer = compressProject(folder);
-							compileProject(zipBuffer, folder, output, isDebugCompiler(this._context));
+							compileProject(zipBuffer, folder, output, isDebugCompiler(this.context));
 							saveJSONDesc(folder, output);
 						}
 						break;
@@ -229,12 +227,12 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
 		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'main.js'));
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'actions', 'main.js'));
 
 		// Do the same for the stylesheet.
-		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'reset.css'));
-		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'vscode.css'));
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'actions', 'main.css'));
+		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'actions', 'reset.css'));
+		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'actions', 'vscode.css'));
+		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'actions', 'main.css'));
 
 		// Use a nonce to only allow a specific script to be run.
 		const nonce = getNonce();
