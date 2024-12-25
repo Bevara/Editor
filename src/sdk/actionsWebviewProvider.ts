@@ -189,7 +189,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 								clearInterval(this._artifactChangeListenerHandle);
 								this._artifactChangeListenerHandle = null;
 							}
-							await addToLibsInternal(this.context, folder, data.body.internal_id);
+							await addToLibsInternal(this.context, folder, data.body.internal_id.toString());
 							this.registerInternal(webviewView);
 						}
 

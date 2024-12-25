@@ -59,13 +59,19 @@ export class InternalRun {
 		return this._jobs;
 	}
 
-	contextValue(): string {
+	contextValue(installed : boolean): string {
 		const contextValues = ["r_internal"];
 		const completed = this._run.status === "completed";
 		contextValues.push(completed ? "rerunnable" : "cancelable");
 
 		if (completed) {
 			contextValues.push("completed");
+
+			if (installed){
+				contextValues.push("installed");
+			}else{
+				contextValues.push("installable");
+			}
 		}
 
 		return contextValues.join(" ");

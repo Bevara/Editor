@@ -13,6 +13,7 @@ import { ActionsViewProvider } from "../sdk/actionsWebviewProvider";
 import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
 import { checkGlobalStorateInitialized } from "../filters/utils";
 import { getFilterDesc, getJSONNameFromCmake } from "../filters/cmake";
+import { deleteLibrary } from "../filters/libraries";
 
 export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
@@ -434,11 +435,11 @@ export function registerInternalArtifactChangeListener(current_completed_run: nu
   return handle;
 }
 
-export function addToLibsInternal(context: vscode.ExtensionContext, directory: string, internal_id: number) {
+export function addToLibsInternal(context: vscode.ExtensionContext, directory: string, internal_id: string) {
   const filter_list: any = context.globalState.get("filterList");
 
   checkGlobalStorateInitialized(context);
-  const buildPath = path.join(directory, ".bevara", internal_id.toString());
+  const buildPath = path.join(directory, ".bevara", internal_id);
 
   if (!fs.existsSync(buildPath)) {
     vscode.window.showErrorMessage("The current build doesn't exist in the project.");
@@ -469,4 +470,29 @@ export function addToLibsInternal(context: vscode.ExtensionContext, directory: s
   }
 
   context.globalState.update("filterList", filter_list);
+}
+
+export function isInternalIdInstalled(context: vscode.ExtensionContext, build : string) {
+  const filter_list: any = context.globalState.get("filterList");
+  const filter = Object.values(filter_list).find((x: any) => x.build == build);
+
+  return filter? true:false;
+}
+
+export function removeInternalId(context: vscode.ExtensionContext, folder: string) {
+  const filter_list: any = context.globalState.get("filterList");
+  let filter = null;
+  
+  for (const key in filter_list) {
+		if (filter_list[key].build == folder){
+			filter = key;
+			break;
+		}
+	}
+
+  if (filter){
+    deleteLibrary(context, filter);
+    delete filter_list[filter];
+    context.globalState.update("filterList", filter_list);
+  }
 }

@@ -10,7 +10,7 @@ import { NoWorkflowJobsNode } from '../workflows/actions/noWorkflowJobsNode';
 import { PreviousAttemptsNode } from '../workflows/actions/previousAttemptsNode';
 import { AttemptNode } from '../workflows/actions/attemptNode';
 import { isInternalCompiler } from './options';
-import { rootPath } from '../commands/compilation';
+import { isInternalIdInstalled, rootPath } from '../commands/compilation';
 import { InternalRunNode } from '../workflows/internal/internalRunNode';
 import { InternalRun } from '../workflows/internal/internalRun';
 import { InternalJobNode } from '../workflows/internal/internalJobNode';
@@ -174,8 +174,9 @@ export class CompilationTreeProvider extends WorkflowRunTreeDataProvider
 		
 			const stats = fs.statSync(fullPath);
 			const run = new InternalRun(fullPath, item);
+			const installed = isInternalIdInstalled(this.context, fullPath);
 			if (stats.isDirectory()) {
-				runs.push(new InternalRunNode(fullPath, item, run));
+				runs.push(new InternalRunNode(fullPath, item, run, installed));
 			}
 		}
 		

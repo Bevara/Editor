@@ -313,7 +313,19 @@
 				"icon": "$(pin)"
 			},
 			{
+				"command": "bevara-compiler.internal.install",
+				"category": "Bevara compiler",
+				"title": "Install this version",
+				"icon": "$(pin)"
+			},
+			{
 				"command": "bevara-compiler.workflow.uninstall",
+				"category": "Bevara compiler",
+				"title": "Uninstall this version",
+				"icon": "$(pinned)"
+			},
+			{
+				"command": "bevara-compiler.internal.uninstall",
 				"category": "Bevara compiler",
 				"title": "Uninstall this version",
 				"icon": "$(pinned)"
@@ -394,6 +406,24 @@
 				{
 					"command": "bevara-compiler.workflow.uninstall",
 					"when": "viewItem =~ /r_actions/ && viewItem =~ /installed/"
+				},
+				{
+					"command": "bevara-compiler.internal.install",
+					"group": "inline",
+					"when": "viewItem =~ /r_internal/ && viewItem =~ /installable/"
+				},
+				{
+					"command": "bevara-compiler.internal.uninstall",
+					"group": "inline",
+					"when": "viewItem =~ /r_internal/ && viewItem =~ /installed/"
+				},
+				{
+					"command": "bevara-compiler.internal.install",
+					"when": "viewItem =~ /r_internal/ && viewItem =~ /installable/"
+				},
+				{
+					"command": "bevara-compiler.internal.uninstall",
+					"when": "viewItem =~ /r_internal/ && viewItem =~ /installed/"
 				}
 			],
 			"commandPalette": [
@@ -427,6 +457,14 @@
 				},
 				{
 					"command": "bevara-compiler.workflow.uninstall",
+					"when": "false"
+				},
+				{
+					"command": "bevara-compiler.internal.install",
+					"when": "false"
+				},
+				{
+					"command": "bevara-compiler.internal.uninstall",
 					"when": "false"
 				}
 			]

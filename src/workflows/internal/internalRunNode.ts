@@ -7,7 +7,8 @@ export class InternalRunNode extends vscode.TreeItem {
   constructor(
     public readonly folder: string,
     public readonly internalName: string,
-    public run: InternalRun
+    public run: InternalRun,
+    public readonly installed : boolean
   ) {
     super(InternalRunNode._getLabel(run, internalName), vscode.TreeItemCollapsibleState.Collapsed);
     this.updateRun(run);
@@ -16,8 +17,8 @@ export class InternalRunNode extends vscode.TreeItem {
   updateRun(run: InternalRun) {
     this.run = run;
     this.label = InternalRunNode._getLabel(run, this.internalName);
-    this.contextValue = this.run.contextValue();
-    this.iconPath = getIconForWorkflowRun(this.run.run);
+    this.contextValue = this.run.contextValue(this.installed);
+    this.iconPath = getIconForWorkflowRun(this.run.run, this.installed);
   }
 
   private static _getLabel(run: InternalRun, internalName: string): string {
