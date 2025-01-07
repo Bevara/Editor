@@ -285,7 +285,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 				</div>
 				<div class="emptyBox">
 					<div>
-					There are no compilation yet. Save some changes in this code, commit and see how to goes!
+					There are no compilations yet. Save some changes in this code, commit and see how to goes!
 					</div>
 				</div>
 				<div class="internalCompileBox">
