@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 
 import { GitHubRepoContext } from "../git/repository";
-import { addToLibsActions, removeArtifactId } from "../filters/libraries";
+import { addToLibsActions, removeArtifactId, addToLibsInternal, removeInternalId } from "../filters/libraries";
 import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
-import { addToLibsInternal, removeInternalId, rootPath } from "./compilation";
+import {  rootPath } from "./compilation";
 
 interface InstallWorkflowCommandOptions {
   gitHubRepoContext: GitHubRepoContext;

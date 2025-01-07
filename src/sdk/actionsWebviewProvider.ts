@@ -3,9 +3,9 @@ import { getCurrentBranch, getGitHubContext, getLastRun, GitHubRepoContext, list
 import { Repository } from '../git/vscode.git';
 import { Credentials } from '../auth/credentials';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
-import { addToLibsActions, getLastArtifactId, getLastInternalId } from '../filters/libraries';
+import { addToLibsActions, addToLibsInternal, getLastArtifactId, getLastInternalId } from '../filters/libraries';
 import { isDebugCompiler, isInternalCompiler } from './options';
-import { addToLibsInternal, compileProject, compressProject, getCompilationOutputPath, registerInternalArtifactChangeListener, rootPath, saveJSONDesc } from '../commands/compilation';
+import { compileProject, compressProject, getCompilationOutputPath, registerInternalArtifactChangeListener, rootPath, saveJSONDesc } from '../commands/compilation';
 import { CompilationTreeProvider } from './compilationTreeProvider';
 
 export class ActionsViewProvider implements vscode.WebviewViewProvider {
@@ -190,6 +190,7 @@ export class ActionsViewProvider implements vscode.WebviewViewProvider {
 								this._artifactChangeListenerHandle = null;
 							}
 							await addToLibsInternal(this.context, folder, data.body.internal_id.toString());
+							this.compilationTreeProvider.refresh();
 							this.registerInternal(webviewView);
 						}
 

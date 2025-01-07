@@ -14,6 +14,7 @@ import { CompilationTreeProvider } from "../sdk/compilationTreeProvider";
 import { checkGlobalStorateInitialized } from "../filters/utils";
 import { getFilterDesc, getJSONNameFromCmake } from "../filters/cmake";
 import { deleteLibrary } from "../filters/libraries";
+import { BevaraUnpreservedEditorProvider } from "../editors/BevaraUnpreservedEditor";
 
 export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
@@ -433,66 +434,4 @@ export function registerInternalArtifactChangeListener(current_completed_run: nu
   artifactChecker();
   handle = setInterval(async () => artifactChecker(), intervalMs);
   return handle;
-}
-
-export function addToLibsInternal(context: vscode.ExtensionContext, directory: string, internal_id: string) {
-  const filter_list: any = context.globalState.get("filterList");
-
-  checkGlobalStorateInitialized(context);
-  const buildPath = path.join(directory, ".bevara", internal_id);
-
-  if (!fs.existsSync(buildPath)) {
-    vscode.window.showErrorMessage("The current build doesn't exist in the project.");
-    return;
-  }
-
-  const items = fs.readdirSync(buildPath);
-
-  for (const item of items) {
-    const fullPath = path.join(buildPath, item);
-    const stats = fs.statSync(fullPath);
-    if (stats.isDirectory()) {
-      continue;
-    }
-
-    if (item.endsWith(".wasm")) {
-      const fs_file = vscode.Uri.joinPath(context.globalStorageUri, item).fsPath;
-      fs.copyFileSync(fullPath, fs_file);
-    } else if (item.endsWith(".json")) {
-      const json_data = fs.readFileSync(fullPath, 'utf-8');
-      const filter_desc = JSON.parse(json_data);
-      const filterName = item.substring(0, item.lastIndexOf(".json"));
-      filter_desc.isDev = true;
-      filter_desc.directory = directory;
-      filter_desc.internal_id = internal_id;
-      filter_list[filterName + ".wasm"] = filter_desc;
-    }
-  }
-
-  context.globalState.update("filterList", filter_list);
-}
-
-export function isInternalIdInstalled(context: vscode.ExtensionContext, build : string) {
-  const filter_list: any = context.globalState.get("filterList");
-  const filter = Object.values(filter_list).find((x: any) => x.build == build);
-
-  return filter? true:false;
-}
-
-export function removeInternalId(context: vscode.ExtensionContext, folder: string) {
-  const filter_list: any = context.globalState.get("filterList");
-  let filter = null;
-  
-  for (const key in filter_list) {
-		if (filter_list[key].build == folder){
-			filter = key;
-			break;
-		}
-	}
-
-  if (filter){
-    deleteLibrary(context, filter);
-    delete filter_list[filter];
-    context.globalState.update("filterList", filter_list);
-  }
 }

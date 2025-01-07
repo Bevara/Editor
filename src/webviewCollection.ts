@@ -33,4 +33,8 @@ export class WebviewCollection {
 			this._webviews.delete(entry);
 		});
 	}
+
+	public toArray(){
+		return Array.from(this._webviews);
+	}
 }

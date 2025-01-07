@@ -6,6 +6,7 @@ import * as path from 'path';
 import { getArtifact, GitHubRepoContext, listArtifacts } from '../git/repository';
 import { Credentials } from '../auth/credentials';
 import { checkGlobalStorateInitialized } from './utils';
+import { BevaraUnpreservedEditorProvider } from '../editors/BevaraUnpreservedEditor';
 
 export function decompressArtifact(buffer: Buffer) {
 	const files: { [key: string]: Buffer } = {};
@@ -51,6 +52,7 @@ export async function addToLibsActions(context: vscode.ExtensionContext, repoCon
 		});
 
 	context.globalState.update("filterList", filter_list);
+	refreshInterface(filter_list);
 }
 
 export function getLastArtifactId(context: vscode.ExtensionContext, repoContext: GitHubRepoContext) {
@@ -65,28 +67,29 @@ export function isArtifactIdInstalled(context: vscode.ExtensionContext, artifact
 	const filter_list: any = context.globalState.get("filterList");
 	const filter = Object.values(filter_list).find((x: any) => x.artifact_id == artifact_id);
 
-	return filter? true:false;
+	return filter ? true : false;
 }
 
 export function removeArtifactId(context: vscode.ExtensionContext, artifact_id: number) {
 	const filter_list: any = context.globalState.get("filterList");
 	let filter = null;
-	
+
 	for (const key in filter_list) {
-		if (filter_list[key].artifact_id == artifact_id){
+		if (filter_list[key].artifact_id == artifact_id) {
 			filter = key;
 			break;
 		}
 	}
 
-	if (filter){
+	if (filter) {
 		deleteLibrary(context, filter);
 		delete filter_list[filter];
 		context.globalState.update("filterList", filter_list);
+		refreshInterface(filter_list);
 	}
 }
 
-export function getLastInternalId(context: vscode.ExtensionContext, directory:string) {
+export function getLastInternalId(context: vscode.ExtensionContext, directory: string) {
 	if (directory == undefined) return null;
 
 	const filter_list: any = context.globalState.get("filterList");
@@ -231,11 +234,88 @@ export async function exportLibs(context: vscode.ExtensionContext, credentials: 
 
 	const buffer = await getUniversalTag(context, credentials, script_name);
 
-	if (buffer){
+	if (buffer) {
 		zip.addFile(script_name, buffer);
 	} else {
 		console.log(`File ${script_name} does not exist`);
 	}
-		
+
 	zip.writeZip(target);
+}
+
+
+export function addToLibsInternal(context: vscode.ExtensionContext, directory: string, internal_id: string) {
+	const filter_list: any = context.globalState.get("filterList");
+
+	checkGlobalStorateInitialized(context);
+	const buildPath = path.join(directory, ".bevara", internal_id);
+
+	if (!fs.existsSync(buildPath)) {
+		vscode.window.showErrorMessage("The current build doesn't exist in the project.");
+		return;
+	}
+
+	const items = fs.readdirSync(buildPath);
+
+	for (const item of items) {
+		const fullPath = path.join(buildPath, item);
+		const stats = fs.statSync(fullPath);
+		if (stats.isDirectory()) {
+			continue;
+		}
+
+		if (item.endsWith(".wasm")) {
+			const fs_file = vscode.Uri.joinPath(context.globalStorageUri, item).fsPath;
+			fs.copyFileSync(fullPath, fs_file);
+		} else if (item.endsWith(".json")) {
+			const json_data = fs.readFileSync(fullPath, 'utf-8');
+			const filter_desc = JSON.parse(json_data);
+			const filterName = item.substring(0, item.lastIndexOf(".json"));
+			filter_desc.isDev = true;
+			filter_desc.directory = directory;
+			filter_desc.internal_id = internal_id;
+			filter_list[filterName + ".wasm"] = filter_desc;
+		}
+	}
+
+	context.globalState.update("filterList", filter_list);
+	refreshInterface(filter_list);
+}
+
+export function isInternalIdInstalled(context: vscode.ExtensionContext, build: string) {
+	const filter_list: any = context.globalState.get("filterList");
+	const filter = Object.values(filter_list).find((x: any) => x.build == build);
+
+	return filter ? true : false;
+}
+
+export function removeInternalId(context: vscode.ExtensionContext, folder: string) {
+	const filter_list: any = context.globalState.get("filterList");
+	let filter = null;
+
+	for (const key in filter_list) {
+		if (filter_list[key].build == folder) {
+			filter = key;
+			break;
+		}
+	}
+
+	if (filter) {
+		deleteLibrary(context, filter);
+		delete filter_list[filter];
+		context.globalState.update("filterList", filter_list);
+		refreshInterface(filter_list);
+	}
+}
+
+function refreshInterface(filter_list: any) {
+	function postMessage(panel: vscode.WebviewPanel, type: string, body: any): void {
+		panel.webview.postMessage({ type, body });
+	}
+
+	for (const webviews of BevaraUnpreservedEditorProvider.webviews.toArray()) {
+		postMessage(webviews.webviewPanel, 'refreshList', {
+			filter_list: filter_list
+		});
+	}
 }

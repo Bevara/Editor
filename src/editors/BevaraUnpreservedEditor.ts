@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
+import * as https from 'https';
+import * as fs from 'fs';
+
 import { UnpreservedDocument } from "../documents/UnpreservedDocument";
 import { disposeAll } from '../dispose';
 import { getNonce, isDev, accessor_version, getUri } from '../util';
 import { WebviewCollection } from '../webviewCollection';
-import * as https from 'https';
-import * as fs from 'fs';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
 import { deleteLibrary, exportHTMLTemplate, exportLibs, storeRelease } from '../filters/libraries';
-import { checkSolver, downloadSolver } from '../filters/solver';
 
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -25,7 +25,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	/**
 	 * Tracks all known webviews
 	 */
-	private readonly webviews = new WebviewCollection();
+	static readonly webviews = new WebviewCollection();
 
 	constructor(
 		private readonly _context: vscode.ExtensionContext,
@@ -81,7 +81,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		Promise<UnpreservedDocument> {
 		const document: UnpreservedDocument = await UnpreservedDocument.create(uri, openContext.backupId, {
 			getFileData: async () => {
-				const webviewsForDocument = Array.from(this.webviews.get(document.uri));
+				const webviewsForDocument = Array.from(BevaraUnpreservedEditorProvider.webviews.get(document.uri));
 				if (!webviewsForDocument.length) {
 					throw new Error('Could not find webview to save for');
 				}
@@ -102,7 +102,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 		listeners.push(document.onDidChangeContent(e => {
 			// Update all webviews when the document changes
-			for (const webviewPanel of this.webviews.get(document.uri)) {
+			for (const webviewPanel of BevaraUnpreservedEditorProvider.webviews.get(document.uri)) {
 				this.postMessage(webviewPanel, 'update', {
 					edits: e.edits,
 					content: e.content,
@@ -252,7 +252,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		const scriptDirectoryUri = getUri(webviewPanel.webview, this._context.globalStorageUri, ["/"]);
 
 		// Add the webview to our internal set of active webviews
-		this.webviews.add(document.uri, webviewPanel);
+		BevaraUnpreservedEditorProvider.webviews.add(document.uri, webviewPanel);
 
 		// Setup initial content for the webview
 		webviewPanel.webview.options = {
