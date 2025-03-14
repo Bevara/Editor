@@ -16,6 +16,8 @@ import { getFilterDesc, getJSONNameFromCmake } from "../filters/cmake";
 import { deleteLibrary } from "../filters/libraries";
 import { BevaraUnpreservedEditorProvider } from "../editors/BevaraUnpreservedEditor";
 
+let terminal :vscode.Terminal | null= null;
+
 export function registerDynamicCompilation(context: vscode.ExtensionContext,
   settingsTreeProvider: SettingsTreeProvider,
   actionsViewProvider: ActionsViewProvider,
@@ -64,6 +66,10 @@ export function registerDynamicCompilation(context: vscode.ExtensionContext,
 }
 
 function createTerminal() {
+  if (terminal != null){
+    terminal.dispose();
+  }
+
   const writeEmitter = new vscode.EventEmitter<string>();
   const pty = {
     onDidWrite: writeEmitter.event,
@@ -71,7 +77,7 @@ function createTerminal() {
     close: () => { /* noop*/ },
     handleInput: (data: string) => { /* noop*/ }
   };
-  const terminal = vscode.window.createTerminal({ name: `Compilation terminal`, pty });
+  terminal = vscode.window.createTerminal({ name: `Compilation terminal`, pty });
   terminal.show();
   return writeEmitter;
 }
