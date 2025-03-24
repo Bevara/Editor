@@ -311,9 +311,12 @@ export function compileProject(
     });
 
     res.on('end', () => {
+      const statusCode = res.statusCode;
+
       fs.writeFileSync(path.join(buildPath, "STATUS"), "completed");
-      fs.writeFileSync(path.join(buildPath, "RETURNCODE"), build_returncode.toString());
-      if (build_returncode != 0){
+      const returnCode = (build_returncode || statusCode != 200)? 1 : 0;
+      fs.writeFileSync(path.join(buildPath, "RETURNCODE"), returnCode.toString() );
+      if (returnCode != 0){
         vscode.window.showInformationMessage("Compilation failed!");
       }else{
         vscode.window.showInformationMessage("Compilation ended successfully!");
