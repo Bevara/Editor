@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.2.21",
+	"version": "1.4.0",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
@@ -51,40 +51,7 @@
 				"displayName": "Open with Bevara viewer",
 				"selector": [
 					{
-						"filenamePattern": "*.bmp"
-					},
-					{
-						"filenamePattern": "*.jpg"
-					},
-					{
-						"filenamePattern": "*.jpeg"
-					},
-					{
-						"filenamePattern": "*.jp2"
-					},
-					{
-						"filenamePattern": "*.mj2"
-					},
-					{
-						"filenamePattern": "*.j2k"
-					},
-					{
-						"filenamePattern": "*.jxl"
-					},
-					{
-						"filenamePattern": "*.svg"
-					},
-					{
-						"filenamePattern": "*.tif"
-					},
-					{
-						"filenamePattern": "*.xps"
-					},
-					{
-						"filenamePattern": "*.dxf"
-					},
-					{
-						"filenamePattern": "*.cr2"
+						"filenamePattern": "*.263"
 					},
 					{
 						"filenamePattern": "*.3fr"
@@ -96,106 +63,466 @@
 						"filenamePattern": "*.ac3"
 					},
 					{
-						"filenamePattern": "*.ogg"
-					},
-					{
-						"filenamePattern": "*.amr"
-					},
-					{
-						"filenamePattern": "*.flac"
-					},
-					{
-						"filenamePattern": "*.mp3"
-					},
-					{
-						"filenamePattern": "*.opus"
-					},
-					{
-						"filenamePattern": "*.wma"
-					},
-					{
-						"filenamePattern": "*.aiff"
-					},
-					{
 						"filenamePattern": "*.aif"
 					},
 					{
 						"filenamePattern": "*.aifc"
 					},
 					{
-						"filenamePattern": "*.snd"
+						"filenamePattern": "*.aiff"
 					},
 					{
-						"filenamePattern": "*.mp4"
+						"filenamePattern": "*.amr"
 					},
 					{
-						"filenamePattern": "*.wma"
+						"filenamePattern": "*.ape"
 					},
 					{
-						"filenamePattern": "*.pbm"
+						"filenamePattern": "*.arw"
 					},
 					{
-						"filenamePattern": "*.pnm"
-					},
-					{
-						"filenamePattern": "*.pgm"
-					},
-					{
-						"filenamePattern": "*.ppm"
-					},
-					{
-						"filenamePattern": "*.rgb"
-					},
-					{
-						"filenamePattern": "*.dng"
-					},
-					{
-						"filenamePattern": "*.pcx"
-					},
-					{
-						"filenamePattern": "*.cdr"
-					},
-					{
-						"filenamePattern": "*.heif"
-					},
-					{
-						"filenamePattern": "*.heic"
-					},
-					{
-						"filenamePattern": "*.tga"
-					},
-					{
-						"filenamePattern": "*.xcf"
-					},
-					{
-						"filenamePattern": "*.xpm"
-					},
-					{
-						"filenamePattern": "*.xv"
-					},
-					{
-						"filenamePattern": "*.mp4"
-					},
-					{
-						"filenamePattern": "*.mpg"
+						"filenamePattern": "*.au"
 					},
 					{
 						"filenamePattern": "*.avi"
 					},
 					{
-						"filenamePattern": "*.ogv"
+						"filenamePattern": "*.avif"
 					},
 					{
-						"filenamePattern": "*.png"
+						"filenamePattern": "*.avifs"
 					},
 					{
-						"filenamePattern": "*.pdf"
+						"filenamePattern": "*.avs"
+					},
+					{
+						"filenamePattern": "*.avs2"
+					},
+					{
+						"filenamePattern": "*.avs3"
+					},
+					{
+						"filenamePattern": "*.awb"
+					},
+					{
+						"filenamePattern": "*.bmp"
+					},
+					{
+						"filenamePattern": "*.bpg"
+					},
+					{
+						"filenamePattern": "*.bt"
+					},
+					{
+						"filenamePattern": "*.bw"
+					},
+					{
+						"filenamePattern": "*.c2"
+					},
+					{
+						"filenamePattern": "*.caf"
 					},
 					{
 						"filenamePattern": "*.cbz"
 					},
 					{
+						"filenamePattern": "*.cdr"
+					},
+					{
+						"filenamePattern": "*.cr2"
+					},
+					{
+						"filenamePattern": "*.cr3"
+					},
+					{
+						"filenamePattern": "*.crw"
+					},
+					{
+						"filenamePattern": "*.dcr"
+					},
+					{
+						"filenamePattern": "*.dds"
+					},
+					{
+						"filenamePattern": "*.djv"
+					},
+					{
+						"filenamePattern": "*.djvu"
+					},
+					{
+						"filenamePattern": "*.dng"
+					},
+					{
+						"filenamePattern": "*.drc"
+					},
+					{
+						"filenamePattern": "*.dts"
+					},
+					{
+						"filenamePattern": "*.dxf"
+					},
+					{
+						"filenamePattern": "*.epub"
+					},
+					{
+						"filenamePattern": "*.erf"
+					},
+					{
+						"filenamePattern": "*.evc"
+					},
+					{
+						"filenamePattern": "*.flac"
+					},
+					{
+						"filenamePattern": "*.flif"
+					},
+					{
+						"filenamePattern": "*.g726"
+					},
+					{
+						"filenamePattern": "*.gbs"
+					},
+					{
+						"filenamePattern": "*.gif"
+					},
+					{
+						"filenamePattern": "*.gsm"
+					},
+					{
+						"filenamePattern": "*.h263"
+					},
+					{
+						"filenamePattern": "*.hdp"
+					},
+					{
+						"filenamePattern": "*.heic"
+					},
+					{
+						"filenamePattern": "*.heics"
+					},
+					{
+						"filenamePattern": "*.heif"
+					},
+					{
+						"filenamePattern": "*.heifs"
+					},
+					{
+						"filenamePattern": "*.icns"
+					},
+					{
+						"filenamePattern": "*.iff"
+					},
+					{
+						"filenamePattern": "*.iiq"
+					},
+					{
+						"filenamePattern": "*.ilbm"
+					},
+					{
+						"filenamePattern": "*.isac"
+					},
+					{
+						"filenamePattern": "*.it"
+					},
+					{
+						"filenamePattern": "*.j2k"
+					},
+					{
+						"filenamePattern": "*.jb2"
+					},
+					{
+						"filenamePattern": "*.jbg"
+					},
+					{
+						"filenamePattern": "*.jbig"
+					},
+					{
+						"filenamePattern": "*.jbig2"
+					},
+					{
+						"filenamePattern": "*.jls"
+					},
+					{
+						"filenamePattern": "*.jng"
+					},
+					{
+						"filenamePattern": "*.jp2"
+					},
+					{
+						"filenamePattern": "*.jpeg"
+					},
+					{
+						"filenamePattern": "*.jpg"
+					},
+					{
+						"filenamePattern": "*.jxl"
+					},
+					{
+						"filenamePattern": "*.jxr"
+					},
+					{
+						"filenamePattern": "*.kar"
+					},
+					{
+						"filenamePattern": "*.kdc"
+					},
+					{
+						"filenamePattern": "*.lbc"
+					},
+					{
+						"filenamePattern": "*.lbm"
+					},
+					{
+						"filenamePattern": "*.lc3"
+					},
+					{
+						"filenamePattern": "*.m1v"
+					},
+					{
+						"filenamePattern": "*.m2v"
+					},
+					{
+						"filenamePattern": "*.m4a"
+					},
+					{
+						"filenamePattern": "*.mid"
+					},
+					{
+						"filenamePattern": "*.midi"
+					},
+					{
+						"filenamePattern": "*.mj2"
+					},
+					{
+						"filenamePattern": "*.mng"
+					},
+					{
+						"filenamePattern": "*.mod"
+					},
+					{
+						"filenamePattern": "*.mos"
+					},
+					{
+						"filenamePattern": "*.mov"
+					},
+					{
+						"filenamePattern": "*.mp1"
+					},
+					{
+						"filenamePattern": "*.mp2"
+					},
+					{
+						"filenamePattern": "*.mp3"
+					},
+					{
+						"filenamePattern": "*.mp4"
+					},
+					{
+						"filenamePattern": "*.mpc"
+					},
+					{
+						"filenamePattern": "*.mpg"
+					},
+					{
+						"filenamePattern": "*.mpp"
+					},
+					{
+						"filenamePattern": "*.mpv"
+					},
+					{
+						"filenamePattern": "*.mrw"
+					},
+					{
+						"filenamePattern": "*.msbc"
+					},
+					{
+						"filenamePattern": "*.msp"
+					},
+					{
+						"filenamePattern": "*.nef"
+					},
+					{
+						"filenamePattern": "*.nrw"
+					},
+					{
+						"filenamePattern": "*.nsf"
+					},
+					{
+						"filenamePattern": "*.ogg"
+					},
+					{
+						"filenamePattern": "*.ogv"
+					},
+					{
+						"filenamePattern": "*.opus"
+					},
+					{
+						"filenamePattern": "*.orf"
+					},
+					{
+						"filenamePattern": "*.oxps"
+					},
+					{
+						"filenamePattern": "*.pbm"
+					},
+					{
+						"filenamePattern": "*.pc1"
+					},
+					{
+						"filenamePattern": "*.pcx"
+					},
+					{
+						"filenamePattern": "*.pdd"
+					},
+					{
+						"filenamePattern": "*.pdf"
+					},
+					{
+						"filenamePattern": "*.pef"
+					},
+					{
+						"filenamePattern": "*.pgf"
+					},
+					{
+						"filenamePattern": "*.pgm"
+					},
+					{
+						"filenamePattern": "*.pi1"
+					},
+					{
+						"filenamePattern": "*.png"
+					},
+					{
+						"filenamePattern": "*.pnm"
+					},
+					{
+						"filenamePattern": "*.ppm"
+					},
+					{
+						"filenamePattern": "*.psb"
+					},
+					{
+						"filenamePattern": "*.psd"
+					},
+					{
+						"filenamePattern": "*.qoi"
+					},
+					{
+						"filenamePattern": "*.raf"
+					},
+					{
+						"filenamePattern": "*.raw"
+					},
+					{
+						"filenamePattern": "*.rgb"
+					},
+					{
+						"filenamePattern": "*.rw2"
+					},
+					{
+						"filenamePattern": "*.s3m"
+					},
+					{
+						"filenamePattern": "*.sbc"
+					},
+					{
+						"filenamePattern": "*.sgi"
+					},
+					{
+						"filenamePattern": "*.silk"
+					},
+					{
+						"filenamePattern": "*.snd"
+					},
+					{
+						"filenamePattern": "*.spc"
+					},
+					{
+						"filenamePattern": "*.spx"
+					},
+					{
+						"filenamePattern": "*.sr2"
+					},
+					{
+						"filenamePattern": "*.srf"
+					},
+					{
+						"filenamePattern": "*.svg"
+					},
+					{
+						"filenamePattern": "*.tga"
+					},
+					{
+						"filenamePattern": "*.tif"
+					},
+					{
+						"filenamePattern": "*.tiff"
+					},
+					{
+						"filenamePattern": "*.tta"
+					},
+					{
+						"filenamePattern": "*.vgm"
+					},
+					{
 						"filenamePattern": "*.wav"
+					},
+					{
+						"filenamePattern": "*.wdp"
+					},
+					{
+						"filenamePattern": "*.webm"
+					},
+					{
+						"filenamePattern": "*.webp"
+					},
+					{
+						"filenamePattern": "*.wma"
+					},
+					{
+						"filenamePattern": "*.wmp"
+					},
+					{
+						"filenamePattern": "*.wrl"
+					},
+					{
+						"filenamePattern": "*.wv"
+					},
+					{
+						"filenamePattern": "*.x3d"
+					},
+					{
+						"filenamePattern": "*.x3dv"
+					},
+					{
+						"filenamePattern": "*.x3f"
+					},
+					{
+						"filenamePattern": "*.xbm"
+					},
+					{
+						"filenamePattern": "*.xcf"
+					},
+					{
+						"filenamePattern": "*.xm"
+					},
+					{
+						"filenamePattern": "*.xmt"
+					},
+					{
+						"filenamePattern": "*.xpm"
+					},
+					{
+						"filenamePattern": "*.xps"
+					},
+					{
+						"filenamePattern": "*.xv"
+					},
+					{
+						"filenamePattern": "*.divx"
+					},
+					{
+						"filenamePattern": "*.mkv"
 					}
 				],
 				"priority": "default"

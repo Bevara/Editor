@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as https from 'https';
 import * as fs from 'fs';
 
 import { UnpreservedDocument } from "../documents/UnpreservedDocument";
@@ -9,7 +8,14 @@ import { WebviewCollection } from '../webviewCollection';
 import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
-import { deleteLibrary, exportHTMLTemplate, exportLibs, storeRelease } from '../filters/libraries';
+import { deleteLibrary, exportHTMLTemplate, exportLibs, storeAccessor } from '../filters/libraries';
+import { accessorUrl, download, getFilterList, getIndex, indexFingerprint } from '../filters/registry';
+
+// Filters left out of the list built from the registry. ffdmx advertises
+// fourteen container and codec formats, so it was recommended for nearly every
+// input, and it imports libavdevice and libavfilter symbols that no module
+// provides, so it throws from its own init as soon as it is loaded.
+const DISABLED_FILTERS = ['ffdmx'];
 
 
 export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvider<UnpreservedDocument> {
@@ -138,47 +144,45 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 	}
 
 	async initFiltersList(webviewPanel: vscode.WebviewPanel) {
-		const lastCommitHash = await this._credentials.getLastCommitHash("Bevara", "filters");
-		this._context.globalState.update("filterListHash", lastCommitHash);
-		// Fetch the .gitmodules file
-		const response = await this._credentials.octokit.repos.getContent({
-			owner: "Bevara",
-			repo: "filters",
-			path: ".gitmodules",
-			ref: "master", // Optional, default is the repository’s default branch (usually main)
-		});
-
-		// The content is base64 encoded, so you need to decode it
-		const content = Buffer.from((response.data as any).content, 'base64').toString('utf8');
-
-		// Parse the content as an INI file
-		const submodules = parse(content);
-		let filters: any = {};
-		const total = Object.keys(submodules).length;
-		let counter = 0;
-		for (const key in submodules) {
-			const submodule = submodules[key];
-			if (submodule.path == "third_parties") continue;
-			const end_url = submodule.url.replace("https://github.com/", "");
-			const owner = end_url.split("/")[0];
-			const repo = end_url.split("/")[1].replace(".git", "");
-			try {
-				const all_releases = await this._credentials.getAllReleaseTags(owner, repo);
-				if (all_releases.length > 0) {
-					const assests = await this._credentials.parseReleaseAssets(owner, repo, all_releases[0], false);
-					filters = Object.assign({}, filters, assests);
-				}
-			} catch (error) {
-				console.error("Error fetching or parsing the JSON from repository ", repo, "from owner ", owner, " : ", error);
-			}
-			counter++;
+		const index = await getIndex();
+		const fingerprint = indexFingerprint(index);
+		const { filters, failures } = await getFilterList(index, DISABLED_FILTERS, (counter, total) => {
 			this.postMessage(webviewPanel, 'updatingList', {
 				counter: counter,
 				total: total
 			});
+		});
+
+		// Accessors and the solver are only downloaded when missing from the
+		// storage, so a cached copy of an older version - or of a GitHub release,
+		// before the list came from the registry - would otherwise be kept for
+		// good, and accessors built with a newer toolchain then fail to link
+		// against an older solver. A rebuilt list drops what may be stale.
+		for (const file in filters) {
+			if (this._filter_list?.[file]?.version !== filters[file].version) {
+				deleteLibrary(this._context, file);
+			}
+		}
+		for (const file of ["solver_1.js", "solver_1.wasm"]) {
+			deleteLibrary(this._context, file);
+		}
+
+		// What happened is reported here rather than left in the console: a list
+		// that came back empty or short used to look like nothing had run at all.
+		const count = Object.keys(filters).length;
+		if (failures.length > 0) {
+			const reason = failures[0];
+			const rest = failures.length > 1 ? ` (and ${failures.length - 1} more)` : "";
+			(count === 0 ? vscode.window.showErrorMessage : vscode.window.showWarningMessage)(
+				`Bevara: ${count} accessor${count === 1 ? "" : "s"} loaded, ${failures.length} failed - ${reason}${rest}`);
+		} else {
+			vscode.window.showInformationMessage(`Bevara: ${count} accessors loaded from the registry.`);
 		}
 
 		this._context.globalState.update("filterList", filters);
+		// The fingerprint is stored only once the list is actually built: a run
+		// that failed or was closed midway must not look up to date.
+		this._context.globalState.update("filterListHash", fingerprint);
 		return filters;
 	}
 
@@ -188,44 +192,19 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			fs.mkdirSync(this._context.globalStoragePath, { recursive: true });
 		}
 
-		function fetchWasm(file: string, url: string, maxRedirects = 5) {
-			return new Promise<Buffer>((resolve, reject) => {
-				https.get(url, async (res) => {
-					if (res.statusCode == 302 && res.headers.location && maxRedirects > 0) {
-						const redirectUrl = new URL(res.headers.location, url).toString();
-						resolve(await fetchWasm(file, redirectUrl, maxRedirects - 1));
-					} else if (res.statusCode === 200) {
-						const data: Uint8Array[] = [];
-						res.on('data', (chunk: Uint8Array) => data.push(chunk));
-						res.on('end', () => {
-							const buffer = Buffer.concat(data);
-
-							if (vscode.workspace.workspaceFolders) {
-								fs.writeFileSync(file, buffer);
-							}
-							resolve(buffer);
-						});
-					} if (res.statusCode !== 200) {
-						reject(`Failed to fetch file. Status code: ${res.statusCode}`);
-					}
-				});
-			});
-		}
-
 		/*if (!checkSolver(this._context.globalStorageUri)){
 			await downloadSolver(this._context, this._credentials);
 		}*/
 
-		async function checkSolverLegacy(storageUri: vscode.Uri, file: string) {
-			const release = "https://github.com/Bevara/solver/releases/download/1/" + file;
+		async function checkSolver(storageUri: vscode.Uri, file: string) {
 			const uri = vscode.Uri.joinPath(storageUri, file).fsPath;
 			if (!fs.existsSync(uri)) {
-				await fetchWasm(uri, release);
+				fs.writeFileSync(uri, await download(accessorUrl(file)));
 			}
 		}
 
-		await checkSolverLegacy(this._context.globalStorageUri, "solver_1.js");
-		await checkSolverLegacy(this._context.globalStorageUri, "solver_1.wasm");
+		await checkSolver(this._context.globalStorageUri, "solver_1.js");
+		await checkSolver(this._context.globalStorageUri, "solver_1.wasm");
 		const wasms: any = {};
 
 		for (const id of ids) {
@@ -235,7 +214,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					const filter = (this._filter_list as any)[wasmFilter];
 					const file = vscode.Uri.joinPath(this._context.globalStorageUri, wasmFilter).fsPath;
 					if (!fs.existsSync(file)) {
-						await storeRelease(this._credentials, filter.owner, filter.repo, filter.binaries, file);
+						await storeAccessor(this._credentials, filter, file);
 					}
 					wasms[id] = webview.asWebviewUri(vscode.Uri.file(file)).toString();
 				}
@@ -255,12 +234,20 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		BevaraUnpreservedEditorProvider.webviews.add(document.uri, webviewPanel);
 
 		// Setup initial content for the webview
+		const localResourceRoots = [
+			this._context.extensionUri,
+			this._context.globalStorageUri
+		];
+		// The document is handed to the pipeline as a webview resource URL, so
+		// its folder has to be servable. GPAC opens the source itself and only
+		// knows http(s): the blob: URL the webview used to build from the bytes
+		// was refused ("Requested URL is not valid or cannot be found").
+		if (document.uri.scheme !== 'untitled') {
+			localResourceRoots.push(vscode.Uri.joinPath(document.uri, '..'));
+		}
 		webviewPanel.webview.options = {
 			enableScripts: true,
-			localResourceRoots: [
-				this._context.extensionUri,
-				this._context.globalStorageUri
-			]
+			localResourceRoots
 		};
 
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
@@ -290,20 +277,29 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 
 				// Check if filterlist has to be initialized or updates
 				const filterListHash = this._context.globalState.get("filterListHash");
-				const lastCommitHash = await this._credentials.getLastCommitHash("Bevara", "filters");
-				if (!filterListHash) {
+				let registryHash: string | undefined;
+				try {
+					registryHash = indexFingerprint(await getIndex());
+				} catch (error) {
+					console.error("Error reaching the registry :", error);
+				}
+				// An empty list is rebuilt whatever the stored hash says, so a run
+				// that stored a hash without producing a list recovers on its own.
+				const hasFilters = this._filter_list && Object.keys(this._filter_list).length > 0;
+				if (!filterListHash || !hasFilters) {
 					try {
 						this._filter_list = await this.initFiltersList(webviewPanel);
 						this.postMessage(webviewPanel, 'updatingList', {
 							end: true
 						});
-					} catch (error) {
+					} catch (error: any) {
 						console.error("Error innitializing filter list :", error);
+						vscode.window.showErrorMessage(`Bevara: could not build the accessor list - ${error?.message ?? error}`);
 						this.postMessage(webviewPanel, 'updatingList', {
 							end: true
 						});
 					}
-				} else if (filterListHash != lastCommitHash) {
+				} else if (registryHash && filterListHash != registryHash) {
 					this.postMessage(webviewPanel, 'UpdateAvailable', {
 					});
 				}
@@ -316,6 +312,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'init', {
 						uri: document.uri,
 						value: document.documentData,
+						// An https URL GPAC can open, in place of a blob: built from value.
+						fileUrl: webviewPanel.webview.asWebviewUri(document.uri).toString(),
 						scriptsDirectory: `${scriptDirectoryUri}`,
 						filter_list: this._filter_list,
 						scripts: {
@@ -377,8 +375,14 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 					this.postMessage(webviewPanel, 'updatingList', {
 						end: true
 					});
-				} catch (error) {
+					// The other handlers hand the rebuilt list back to the webview;
+					// without this one the modal closed on a list that never changed.
+					this.postMessage(webviewPanel, 'refreshList', {
+						filter_list: this._filter_list
+					});
+				} catch (error: any) {
 					console.error("Error innitializing filter list :", error);
+					vscode.window.showErrorMessage(`Bevara: could not refresh the accessor list - ${error?.message ?? error}`);
 					this.postMessage(webviewPanel, 'updatingList', {
 						end: true
 					});

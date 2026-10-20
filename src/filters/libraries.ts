@@ -7,6 +7,7 @@ import { getArtifact, GitHubRepoContext, listArtifacts } from '../git/repository
 import { Credentials } from '../auth/credentials';
 import { checkGlobalStorateInitialized } from './utils';
 import { BevaraUnpreservedEditorProvider } from '../editors/BevaraUnpreservedEditor';
+import { accessorUrl, download } from './registry';
 
 export function decompressArtifact(buffer: Buffer) {
 	const files: { [key: string]: Buffer } = {};
@@ -113,11 +114,21 @@ export async function storeRelease(credentials: Credentials, owner: string, repo
 	fs.writeFileSync(target, wasmData);
 }
 
+// Accessors of the list come from the registry; those imported from the
+// release of a GitHub repository (addAccessor) still come from that release.
+export async function storeAccessor(credentials: Credentials, filter: any, target: string) {
+	if (filter.dist?.wasm) {
+		fs.writeFileSync(target, await download(filter.dist.wasm));
+	} else {
+		await storeRelease(credentials, filter.owner, filter.repo, filter.binaries, target);
+	}
+}
+
 export async function storeLibrary(context: vscode.ExtensionContext, credentials: Credentials, lib: any, target: string) {
 	const wasmFilter = lib.id + ".wasm";
 	const file = vscode.Uri.joinPath(context.globalStorageUri, wasmFilter).fsPath;
 	if (!fs.existsSync(file)) {
-		await storeRelease(credentials, lib.owner, lib.repo, lib.binaries, file);
+		await storeAccessor(credentials, lib, file);
 	}
 	fs.copyFileSync(file, target + "/" + wasmFilter);
 }
@@ -133,46 +144,25 @@ export async function storeUsing(context: vscode.ExtensionContext, credentials: 
 	const using = lib.name;
 	const file = vscode.Uri.joinPath(context.globalStorageUri, using).fsPath;
 	if (!fs.existsSync(file)) {
-		await storeRelease(credentials, lib.owner, lib.repo, lib.binaries, file);
+		fs.writeFileSync(file, await download(accessorUrl(using)));
 	}
 	fs.copyFileSync(file, target + "/" + using);
 }
 
 export async function storeUniversalTag(context: vscode.ExtensionContext, credentials: Credentials, script_name: string, target: string) {
-
-	const all_releases = await credentials.getAllReleaseTags("Bevara", "player");
-	if (all_releases.length == 0) {
-		return;
+	const buffer = await getUniversalTag(context, credentials, script_name);
+	if (buffer) {
+		fs.writeFileSync(target + "/" + script_name, buffer);
 	}
-
-	const asset = all_releases[0].assets.find(x => x.name == script_name);
-	if (!asset) {
-		return;
-	}
-	await storeRelease(credentials, "Bevara", "player", asset.id, target + "/" + script_name);
 }
 
 export async function getUniversalTag(context: vscode.ExtensionContext, credentials: Credentials, script_name: string) {
-
-	const all_releases = await credentials.getAllReleaseTags("Bevara", "player");
-	if (all_releases.length == 0) {
+	try {
+		return await download(accessorUrl(script_name));
+	} catch (error) {
+		console.error(`Error fetching ${script_name} from the registry:`, error);
 		return;
 	}
-
-	const asset = all_releases[0].assets.find(x => x.name == script_name);
-	if (!asset) {
-		return;
-	}
-	const response = await credentials.octokit.repos.getReleaseAsset({
-		owner: "Bevara",
-		repo: "player",
-		asset_id: asset.id,
-		headers: {
-			accept: "application/octet-stream", // GitHub's API requires this header to download binary data
-		},
-	}
-	);
-	return Buffer.from(response.data as any);
 }
 
 
