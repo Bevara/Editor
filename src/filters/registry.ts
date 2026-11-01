@@ -6,6 +6,8 @@ import * as crypto from 'crypto';
 // replaces the two or three API calls per filter that ran into the 60 an hour
 // GitHub allows without a token. The sources are still explored on GitHub.
 export const REGISTRY = "https://registry.bevara.ddns.net";
+/** The solver the editor runs, as pages name it in using="…": its name carries its version. */
+export const SOLVER = "mm_solver_1.0.1";
 
 // GitHub repositories whose name differs from the module the registry publishes.
 const GITHUB_REPO: { [module: string]: string } = {
@@ -36,7 +38,7 @@ async function getJson(url: string): Promise<any> {
 	return JSON.parse((await download(url)).toString('utf8'));
 }
 
-/** URL of the latest published file of a module, e.g. solver_1.js or universal-img_1.js. */
+/** URL of the latest published file of a module, e.g. mm_solver_1.0.1.js or universal-img_1.js. */
 export function accessorUrl(file: string) {
 	return `${REGISTRY}/accessors/${encodeURIComponent(file)}`;
 }

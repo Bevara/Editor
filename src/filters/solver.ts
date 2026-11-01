@@ -6,6 +6,7 @@ import { Credentials } from '../auth/credentials';
 import { Workflow } from '../workflows/actions/model';
 import { getArtifact, getLastCompletedRun, listArtifacts } from '../git/repository';
 import { decompressArtifact } from './libraries';
+import { SOLVER } from './registry';
 
 const bevaraRepo = {
 	repo: "solver",
@@ -14,7 +15,7 @@ const bevaraRepo = {
 };
 
 export function checkSolver(storageUri: vscode.Uri) {
-	return fs.existsSync(vscode.Uri.joinPath(storageUri, "solver_1.js").fsPath) && fs.existsSync(vscode.Uri.joinPath(storageUri, "solver_1.wasm").fsPath);
+	return fs.existsSync(vscode.Uri.joinPath(storageUri, `${SOLVER}.js`).fsPath) && fs.existsSync(vscode.Uri.joinPath(storageUri, `${SOLVER}.wasm`).fsPath);
 }
 
 

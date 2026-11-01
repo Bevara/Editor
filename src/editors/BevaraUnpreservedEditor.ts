@@ -9,7 +9,7 @@ import { BevaraAuthenticationProvider } from '../auth/authProvider';
 import { parse } from 'ini';
 import { Credentials } from '../auth/credentials';
 import { deleteLibrary, exportHTMLTemplate, exportLibs, storeAccessor } from '../filters/libraries';
-import { accessorUrl, download, getFilterList, getIndex, indexFingerprint } from '../filters/registry';
+import { accessorUrl, download, getFilterList, getIndex, indexFingerprint, SOLVER } from '../filters/registry';
 
 // Filters left out of the list built from the registry. ffdmx advertises
 // fourteen container and codec formats, so it was recommended for nearly every
@@ -163,7 +163,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 				deleteLibrary(this._context, file);
 			}
 		}
-		for (const file of ["solver_1.js", "solver_1.wasm"]) {
+		// solver_1 is the name the solver had before it carried its version.
+		for (const file of [`${SOLVER}.js`, `${SOLVER}.wasm`, "solver_1.js", "solver_1.wasm"]) {
 			deleteLibrary(this._context, file);
 		}
 
@@ -203,8 +204,8 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 			}
 		}
 
-		await checkSolver(this._context.globalStorageUri, "solver_1.js");
-		await checkSolver(this._context.globalStorageUri, "solver_1.wasm");
+		await checkSolver(this._context.globalStorageUri, `${SOLVER}.js`);
+		await checkSolver(this._context.globalStorageUri, `${SOLVER}.wasm`);
 		const wasms: any = {};
 
 		for (const id of ids) {
@@ -504,7 +505,7 @@ export class BevaraUnpreservedEditorProvider implements vscode.CustomEditorProvi
 		const polyfillsUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "polyfills.js"]);
 		const mainUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "main.js"]);
 		const scripstUri = getUri(webview, this._context.extensionUri, ["Interface", "build", "scripts.js"]);
-		const solverUri = getUri(webview, this._context.globalStorageUri, ["solver_1.js"]);
+		const solverUri = getUri(webview, this._context.globalStorageUri, [`${SOLVER}.js`]);
 		const testUri = getUri(webview, this._context.globalStorageUri, ["test.js"]);
 		const universalUri = getUri(webview, this._context.extensionUri, ["Interface", "player", "dist", "universal-tags_1.js"]);
 

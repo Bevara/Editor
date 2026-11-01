@@ -1,7 +1,7 @@
 {
 	"name": "bevara-access",
 	"description": "Bevara extension to provide platform-independent support for data formats.",
-	"version": "1.4.0",
+	"version": "2.0.0",
 	"publisher": "Bevara",
 	"repository": "https://github.com/Bevara/Editor",
 	"icon": "images/logo.png",
@@ -144,6 +144,9 @@
 						"filenamePattern": "*.dds"
 					},
 					{
+						"filenamePattern": "*.divx"
+					},
+					{
 						"filenamePattern": "*.djv"
 					},
 					{
@@ -175,6 +178,9 @@
 					},
 					{
 						"filenamePattern": "*.flif"
+					},
+					{
+						"filenamePattern": "*.flv"
 					},
 					{
 						"filenamePattern": "*.g726"
@@ -292,6 +298,9 @@
 					},
 					{
 						"filenamePattern": "*.mj2"
+					},
+					{
+						"filenamePattern": "*.mkv"
 					},
 					{
 						"filenamePattern": "*.mng"
@@ -462,6 +471,9 @@
 						"filenamePattern": "*.tta"
 					},
 					{
+						"filenamePattern": "*.vc2"
+					},
+					{
 						"filenamePattern": "*.vgm"
 					},
 					{
@@ -517,12 +529,6 @@
 					},
 					{
 						"filenamePattern": "*.xv"
-					},
-					{
-						"filenamePattern": "*.divx"
-					},
-					{
-						"filenamePattern": "*.mkv"
 					}
 				],
 				"priority": "default"
