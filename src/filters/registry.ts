@@ -10,7 +10,7 @@ export const REGISTRY = "https://registry.bevara.ddns.net";
  * The solver the editor runs, as pages name it in using="…": its name carries its version.
  * Keep it in step with SOLVER in Interface/src/app/solver.ts, which the webview uses.
  */
-export const SOLVER = "mm_solver_1.0.5";
+export const SOLVER = "mm_solver_1.0.6";
 
 // GitHub repositories whose name differs from the module the registry publishes.
 const GITHUB_REPO: { [module: string]: string } = {
